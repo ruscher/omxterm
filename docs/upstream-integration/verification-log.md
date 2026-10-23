@@ -18,9 +18,10 @@ Real results only. Anything not run is listed as not verified.
 
 - `npm test -- test/unit`: 2113 passed, 36 failed. All 36 failures are in
   `linux-appimage-installer.test.ts`, which requires an ARM64 AppImage.
-- `test/integration/failure-acknowledgement.test.ts`: 2 failed (`native exec
-failure must not be an ordinary code-1 exit`), reproduced in a clean
-  worktree. They come from the locally built x86_64 `node-pty`.
+- `test/integration/failure-acknowledgement.test.ts`: 2 failed, reproduced in
+  a clean worktree. The assertion says a native exec failure must not look
+  like an ordinary code-1 exit; it comes from the locally built x86_64
+  `node-pty`.
 
 ## #626 — Scrollback search (`feat/terminal-search`, `a819449`)
 
