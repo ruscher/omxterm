@@ -105,3 +105,33 @@ again for x86_64.
 - Switching between #649 and other branches needs the installed Restty
   runtime reverted or re-prepared (`node scripts/prepare-restty-runtime.mjs`
   upgrades it; reverting needs the reverse corrections).
+
+## #649 review fixes (`8e96b77`, 2026-10-24)
+
+- Source-tab binding, the over-limit report instead of a hidden rejection, and save-dialog/Documents failures inside the reporting boundary.
+- Unit tests: 179 files, 2285 tests. `restty-host-oracles` 16 of 16, `restty-runtime-history` 35 of 35, `auxiliary-panel` pass.
+- Maintainers' residual review found nothing, and their native dialog smoke passed.
+
+## #661 — Interface Language (`9a81992`, 2026-10-24)
+
+- Unit tests: 177 files, 2280 tests.
+- Graphical, one at a time: `restty-host-oracles` 15, `restty-search-core` 5, `application-about` 5, `auxiliary-panel` 1, `window-chrome` 3, `local-image-native` 2.
+- `restty-host-oracles` pins the `applyRuntimeTheme` signature line, so the pin was updated together with the signature.
+- Full `npm test`: 55 failures, all host baselines:
+  - the Linux installer and launcher suites stop at the `ARM aarch64` guard;
+  - `failure-acknowledgement`;
+  - `restty-ligatures-rendering` fails identically on a clean `upstream/main` worktree.
+- Manual run with an isolated `XDG_CONFIG_HOME`:
+  - pt-BR rendering;
+  - a live switch to en-US and back without restart;
+  - an invalid tag is rejected;
+  - a translated reload frame around the English validator detail.
+
+## #651 main merge (`c6720b2`, 2026-10-24)
+
+- Main brought Electron 43.8.1 and fixtures #657/#658. One conflict in `window-chrome-main.ts`.
+- To get the fixture back under 500 lines:
+  - configuration application moved to `window-chrome-configuration.ts`;
+  - the Settings scenario now runs through `runSettingsExercise`.
+- `npm ci`, the node-pty rebuild and runtime preparation were redone for the new Electron.
+- Unit tests: 181 files, 2314 tests. `window-chrome` 4 of 4 twice; the first run hit the About Alt-menu timeout once. `auxiliary-panel` and `application-about` pass.
