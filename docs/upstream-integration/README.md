@@ -28,8 +28,8 @@ upstream as small, focused pull requests. This branch exists only in the
 
 ## Status
 
-| Piece              | State                                   | Link                                                                                |
-| ------------------ | --------------------------------------- | ----------------------------------------------------------------------------------- |
-| Coordination reply | Posted 2026-10-23                       | [#622 comment](https://github.com/luizomf/omxterm/pull/622#issuecomment-6373050635) |
-| Scrollback search  | Draft PR, awaiting maintainer feedback  | [#626](https://github.com/luizomf/omxterm/pull/626)                                 |
-| Everything else    | Waiting on the decisions in the roadmap | —                                                                                   |
+| Piece              | State                                                                                   | Link                                                                                |
+| ------------------ | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Coordination reply | Posted 2026-10-23                                                                       | [#622 comment](https://github.com/luizomf/omxterm/pull/622#issuecomment-6373050635) |
+| Scrollback search  | Ready for review after the 2026-10-23 decisions and review fixes (`a8d3ae2`, `a25a0e2`) | [#626](https://github.com/luizomf/omxterm/pull/626)                                 |
+| Everything else    | Waiting on the decisions in the roadmap                                                 | —                                                                                   |

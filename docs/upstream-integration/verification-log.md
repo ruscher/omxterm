@@ -46,3 +46,24 @@ right, themed from the fixture theme.
 Not verified: macOS, Linux ARM64, Windows, and the complete
 `npm run check:portable` graphical run. Upstream has no GitHub Actions
 workflows, so no CI runs on the PR.
+
+## #626 round 2 (`a8d3ae2`, `a25a0e2`, 2026-10-24)
+
+Maintainer decisions: Find on `Ctrl+Shift+F`, full screen on `F11`
+(Linux/Windows), `null` disables a shortcut, conflicts stay errors that name
+both actions and the key. Review fixes: clipboard actions follow the focused
+query field, the counter badge follows the theme, and the focus wording.
+
+| Check                                                                                                           | Result                                                                   |
+| --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Static checks and `git diff --check`                                                                            | pass                                                                     |
+| Unit tests without the ARM64 installer suite                                                                    | 164 files, 2145 tests pass                                               |
+| Core search tests                                                                                               | 5 pass                                                                   |
+| Host oracle (clipboard IPC, terminal click, `Enter`/`Escape` to the PTY, counter colors)                        | pass                                                                     |
+| Negative controls (no routing, no counter paint)                                                                | fail as expected                                                         |
+| `intrinsic-shift`, `restty-host-integration`, `window-chrome`, `developer-tools`, `initialization-cancellation` | pass                                                                     |
+| `pending-tab-ownership`                                                                                         | 2 of 21 runs failed on this branch, detail not captured; upstream 6 of 6 |
+
+Fixture note: an `Escape` sent to the fixture's bash leaves readline waiting
+for a Meta sequence, which blocks teardown; the oracle completes it with
+`Enter`.
