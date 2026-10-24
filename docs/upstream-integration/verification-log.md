@@ -67,3 +67,20 @@ query field, the counter badge follows the theme, and the focus wording.
 Fixture note: an `Escape` sent to the fixture's bash leaves readline waiting
 for a Meta sequence, which blocks teardown; the oracle completes it with
 `Enter`.
+
+## #626 round 3 (`5f6902d`, `cb0fdd5`, `c18fa86`, 2026-10-24)
+
+Review items: Escape release after closing Find under Kitty event reporting,
+`null` wording, search privacy wording, and merging `main` (#638, #639).
+
+| Check                                                                                                                                | Result                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| Static checks and `git diff --check`                                                                                                 | pass                                                       |
+| Unit tests without the ARM64 installer suite                                                                                         | 168 files, 2197 tests pass                                 |
+| Host oracle with Kitty flags 3                                                                                                       | only `CSI 27;1:1u` + `CSI 27;1:3u` (control) reach the PTY |
+| Negative control without the Escape guard                                                                                            | stray `CSI 27;1:3u` reaches the PTY, oracle fails          |
+| `application-about`, `intrinsic-shift`, `restty-host-integration`, `window-chrome`, `developer-tools`, `initialization-cancellation` | pass                                                       |
+| `pending-tab-ownership`                                                                                                              | 8 of 8 with logs retained                                  |
+
+After `npm ci` for the new `yaml` dependency, `node-pty` had to be rebuilt
+again for x86_64.
