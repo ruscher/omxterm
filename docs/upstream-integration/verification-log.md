@@ -84,3 +84,24 @@ Review items: Escape release after closing Find under Kitty event reporting,
 
 After `npm ci` for the new `yaml` dependency, `node-pty` had to be rebuilt
 again for x86_64.
+
+## #649 — Explicit export (`c1dec0f`, 2026-10-24)
+
+- New prepared-runtime stage `getBufferText()` (digest `3b1076d3…`). The
+  history fixture reconstructs `8ebccc2a…`, and every historical runtime
+  prepares to the new bytes.
+- Unit tests: 172 files, 2225 tests. Core buffer-text tests: 3. Export host
+  oracle pass; the negative control with #622's select-all extraction fails.
+- One long graphical batch had native-input failures (scrollback drag,
+  About keyboard phase, initialization-cancellation, 1 of 4 pending-tab
+  runs); each passed 2 of 2 rerun individually. Logs retained.
+
+## #651 — Settings editor (`8926b62`, 2026-10-24)
+
+- Unit tests: 173 files, 2236 tests. `window-chrome` 4 of 4 with the new
+  `settings-only` scenario; the negative control without reload fails.
+- A native capture found every tab panel rendering at once (class display
+  overrode `hidden`); fixed and asserted through computed style.
+- Switching between #649 and other branches needs the installed Restty
+  runtime reverted or re-prepared (`node scripts/prepare-restty-runtime.mjs`
+  upgrades it; reverting needs the reverse corrections).
