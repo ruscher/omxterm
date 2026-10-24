@@ -52,3 +52,19 @@ ADR impact). They stay local until the contributor approves posting.
 
 - #634 translation guide: maintainer-owned.
 - Extensions architecture: open; no proposal until the optional tools settle.
+
+## Update (2026-10-24, evening)
+
+- Session A exited without handing back. At the contributor's request, Session B opened the queued slices from separate worktrees under `~/Documentos/Git/omxterm-worktrees/`.
+  - **#662:** Snippets Insert/Run + preview (#636).
+  - **#663:** splits (#650), `feat/terminal-splits` at `b6d1e64`.
+- The bridge `feat/settings-localization` is still uncommitted in the main checkout, left as Session A had it.
+- **Splits design note:** Restty forwards only OSC 52 to `onOsc`, so main reads OSC 7 from PTY output with a bounded parser instead of a renderer report channel.
+- **Overlaps to resolve when merging:**
+  - #662 and #661 both edit the Snippets panel block (`snippets-host.ts` vs `snippets-panel.ts`).
+  - #663 and #661 both touch the dialogs (`native-confirmations.ts` vs `native-dialogs.ts`) and the menu labels.
+  - #663 and #651 share an identical `native-confirmations.ts`.
+- **Remaining:**
+  - #631 shortcut editor (after #651);
+  - the five proposal drafts (not posted);
+  - the bridge commit.
