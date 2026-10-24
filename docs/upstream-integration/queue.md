@@ -35,7 +35,7 @@ work, each owns separate branches and checkouts:
    Session A.
 
 3. **Shortcut editor (#631):** after #651. Session A.
-4. **Snippets Insert/Run + preview (#636 resolution):** renderer-only. Owner to be decided.
+4. **Snippets Insert/Run + preview (#636 resolution)**: done on `feat/snippets-intent` at `f9e2ec2`, pushed to the fork. The worktree is at `~/Documentos/Git/omxterm-worktrees/snippets-intent`. Unit tests 2296 pass; graphical `auxiliary-panel`, `tab-removal`, `application-about` and `window-chrome` pass. The upstream PR is not opened yet. Session B.
 
 ## Need a maintainer decision first
 
