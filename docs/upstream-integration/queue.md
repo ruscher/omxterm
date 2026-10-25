@@ -79,3 +79,16 @@ ADR impact). They stay local until the contributor approves posting.
 - **Proposals posted:** #669 (action discovery), #670 (Files), #671 (SSH Hosts), #672 (broadcast), #673 (layout restore).
 - **Thank-you and full summary:** [#622 comment](https://github.com/luizomf/omxterm/pull/622#issuecomment-6392656166).
 - **Not proposed (outside the maintainer's list):** assistant, output highlighting, SFTP, colour schemes, extensions architecture.
+
+## After #676 (2026-10-25)
+
+- **#676 merged** #651, #661, #662 and #663 together with the language bridge. Maintainers applied the review corrections themselves.
+- **#680** opened for #631 (`8f80566`): rebased on main, pane actions included, translated, uses main's status model.
+- **#649:** main `0f9a7a2` merged in (`e9eb7e3`); mergeable again.
+  - Restty chain: wide-wrap, then buffer-text, giving `c55a8f40…`.
+  - Export is pane-owned and translated.
+- **Evidence posted on #622.** The earlier "x86_64 baseline" grouping was wrong:
+  - **Installer and launcher suites:** this host's `/tmp` is `noexec`; with an exec-capable `TMPDIR` they all pass.
+  - **`failure-acknowledgement`:** the ADR 0032 exec-status node-pty patch is ARM64-only.
+  - **Ligatures:** the CJK fallback names "Noto Sans CJK SC", but this host has only "Source Han Sans CN".
+- **From now on:** run tests with `TMPDIR=~/Documentos/Git/omxterm-worktrees/exec-tmp`.
