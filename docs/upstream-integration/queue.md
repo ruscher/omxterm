@@ -68,3 +68,14 @@ ADR impact). They stay local until the contributor approves posting.
   - #631 shortcut editor (after #651);
   - the five proposal drafts (not posted);
   - the bridge commit.
+
+## Everything sent (2026-10-24, night)
+
+- **Merged:** #626.
+- **Open PRs:** #649, #651, #661, #662, #663.
+- **Ready, waiting on dependencies:**
+  - `feat/settings-localization` (`f936da9`): the #651 ↔ #661 bridge, linked on both PRs.
+  - `feat/shortcut-editor` (`95a0db5`): #631, built on #651. The upstream PR opens after #651 merges; announced on the issue.
+- **Proposals posted:** #669 (action discovery), #670 (Files), #671 (SSH Hosts), #672 (broadcast), #673 (layout restore).
+- **Thank-you and full summary:** [#622 comment](https://github.com/luizomf/omxterm/pull/622#issuecomment-6392656166).
+- **Not proposed (outside the maintainer's list):** assistant, output highlighting, SFTP, colour schemes, extensions architecture.
