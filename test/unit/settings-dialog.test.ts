@@ -68,6 +68,8 @@ async function open(overrides: Partial<SettingsBridge> = {}) {
       }),
     ),
     saveText: vi.fn(async () => saved({ ...base, revision: "r2" })),
+    changeKeybind: vi.fn(async () => saved(base)),
+    captureShortcut: vi.fn(() => () => {}),
     onOpen: () => () => {},
     ...overrides,
   };
@@ -110,6 +112,7 @@ describe("settings dialog", () => {
       "Appearance",
       "Terminal",
       "New Windows",
+      "Shortcuts",
       "Config File",
     ]);
     expect(document.activeElement?.textContent).toBe("General");
@@ -271,6 +274,8 @@ describe("settings dialog", () => {
         }),
       change: vi.fn(),
       saveText: vi.fn(),
+      changeKeybind: vi.fn(),
+      captureShortcut: vi.fn(() => () => {}),
       onOpen: () => () => {},
     };
     const dialog = createSettingsDialog(document, bridge, {

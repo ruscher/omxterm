@@ -10,6 +10,7 @@ import type { TerminalClipboard } from "../../terminal-surface/terminal-surface"
 import { retainDismissalGesture } from "../about/about-dialog";
 import { renderConfigFile } from "./settings-config-file";
 import { pages, renderControl } from "./settings-pages";
+import { renderShortcuts } from "./settings-shortcuts";
 
 const LIFETIME_NOTES = {
   live: "",
@@ -69,11 +70,15 @@ export function createSettingsDialog(
 ) {
   let dialog: HTMLDialogElement | undefined;
   let disposed = false;
+  // Ends the open view's shortcut capture so main returns the keyboard.
+  let releaseView: (() => void) | undefined;
   const keyboard = retainDismissalGesture(document);
   const close = (restoreFocus: boolean) => {
     const previous = dialog;
     if (!previous) return;
     dialog = undefined;
+    releaseView?.();
+    releaseView = undefined;
     if (restoreFocus) previous.close();
     previous.remove();
     options.onActivityChange(false);
@@ -96,6 +101,7 @@ export function createSettingsDialog(
     current.setAttribute("aria-labelledby", "settings-title");
     const live = () => dialog === current;
     const view = buildSettingsView(document, bridge, live);
+    releaseView = view.release;
     const done = document.createElement("button");
     done.type = "button";
     done.className = "settings-close";
@@ -269,6 +275,7 @@ function buildSettingsView(
     panels.append(panel);
   };
 
+  let shortcuts: ReturnType<typeof renderShortcuts> | undefined;
   // Pages depend on the main-reported platform, so they are built with the
   // first snapshot; until then the dialog shows a loading status.
   const build = (platform: string) => {
@@ -279,6 +286,15 @@ function buildSettingsView(
         panel.append(renderControl(document, control, value, change, syncs));
       addPage(page.id, page.label, panel);
     }
+    shortcuts = renderShortcuts(document, bridge, {
+      snapshot: () => snapshot,
+      platform,
+      live,
+      adopt,
+      report,
+      syncs,
+    });
+    addPage("shortcuts", "Shortcuts", shortcuts.element);
     addPage(
       "config-file",
       "Config File",
@@ -291,6 +307,7 @@ function buildSettingsView(
 
   return {
     element,
+    release: () => shortcuts?.release(),
     async load() {
       try {
         const loaded = await bridge.snapshot();

@@ -44,7 +44,15 @@ Choose **Settings…** in the OMXTerm application menu. Each change you make to 
 
 Clearing a text or number field removes that entry from `config.json`, so the default applies again. Settings changes only the field you edited and keeps the rest of your file, including edits you make in another editor while it's open. It rewrites the file with two-space indentation.
 
-The **Config File** page shows `config.json` with an explicit **Save**. If the file changes on disk while you edit there, your draft is kept and saving it is refused until you choose **Reload File**, so nothing is overwritten by accident. Shortcuts, transparency, blur and snippets are still edited in the files.
+The **Config File** page shows `config.json` with an explicit **Save**. If the file changes on disk while you edit there, your draft is kept and saving it is refused until you choose **Reload File**, so nothing is overwritten by accident. Transparency, blur and snippets are still edited in the files.
+
+The **Shortcuts** page lists every remappable action with the shortcut it uses now and how it is set:
+
+- **Default:** follows OMXTerm's built-in shortcut (no entry in `config.json`). **Default** removes your entry again.
+- **Custom:** **Record**, then press the new combination; it is saved as that action's `keybinds` entry. Escape cancels. A key that cannot be a shortcut by itself (a letter without Ctrl, Alt, Cmd or AltGr) asks you to try again; F1–F24 can stand alone. While recording, the keys you press don't run their actions or reach the terminal.
+- **Unbound:** **Unbind** saves `null`, so the action stays in the menu without a key.
+
+A shortcut that collides with another action is rejected with the same message as in `config.json`, and your file stays unchanged. App shortcuts take their key before terminal programs see it, so binding a key a program uses (like `Ctrl+C`) keeps it from reaching that program.
 
 ## Add one display change
 

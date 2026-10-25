@@ -7,12 +7,22 @@ import {
   MIN_TERMINAL_LINE_HEIGHT,
   MIN_TERMINAL_PADDING,
 } from "./user-configuration";
+import type { TerminalActionName } from "./terminal-keybinds";
+import {
+  isSettingsKeybinds,
+  type CapturedShortcut,
+  type SettingsKeybind,
+  type SettingsKeybindChange,
+} from "./settings-keybinds";
 
 export const settingsIpc = {
   open: "settings:open",
   snapshot: "settings:snapshot",
   change: "settings:change",
   saveText: "settings:save-text",
+  keybind: "settings:keybind",
+  capture: "settings:capture",
+  captured: "settings:captured",
 } as const;
 
 // When a saved change takes effect, as the existing setting lifetimes define.
@@ -98,6 +108,10 @@ export interface SettingsSnapshot {
   readonly values: Readonly<Partial<Record<SettingsPath, unknown>>>;
   // Why config.json cannot be edited graphically right now, if it cannot.
   readonly problem?: string;
+  // Each action's effective shortcut and how config.json sets it.
+  readonly keybinds?: Readonly<
+    Partial<Record<TerminalActionName, SettingsKeybind>>
+  >;
 }
 
 export type SettingsApplication =
@@ -120,6 +134,10 @@ export interface SettingsBridge {
   snapshot(): Promise<SettingsSnapshot>;
   change(change: SettingsChange): Promise<SettingsResult>;
   saveText(text: string, revision: string): Promise<SettingsResult>;
+  changeKeybind(change: SettingsKeybindChange): Promise<SettingsResult>;
+  // Main delivers the next key press here instead of running it; the returned
+  // function ends capture. One capture per window at a time.
+  captureShortcut(listener: (shortcut: CapturedShortcut) => void): () => void;
   onOpen(listener: () => void): () => void;
 }
 
@@ -177,7 +195,8 @@ export function isSettingsSnapshot(value: unknown): value is SettingsSnapshot {
     (snapshot.problem === undefined || isBoundedText(snapshot.problem)) &&
     typeof values === "object" &&
     values !== null &&
-    Object.keys(values).every(isSettingsPath)
+    Object.keys(values).every(isSettingsPath) &&
+    (snapshot.keybinds === undefined || isSettingsKeybinds(snapshot.keybinds))
   );
 }
 

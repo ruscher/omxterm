@@ -16,6 +16,17 @@ import type {
   SettingsSnapshot,
 } from "../shared/settings";
 import type { UserConfiguration } from "../shared/user-configuration";
+import {
+  TERMINAL_ACTION_NAMES,
+  terminalDefaultKeybinds,
+  type TerminalActionName,
+  type TerminalKeybinds,
+} from "../shared/terminal-keybinds";
+import type {
+  KeybindState,
+  SettingsKeybind,
+  SettingsKeybindChange,
+} from "../shared/settings-keybinds";
 import type { UserConfigurationReloadOutcome } from "./user-configuration-reloader";
 import {
   DEFAULT_USER_CONFIGURATION,
@@ -34,6 +45,7 @@ export interface SettingsService {
   snapshot(): Promise<SettingsSnapshot>;
   change(change: SettingsChange): Promise<SettingsResult>;
   saveText(text: string, revision: string): Promise<SettingsResult>;
+  changeKeybind(change: SettingsKeybindChange): Promise<SettingsResult>;
 }
 
 interface CurrentDocument {
@@ -129,6 +141,13 @@ export function createSettingsService(options: {
       current.document,
     ),
     ...(current.problem ? { problem: current.problem } : {}),
+    keybinds: settingsKeybinds(
+      current.configuration?.keybinds ??
+        terminalDefaultKeybinds(
+          options.loadOptions.platform ?? process.platform,
+        ),
+      current.document,
+    ),
   });
 
   const commit = async (text: string): Promise<SettingsResult> => {
@@ -156,23 +175,28 @@ export function createSettingsService(options: {
     };
   };
 
+  // A graphical edit rereads the file and changes only its own entry.
+  const edit = (mutate: (document: Record<string, unknown>) => void) =>
+    serialize(async (): Promise<SettingsResult> => {
+      const current = await readCurrent();
+      // A parsed but invalid document may be repaired by this very change;
+      // the candidate still passes full validation before it is written.
+      if (current.problem && !current.document)
+        return {
+          status: "rejected",
+          message: `${current.problem}. Fix it in the Config File page first.`,
+          snapshot: snapshotOf(current),
+        };
+      const document = structuredClone(current.document ?? { version: 1 });
+      mutate(document);
+      return commit(`${JSON.stringify(document, null, 2)}\n`);
+    });
+
   return {
     snapshot: () => serialize(async () => snapshotOf(await readCurrent())),
     change: (change) =>
-      serialize(async () => {
-        const current = await readCurrent();
-        // A parsed but invalid document may be repaired by this very change;
-        // the candidate still passes full validation before it is written.
-        if (current.problem && !current.document)
-          return {
-            status: "rejected",
-            message: `${current.problem}. Fix it in the Config File page first.`,
-            snapshot: snapshotOf(current),
-          };
-        const document = structuredClone(current.document ?? { version: 1 });
-        setField(document, change.path, change.value);
-        return commit(`${JSON.stringify(document, null, 2)}\n`);
-      }),
+      edit((document) => setField(document, change.path, change.value)),
+    changeKeybind: (change) => edit((document) => setKeybind(document, change)),
     saveText: (text, revision) =>
       serialize(async () => {
         const current = await readCurrent();
@@ -242,6 +266,38 @@ function settingsValues(
     "window.showTabBar": configuration.showTabBar,
     "theme.path": typeof theme === "string" ? theme : "",
   };
+}
+
+// Inherit removes the action's entry (and an emptied keybinds group); unbound
+// writes null; custom writes the accelerator. Other entries are kept.
+export function setKeybind(
+  document: Record<string, unknown>,
+  change: SettingsKeybindChange,
+): void {
+  const keybinds = isRecord(document.keybinds) ? document.keybinds : {};
+  if (change.choice.state === "inherit") delete keybinds[change.action];
+  else
+    keybinds[change.action] =
+      change.choice.state === "unbound" ? null : change.choice.accelerator;
+  if (Object.keys(keybinds).length > 0) document.keybinds = keybinds;
+  else delete document.keybinds;
+}
+
+function settingsKeybinds(
+  effective: TerminalKeybinds,
+  document: Record<string, unknown> | undefined,
+): Partial<Record<TerminalActionName, SettingsKeybind>> {
+  const entries = isRecord(document?.keybinds) ? document.keybinds : {};
+  return Object.fromEntries(
+    TERMINAL_ACTION_NAMES.map((action) => {
+      const entry = Object.hasOwn(entries, action)
+        ? entries[action]
+        : undefined;
+      const state: KeybindState =
+        entry === undefined ? "inherit" : entry === null ? "unbound" : "custom";
+      return [action, { effective: effective[action], state }];
+    }),
+  );
 }
 
 // Serves the candidate bytes to the startup loader instead of the disk.
