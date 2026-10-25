@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -100,7 +100,7 @@ describe("Forgetting a host key", () => {
 
   const sshKeygen = findExecutable("ssh-keygen", process.env, process.platform);
   it.skipIf(!sshKeygen || process.platform === "win32")(
-    "removes only that host with the real ssh-keygen and keeps a backup",
+    "removes only that host's lines, even beside an invalid line ssh-keygen rejects",
     async () => {
       const root = await mkdtemp(path.join(tmpdir(), "omx-known-"));
       roots.push(root);
@@ -119,23 +119,20 @@ describe("Forgetting a host key", () => {
         .slice(0, 2)
         .join(" ");
       const knownHostsFile = path.join(root, "known_hosts");
-      await writeFile(
-        knownHostsFile,
-        `192.168.0.121 ${key}\nother.example ${key}\n[192.168.0.121]:2222 ${key}\n`,
-      );
+      // ssh-keygen -R alone refuses to rewrite this file ("invalid line").
+      const original = `192.168.0.121 ${key}\nnot a valid known_hosts line\nother.example ${key}\n[192.168.0.121]:2222 ${key}\n192.168.0.121 ${key}\n`;
+      await writeFile(knownHostsFile, original, { mode: 0o600 });
       expect(
         await forgetHostKey(
           { host: "192.168.0.121" },
           { sshKeygen: sshKeygen!, knownHostsFile },
         ),
       ).toBe(true);
-      const remaining = await readFile(knownHostsFile, "utf8");
-      expect(remaining).not.toMatch(/^192\.168\.0\.121 /mu);
-      expect(remaining).toContain("other.example");
-      expect(remaining).toContain("[192.168.0.121]:2222");
-      expect(await readFile(`${knownHostsFile}.old`, "utf8")).toContain(
-        "192.168.0.121 ",
+      expect(await readFile(knownHostsFile, "utf8")).toBe(
+        `not a valid known_hosts line\nother.example ${key}\n[192.168.0.121]:2222 ${key}\n`,
       );
+      expect(await readFile(`${knownHostsFile}.old`, "utf8")).toBe(original);
+      expect((await stat(knownHostsFile)).mode & 0o777).toBe(0o600);
       expect(
         await forgetHostKey(
           { host: "192.168.0.121" },
@@ -152,8 +149,12 @@ describe("Forgetting a host key", () => {
     >();
     const sender = { mainFrame: {} };
     const trusted = { sender, senderFrame: sender.mainFrame };
+    const root = await mkdtemp(path.join(tmpdir(), "omx-known-"));
+    roots.push(root);
+    const knownHostsFile = path.join(root, "known_hosts");
+    await writeFile(knownHostsFile, "keep\nold key\nkeep too\n");
     const run = vi.fn(async () => ({
-      stdout: "# Host 192.168.0.121 found: line 148\n",
+      stdout: "# Host 192.168.0.121 found: line 2\n",
     }));
     registerHostKeyIpc(
       {
@@ -176,7 +177,7 @@ describe("Forgetting a host key", () => {
               ? { id: "logs", kind: "local", name: "Logs" }
               : undefined,
         sshKeygen: () => "/usr/bin/ssh-keygen",
-        knownHostsFile: "/home/me/.ssh/known_hosts",
+        knownHostsFile,
         run,
       },
     );
@@ -187,12 +188,14 @@ describe("Forgetting a host key", () => {
     await expect(forget({ kind: "saved-session", id: "box" })).resolves.toEqual(
       { removed: true },
     );
+    // ssh-keygen only reads a private copy; OMXTerm edits the real file.
     expect(run).toHaveBeenCalledExactlyOnceWith("/usr/bin/ssh-keygen", [
       "-R",
       "192.168.0.121",
       "-f",
-      "/home/me/.ssh/known_hosts",
+      expect.stringMatching(/omxterm-known-hosts-[^/\\]+[/\\]known_hosts$/u),
     ]);
+    expect(await readFile(knownHostsFile, "utf8")).toBe("keep\nkeep too\n");
     await expect(forget({ kind: "saved-session", id: "logs" })).rejects.toThrow(
       "not an SSH session",
     );

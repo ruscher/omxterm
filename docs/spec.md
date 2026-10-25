@@ -450,10 +450,12 @@ Opening one always starts a new process.
   unverified host key, refused sign-in, refused connection, timeout, no route,
   unknown host name) and the safe next step. A changed host key in the user's
   `~/.ssh/known_hosts` is removed only after the fingerprint is shown and the
-  user chooses Remove old key and reconnect: main runs
-  `ssh-keygen -R <host> -f ~/.ssh/known_hosts` for the host in the session
-  definition (backup `known_hosts.old`), and ssh asks about the new key on
-  reconnect. Keys in other files are never changed (ADR 0039).
+  user chooses Remove old key and reconnect: `ssh-keygen -R <host>` on a
+  private copy names the host's lines (the host comes from the session
+  definition), main removes exactly those lines with an atomic replace and a
+  `known_hosts.old` backup, other lines (even invalid ones) stay, and ssh asks
+  about the new key on reconnect. Keys in other files are never changed
+  (ADR 0039).
 - Exports contain definitions only; options that execute local programs are
   rejected. Password authentication either stores the password in the system
   keyring or, with Password (typed when prompted), leaves it to ssh's prompt.

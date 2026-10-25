@@ -21,8 +21,13 @@ would want.
 - For a changed host key in the user's own `~/.ssh/known_hosts`, the dialog
   explains the risk, shows the fingerprint, and asks the user to confirm it
   with whoever manages that computer. Only the explicit **Remove old key and
-  reconnect** runs `ssh-keygen -R <host> -f ~/.ssh/known_hosts` in main, with
-  literal arguments. ssh-keygen keeps the previous file as `known_hosts.old`.
+  reconnect** changes the file. Main runs `ssh-keygen -R <host>` with literal
+  arguments on a private copy, only to learn which lines belong to the host:
+  ssh-keygen itself refuses to rewrite a file that has any invalid line. Main
+  then removes exactly those lines from `~/.ssh/known_hosts` with an atomic
+  replace, keeps the previous file as `known_hosts.old`, preserves its mode,
+  leaves every other line (valid or not) as it was, and gives up if the file
+  changed meanwhile.
   The host comes from the session definition or the Quick Connect target,
   never from the renderer or the terminal output. The reconnect then makes
   ssh ask about the new key in the terminal under the session's own Host key
