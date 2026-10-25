@@ -437,7 +437,7 @@ Opening one always starts a new process.
 - A tab whose focused pane runs an SSH session shows a server icon before its
   title and a tooltip with the session name, connection, folder,
   authentication, jump host, options and connection time. The Sessions list
-  shows, after each name, a status dot for that session's panes in the same
+  shows, at the right end of each session, a status dot for that session's panes in the same
   window (green: one runs; red: all ended; grey: none) with the open count, a
   tooltip with the definition's details, and the open panes first in its
   context menu, each selecting its tab and pane. Tooltips show definitions

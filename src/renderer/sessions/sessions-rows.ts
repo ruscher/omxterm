@@ -78,19 +78,17 @@ export function sessionRow(
   if (session.color) icon.style.color = session.color;
   const text = document.createElement("span");
   text.className = "sessions-text";
-  const nameLine = document.createElement("span");
-  nameLine.className = "sessions-name-line";
   const title = document.createElement("span");
   title.className = "sessions-name";
   title.textContent = session.name;
-  const status = document.createElement("span");
-  status.className = "sessions-status";
-  nameLine.append(title, status);
   const subtitle = document.createElement("span");
   subtitle.className = "sessions-subtitle";
   subtitle.textContent = sessionSubtitle(session);
-  text.append(nameLine, subtitle);
-  row.append(icon, text);
+  text.append(title, subtitle);
+  // At the row's right end, mirroring the kind icon on the left.
+  const status = document.createElement("span");
+  status.className = "sessions-status";
+  row.append(icon, text, status);
   applySessionStatus(row, context, session);
   row.setAttribute(
     "aria-label",
@@ -114,7 +112,7 @@ export function sessionRow(
   return row;
 }
 
-// The status dot after the name (green: a pane runs; red: every open pane
+// The status dot at the row's end (green: a pane runs; red: every open pane
 // has ended; grey: none open here) with the open count inside, and the
 // detailed tooltip. Panes changing update existing rows in place.
 export function applySessionStatus(

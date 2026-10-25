@@ -128,7 +128,7 @@ Omarchy screenshot are arranged by Hyprland.
   the cause and, for a changed host key, removes the old key from
   `known_hosts` only after you check the fingerprint.
 - SSH tabs show a server icon and a tooltip with the connection details. In
-  the Sessions list, a status dot after each name (green connected, red
+  the Sessions list, a status dot at the end of each session (green connected, red
   disconnected, grey closed) counts the open panes, the tooltip lists the
   session's settings, and right-clicking jumps to its open tabs.
 - **Password** sessions can keep their password in the system keyring (with a
