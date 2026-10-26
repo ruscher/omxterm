@@ -21,6 +21,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import path from "node:path";
+import { format, resolveConfig } from "prettier";
 import { promisify } from "node:util";
 
 const execFile = promisify(execFileCallback);
@@ -125,9 +126,14 @@ async function main() {
     }
     // The renderer shows the icon while a window starts; esbuild needs no
     // extra loader for a TypeScript string module.
+    // Written in the repository's Prettier style, so format:check passes.
+    const modulePath = path.join(root, "src/renderer/application-icon.ts");
     await writeFile(
-      path.join(root, "src/renderer/application-icon.ts"),
-      applicationIconModule(sourceSvg),
+      modulePath,
+      await format(applicationIconModule(sourceSvg), {
+        ...(await resolveConfig(modulePath)),
+        filepath: modulePath,
+      }),
     );
     const scalable = path.join(hicolor, "scalable", "apps");
     await mkdir(scalable, { recursive: true });
