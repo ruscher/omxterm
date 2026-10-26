@@ -62,7 +62,7 @@ makedepends=(
 # Electron ships prebuilt, already-stripped binaries.
 options=('!strip' '!debug')
 
-pkgver=0.22.1
+pkgver=0.22.2
 pkgrel=1
 # Packages built before 0.22.1 were versioned by date (26.10.25 and so on);
 # epoch=1 lets pacman upgrade from them to semantic versions.
@@ -79,7 +79,7 @@ fi
 md5sums=('SKIP')
 
 # The checkout's package.json version, without "-" (pacman versions cannot
-# contain it): 0.22.1 for the tag, for example 0.22.2dev.0 for a branch.
+# contain it): 0.22.2 for the tag, for example 0.22.3dev.0 for a branch.
 pkgver() {
     cd "${srcdir}/${pkgname}"
     node -p 'require("./package.json").version.replaceAll("-", "")'

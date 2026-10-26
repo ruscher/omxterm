@@ -211,21 +211,21 @@ These screenshots were taken on Linux (KDE Plasma) with OMXTerm 0.22.0.
 ## Platforms and downloads
 
 **Latest release:
-[0.22.1 — downloads and release notes](https://github.com/ruscher/omxterm/releases/tag/v0.22.1)**
+[0.22.2 — downloads and release notes](https://github.com/ruscher/omxterm/releases/tag/v0.22.2)**
 
 | Platform                                 | Download                                                                                                | Checksum                                                                                                      |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Apple Silicon macOS                      | [DMG](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-arm64.dmg)            | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-arm64.dmg.sha256)       |
-| Intel macOS                              | [DMG](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-x64.dmg)              | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-x64.dmg.sha256)         |
-| Linux ARM64                              | [AppImage](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-arm64.AppImage)  | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-arm64.AppImage.sha256)  |
-| Linux ARM64 (Debian, Ubuntu)             | [DEB](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-arm64.deb)            | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-arm64.deb.sha256)       |
-| Linux ARM64 (Fedora, openSUSE)           | [RPM](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-aarch64.rpm)          | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-aarch64.rpm.sha256)     |
-| Linux x64                                | [AppImage](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-x86_64.AppImage) | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-x86_64.AppImage.sha256) |
-| Linux x64 (Debian, Ubuntu)               | [DEB](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-amd64.deb)            | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-amd64.deb.sha256)       |
-| Linux x64 (Fedora, openSUSE)             | [RPM](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-x86_64.rpm)           | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-x86_64.rpm.sha256)      |
-| Linux application-menu helper (optional) | [linux_install.sh](https://github.com/ruscher/omxterm/releases/download/v0.22.1/linux_install.sh)       | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.1/linux_install.sh.sha256)               |
-| Windows ARM64                            | [Installer](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-arm64.exe)      | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-arm64.exe.sha256)       |
-| Windows x64                              | [Installer](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-x64.exe)        | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.1/OMXTerm-0.22.1-x64.exe.sha256)         |
+| Apple Silicon macOS                      | [DMG](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-arm64.dmg)            | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-arm64.dmg.sha256)       |
+| Intel macOS                              | [DMG](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-x64.dmg)              | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-x64.dmg.sha256)         |
+| Linux ARM64                              | [AppImage](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-arm64.AppImage)  | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-arm64.AppImage.sha256)  |
+| Linux ARM64 (Debian, Ubuntu)             | [DEB](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-arm64.deb)            | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-arm64.deb.sha256)       |
+| Linux ARM64 (Fedora, openSUSE)           | [RPM](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-aarch64.rpm)          | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-aarch64.rpm.sha256)     |
+| Linux x64                                | [AppImage](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-x86_64.AppImage) | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-x86_64.AppImage.sha256) |
+| Linux x64 (Debian, Ubuntu)               | [DEB](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-amd64.deb)            | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-amd64.deb.sha256)       |
+| Linux x64 (Fedora, openSUSE)             | [RPM](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-x86_64.rpm)           | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-x86_64.rpm.sha256)      |
+| Linux application-menu helper (optional) | [linux_install.sh](https://github.com/ruscher/omxterm/releases/download/v0.22.2/linux_install.sh)       | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.2/linux_install.sh.sha256)               |
+| Windows ARM64                            | [Installer](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-arm64.exe)      | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-arm64.exe.sha256)       |
+| Windows x64                              | [Installer](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-x64.exe)        | [SHA-256](https://github.com/ruscher/omxterm/releases/download/v0.22.2/OMXTerm-0.22.2-x64.exe.sha256)         |
 
 Arch Linux, Manjaro and BigLinux build a native package with the included
 `PKGBUILD` ([below](#arch-linux-manjaro-and-biglinux)).
@@ -274,23 +274,23 @@ Run the installer and start OMXTerm from the Start menu.
 ### Debian and Ubuntu
 
 ```sh
-sudo apt install ./OMXTerm-0.22.1-amd64.deb    # arm64: OMXTerm-0.22.1-arm64.deb
+sudo apt install ./OMXTerm-0.22.2-amd64.deb    # arm64: OMXTerm-0.22.2-arm64.deb
 ```
 
 ### Fedora, openSUSE and other RPM systems
 
 ```sh
-sudo dnf install ./OMXTerm-0.22.1-x86_64.rpm   # arm64: OMXTerm-0.22.1-aarch64.rpm
-# openSUSE: sudo zypper install --allow-unsigned-rpm ./OMXTerm-0.22.1-x86_64.rpm
+sudo dnf install ./OMXTerm-0.22.2-x86_64.rpm   # arm64: OMXTerm-0.22.2-aarch64.rpm
+# openSUSE: sudo zypper install --allow-unsigned-rpm ./OMXTerm-0.22.2-x86_64.rpm
 ```
 
 ### AppImage (any Linux)
 
 ```sh
-chmod +x OMXTerm-0.22.1-x86_64.AppImage
-./OMXTerm-0.22.1-x86_64.AppImage
+chmod +x OMXTerm-0.22.2-x86_64.AppImage
+./OMXTerm-0.22.2-x86_64.AppImage
 # Optional: add it to your application menu
-sh linux_install.sh install OMXTerm-0.22.1-x86_64.AppImage
+sh linux_install.sh install OMXTerm-0.22.2-x86_64.AppImage
 ```
 
 ### Arch Linux, Manjaro and BigLinux
@@ -299,7 +299,7 @@ Two PKGBUILDs build the same package for x86_64 or aarch64. Both download npm
 packages and Electron during the build.
 
 **From GitHub (BigLinux layout).** `pkgbuild/PKGBUILD` clones this
-repository at the release tag (`v0.22.1`) and versions the package from it:
+repository at the release tag (`v0.22.2`) and versions the package from it:
 
 ```sh
 sudo pacman -S --needed base-devel git nodejs npm
@@ -321,7 +321,7 @@ cd omxterm/packaging/arch
 makepkg -si
 ```
 
-Both PKGBUILDs set `epoch=1`, so `1:0.22.1` upgrades the older date-versioned
+Both PKGBUILDs set `epoch=1`, so `1:0.22.2` upgrades the older date-versioned
 packages (such as `26.10.25`) without a "downgrade" warning.
 
 Optional packages:

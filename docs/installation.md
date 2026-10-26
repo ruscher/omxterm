@@ -109,16 +109,16 @@ makepkg -si
 
 It builds your local tree, committed or not, versioned from `package.json`, and installs OMXTerm in `/usr/lib/omxterm` with the `omxterm` command, an application menu entry, theme icons, the README in `/usr/share/doc/omxterm`, and its licenses in `/usr/share/licenses/omxterm`. Optional packages: `openssh` (SSH sessions, Quick Connect, remote files over SFTP) and `ollama` (local models for the AI assistant).
 
-On **BigLinux**, [`pkgbuild/PKGBUILD`](../pkgbuild/PKGBUILD) clones the repository at the release tag (`v0.22.1`), or the branch in `OMXTERM_BRANCH`, and takes the version from that checkout's `package.json`. It installs the same files:
+On **BigLinux**, [`pkgbuild/PKGBUILD`](../pkgbuild/PKGBUILD) clones the repository at the release tag (`v0.22.2`), or the branch in `OMXTERM_BRANCH`, and takes the version from that checkout's `package.json`. It installs the same files:
 
 ```sh
 mkdir omxterm-pkg && cd omxterm-pkg
 curl -fLO https://raw.githubusercontent.com/ruscher/omxterm/main/pkgbuild/PKGBUILD
-makepkg -si                       # release v0.22.1
+makepkg -si                       # release v0.22.2
 OMXTERM_BRANCH=main makepkg -si   # a branch
 ```
 
-Both PKGBUILDs set `epoch=1`, so `1:0.22.1` upgrades the date-versioned packages built before 0.22.1 (such as `26.10.25`) without a downgrade warning.
+Both PKGBUILDs set `epoch=1`, so `1:0.22.2` upgrades the date-versioned packages built before 0.22.1 (such as `26.10.25`) without a downgrade warning.
 
 ### Run the AppImage
 
