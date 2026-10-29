@@ -113,6 +113,11 @@ Build and verify each Windows architecture natively on a host of that architectu
 
 > **Warning:** Full Windows NSIS verification installs and uninstalls the real package and can replace an existing OMXTerm installation on the system ([ADR 0023](adr/0023-verify-exact-nsis-only-in-authorized-disposable-vms.md)). Always run it inside a disposable Windows 11 VM with a clean recovery snapshot, using the target architecture or the explicitly approved x64 emulation exception.
 
+Interactive install, update and uninstall refuse to force-close a running
+OMXTerm. Close every window through the normal confirmation, wait for the app to
+exit, then choose **Retry**. Silent invocation cancels if an OMXTerm process is
+still live.
+
 In an interactive desktop PowerShell session with [Windows prerequisites](development.md#windows):
 
 ```powershell

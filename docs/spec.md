@@ -41,9 +41,11 @@ OMXTerm:
 
 - opens the Default Shell in the user's home directory: on macOS and Linux the
   operating-system-configured shell as an interactive login shell; on Windows,
-  which has no login-shell concept, a configured `windowsShell` executable when
-  present, otherwise Windows PowerShell — falling back to the ComSpec command
-  processor — started interactively without a login flag; or, when startup
+  which has no login-shell concept, the selected `windowsProfiles` entry or a
+  configured legacy `windowsShell` executable when present, otherwise Windows
+  PowerShell — falling back to Command Prompt at its standard `SystemRoot`
+  location — started interactively without a login flag;
+  or, when startup
   includes `-e <program> [arguments...]`, runs that executable and literal
   argument vector directly in the first Terminal Tab without an implicit shell;
 - provides a terminal targeting ordinary shells, SSH started by the user, tmux,
@@ -72,9 +74,10 @@ OMXTerm:
   an optional versioned per-user AppImage desktop installer and its checksum;
   running the AppImage directly remains supported.
 
-AI assistance, splits, saved or reconnectable sessions, shell integration,
-profiles, a theme picker or catalog, automatic configuration reload, automatic
-updates, and remote terminal features are outside the current product contract.
+AI assistance, splits, saved or reconnectable sessions, shell integration, a
+graphical profile manager, a theme picker or catalog, automatic configuration
+reload, automatic updates, and remote terminal features are outside the current
+product contract.
 
 Restty 0.3.0 and its pinned Ghostty core provide the sole Terminal Surface in
 ordinary development and every packaged application. OMXTerm has no renderer
@@ -869,6 +872,7 @@ track subsequent bundled palette changes. A present file must contain
 - `confirmClose`;
 - `logLevel`;
 - `windowsShell`;
+- `windowsProfiles.default` and `windowsProfiles.profiles`;
 - `font.family`, `font.size`, `font.lineHeight`, and `font.ligatures`;
 - `terminal.padding.top`, `terminal.padding.right`, `terminal.padding.bottom`,
   and `terminal.padding.left`;
@@ -988,6 +992,43 @@ readability or executability, preflight a spawn, add arguments, use a wrapper,
 or construct a command string. On macOS and Linux the key is accepted without
 filesystem access or warning but has no effect on operating-system shell
 selection.
+
+`windowsProfiles` is an optional saved Windows launch collection and is
+mutually exclusive with `windowsShell`. It contains a lowercase ASCII `default`
+id and from 1 through 16 `profiles`. Every profile contains exactly a unique
+lowercase ASCII `id`, a trimmed printable `name` of at most 128 characters, a
+bounded local drive-absolute `executable`, and an optional `arguments` array.
+The normalized array contains at most 32 literal strings; no argument contains
+NUL, each is at most 8192 characters, and their aggregate length is at most
+32768 characters. Empty arguments and whitespace are preserved.
+
+This structure is validated on every platform. On Windows, the final target of
+every profile executable must also be an existing regular file; one failure
+rejects the complete configuration. A new tab resolves the current default
+profile, sends its executable and literal argument vector directly to the PTY,
+and uses its name as the fallback tab title. No command string, quoting layer,
+wrapper, argument expansion or shell probe is introduced. A valid reload
+affects future tabs only; live tabs retain their processes. macOS and Linux
+ignore `windowsProfiles` for shell selection and do not inspect its executable
+targets.
+
+Without `windowsProfiles` or `windowsShell`, Windows checks Windows PowerShell
+5.1 and then Command Prompt at their fixed `SystemRoot` layouts. The root must
+be a bounded local drive-absolute path; an absent or malformed value uses
+`C:\\Windows`. OMXTerm does not inspect `ComSpec` or search `PATH` while
+resolving the Default Shell.
+
+When Settings opens on Windows, main passively checks a bounded list of fixed
+installation layouts for PowerShell 7, Windows PowerShell, Command Prompt, WSL,
+Git Bash, MSYS2 and Cygwin. Environment-derived roots must be bounded local
+drive-absolute paths; UNC, device, root-relative and malformed values are not
+inspected. Existing regular files become at most 16 case-insensitively
+deduplicated suggestions for the editable `windowsShell` field. Discovery does
+not inspect `ComSpec`, search `PATH`, start a candidate, query a shell, change
+the current configuration or imply that an individual WSL distribution was
+found. A user may still enter another absolute executable path, which goes
+through the same validation above. Discovery is refreshed when Settings loads
+and never polls in the background.
 
 An optional `keybinds` object remaps application-chrome shortcuts for a fixed
 action vocabulary: `quit`, `copy`, `paste`, `selectAll`, `find`, `newWindow`,
@@ -1174,7 +1215,10 @@ atomic replacement, a field-scoped change that keeps every other entry, a raw
 save refused when the file changed since its draft was loaded, and a dirty draft
 never replaced by other changes. The status line distinguishes saved and
 applied, saved but not applied (with the reload's reason), new-window-only
-settings, and settings that need a restart for open tabs. While Settings is
+settings, and settings that need a restart for open tabs. When
+`windowsProfiles` is active, Settings shows its selected executable as
+read-only and the validated Config File editor owns profile/default/argument
+changes. While Settings is
 open it owns modal input like About, and the auxiliary panel stays visible
 but inert: terminal-directed actions and tab navigation are ignored,
 application Copy, Paste and Select All edit its focused field and never reach
@@ -1301,6 +1345,12 @@ notarization; Windows NSIS is unsigned. Installation guidance explains
 Gatekeeper and SmartScreen without recommending disabling system-wide
 protections.
 
+Windows NSIS never terminates a running OMXTerm process during install, update
+or uninstall. Interactive use presents Retry/Cancel until every instance has
+closed through the normal Busy Session confirmation and native PTY drain;
+silent use cancels while an instance remains. The installer does not treat
+window loss or a fixed delay as terminal-session completion.
+
 The [release procedure](release.md) owns preparation, native verification,
 artifact identity, tagging, uploads and download checks. An owner-requested
 release covers those steps without additional per-step approval. Manual testing
@@ -1325,7 +1375,8 @@ disposable VM and literal CLI opt-in. `/D=` changes the destination without
 isolating old-version removal, registration, shortcuts or processes.
 Verification refuses unsafe or unknown installation state. Ownership-checked
 cleanup preserves user data and is part of full verification; unpacked-only
-diagnostics are partial.
+diagnostics are partial. Its reviewed footprint pins both the builder
+configuration and the custom live-process include.
 
 Release verification separates behavioral tests, native builds, exact-artifact
 checks and publication. Each artifact needs verification against its own

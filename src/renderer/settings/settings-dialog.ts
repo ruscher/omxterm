@@ -203,7 +203,13 @@ function buildSettingsView(
   let snapshot: SettingsSnapshot | undefined;
   const syncs: (() => void)[] = [];
   const relabels: ((t: Translate) => void)[] = [];
-  const hooks: SettingsViewHooks = { syncs, relabels, language };
+  const hooks: SettingsViewHooks = {
+    syncs,
+    relabels,
+    language,
+    windowsShells: () => snapshot?.windowsShells,
+    activeWindowsProfile: () => snapshot?.activeWindowsProfile,
+  };
   const element = document.createElement("div");
   element.className = "settings-body";
   const title = document.createElement("h2");

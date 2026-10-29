@@ -22,7 +22,7 @@ import {
 import * as applicationAbout from "./application-about";
 import { startApplicationSettings } from "./application-settings";
 import { deliverKeybindsFromKeyEvents } from "./keybind-delivery";
-import { createDefaultShellResolver, defaultShellName } from "./default-shell";
+import { createDefaultShellLaunchResolver } from "./default-shell";
 import {
   MalformedLaunchRequestError,
   startupLaunchRequest,
@@ -190,9 +190,9 @@ app
         });
         currentTranslator = () =>
           translatorFor(configurationReloader.current().configuration.language);
-        const resolveCurrentDefaultShell = createDefaultShellResolver(
+        const resolveCurrentDefaultShell = createDefaultShellLaunchResolver(
           account.shell,
-          () => configurationReloader.current().configuration.windowsShell,
+          () => configurationReloader.current().configuration,
         );
         terminalApplication = startTerminalApplication<BrowserWindow>({
           confirmClose: userConfiguration.confirmClose,
@@ -209,7 +209,7 @@ app
                 linuxWindowIconPath,
               ),
             );
-            const shellName = defaultShellName(process.platform, initialShell);
+            const shellName = initialShell.title;
             lockTerminalRendererNavigation(window.webContents);
             deliverKeybindsFromKeyEvents(
               window.webContents,
@@ -258,8 +258,11 @@ app
               ),
               webContents: window.webContents,
               createSession(callbacks) {
+                const defaultShell = resolveCurrentDefaultShell();
                 return shutdown.createSession(nodePty.spawn, {
-                  shell: resolveCurrentDefaultShell(),
+                  shell: defaultShell.shell,
+                  shellArguments: defaultShell.arguments,
+                  shellTitle: defaultShell.title,
                   launchRequest: consumeLaunch(),
                   platform: process.platform,
                   homeDirectory: account.homedir,

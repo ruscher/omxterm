@@ -8,6 +8,14 @@ import {
   MIN_TERMINAL_PADDING,
 } from "./user-configuration";
 import { SUPPORTED_LANGUAGES } from "./i18n";
+import {
+  isWindowsShellSuggestions,
+  type WindowsShellSuggestion,
+} from "./windows-shells";
+import {
+  isWindowsShellProfile,
+  type WindowsShellProfile,
+} from "./windows-shell-profiles";
 
 export const settingsIpc = {
   open: "settings:open",
@@ -98,6 +106,12 @@ export interface SettingsSnapshot {
   // The values each control shows: the file's own entries, falling back to
   // the effective defaults for omitted fields.
   readonly values: Readonly<Partial<Record<SettingsPath, unknown>>>;
+  // Passive suggestions from fixed Windows installation locations. The text
+  // field remains editable for custom shells.
+  readonly windowsShells?: readonly WindowsShellSuggestion[];
+  // Present when config.json selects a saved profile. The executable field is
+  // then display-only; profile structure is edited in the raw config editor.
+  readonly activeWindowsProfile?: WindowsShellProfile;
   // Why config.json cannot be edited graphically right now, if it cannot.
   readonly problem?: string;
 }
@@ -179,7 +193,11 @@ export function isSettingsSnapshot(value: unknown): value is SettingsSnapshot {
     (snapshot.problem === undefined || isBoundedText(snapshot.problem)) &&
     typeof values === "object" &&
     values !== null &&
-    Object.keys(values).every(isSettingsPath)
+    Object.keys(values).every(isSettingsPath) &&
+    (snapshot.windowsShells === undefined ||
+      isWindowsShellSuggestions(snapshot.windowsShells)) &&
+    (snapshot.activeWindowsProfile === undefined ||
+      isWindowsShellProfile(snapshot.activeWindowsProfile))
   );
 }
 

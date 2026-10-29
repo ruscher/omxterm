@@ -44,6 +44,13 @@ Choose **Settings…** in the OMXTerm application menu. Each change you make to 
 
 **Language** on the **General** page switches OMXTerm between English and Brazilian Portuguese. Each language is listed by its own name, and the open Settings window, menus and other windows switch right after it saves.
 
+On Windows, **Shell executable** remains an editable path and also offers
+installed-shell suggestions found in fixed standard locations. OMXTerm does not
+start candidates while discovering them or search arbitrary `PATH` entries.
+PowerShell 7, Windows PowerShell, Command Prompt, WSL, Git Bash, MSYS2 and
+Cygwin appear only when the corresponding executable exists. You can type a
+different absolute executable path for a custom installation.
+
 Clearing a text or number field removes that entry from `config.json`, so the default applies again. Settings changes only the field you edited and keeps the rest of your file, including edits you make in another editor while it's open. It rewrites the file with two-space indentation.
 
 The **Config File** page shows `config.json` with an explicit **Save**. If the file changes on disk while you edit there, your draft is kept and saving it is refused until you choose **Reload File**, so nothing is overwritten by accident. Shortcuts, transparency, blur and snippets are still edited in the files.
@@ -190,30 +197,31 @@ See the [Linux desktop guide](linux-desktop.md) for compositor-specific setup:
 
 Every field except `version` is optional and falls back to its default when omitted:
 
-| Preference                | Accepted value                          | Default                          |
-| ------------------------- | --------------------------------------- | -------------------------------- |
-| `version`                 | `1`                                     | required                         |
-| `language`                | `"en-US"` or `"pt-BR"`                  | `"en-US"`                        |
-| `confirmClose`            | boolean                                 | `true`                           |
-| `logLevel`                | `"error"`, `"info"`, or `"debug"`       | `"info"`                         |
-| `windowsShell`            | non-empty absolute executable path      | Windows PowerShell, then ComSpec |
-| `font.family`             | exact installed system font-family name | bundled FiraCode Nerd Font Mono  |
-| `font.size`               | integer `8` – `72` (CSS px)             | `16`                             |
-| `font.lineHeight`         | number `1.0` – `2.0`                    | `1.0`                            |
-| `font.ligatures`          | boolean                                 | `true`                           |
-| `terminal.padding.top`    | integer `0` – `128` (CSS px)            | `0`                              |
-| `terminal.padding.right`  | integer `0` – `128` (CSS px)            | `8`                              |
-| `terminal.padding.bottom` | integer `0` – `128` (CSS px)            | `8`                              |
-| `terminal.padding.left`   | integer `0` – `128` (CSS px)            | `8`                              |
-| `scrollback.lines`        | integer `0` – `100000`                  | `10000`                          |
-| `keyboard.optionAsAlt`    | `"none"`, `"left"`, `"right"`, `"both"` | `"none"`                         |
-| `window.alwaysOnTop`      | boolean                                 | `false`                          |
-| `window.blur`             | boolean                                 | `false`                          |
-| `window.transparency`     | number `0` – `1`                        | `0`                              |
-| `window.showTitleBar`     | boolean                                 | `true`                           |
-| `window.showTabBar`       | boolean                                 | `true`                           |
-| `theme.path`              | relative or absolute file path          | bundled `omtheme`                |
-| `keybinds.<action>`       | Electron accelerator string or `null`   | built-in shortcut per action     |
+| Preference                | Accepted value                          | Default                         |
+| ------------------------- | --------------------------------------- | ------------------------------- |
+| `version`                 | `1`                                     | required                        |
+| `language`                | `"en-US"` or `"pt-BR"`                  | `"en-US"`                       |
+| `confirmClose`            | boolean                                 | `true`                          |
+| `logLevel`                | `"error"`, `"info"`, or `"debug"`       | `"info"`                        |
+| `windowsShell`            | absolute Windows executable path        | Windows PowerShell, then CMD    |
+| `windowsProfiles`         | saved Windows shell profile collection  | absent                          |
+| `font.family`             | exact installed system font-family name | bundled FiraCode Nerd Font Mono |
+| `font.size`               | integer `8` – `72` (CSS px)             | `16`                            |
+| `font.lineHeight`         | number `1.0` – `2.0`                    | `1.0`                           |
+| `font.ligatures`          | boolean                                 | `true`                          |
+| `terminal.padding.top`    | integer `0` – `128` (CSS px)            | `0`                             |
+| `terminal.padding.right`  | integer `0` – `128` (CSS px)            | `8`                             |
+| `terminal.padding.bottom` | integer `0` – `128` (CSS px)            | `8`                             |
+| `terminal.padding.left`   | integer `0` – `128` (CSS px)            | `8`                             |
+| `scrollback.lines`        | integer `0` – `100000`                  | `10000`                         |
+| `keyboard.optionAsAlt`    | `"none"`, `"left"`, `"right"`, `"both"` | `"none"`                        |
+| `window.alwaysOnTop`      | boolean                                 | `false`                         |
+| `window.blur`             | boolean                                 | `false`                         |
+| `window.transparency`     | number `0` – `1`                        | `0`                             |
+| `window.showTitleBar`     | boolean                                 | `true`                          |
+| `window.showTabBar`       | boolean                                 | `true`                          |
+| `theme.path`              | relative or absolute file path          | bundled `omtheme`               |
+| `keybinds.<action>`       | Electron accelerator string or `null`   | built-in shortcut per action    |
 
 ### Notes on specific settings
 
@@ -238,7 +246,9 @@ To open new windows with a minimal, borderless layout:
 
 ### Choose the Windows default shell
 
-On Windows, set `windowsShell` to the full executable path of your preferred shell (remember to double backslashes in JSON).
+On Windows, choose an installed suggestion in **Settings → General → Shell
+executable**, or set `windowsShell` to the full executable path of your preferred
+shell (remember to double backslashes in JSON).
 
 **Git Bash:**
 
@@ -259,6 +269,50 @@ On Windows, set `windowsShell` to the full executable path of your preferred she
 ```
 
 Reload your configuration and open a new tab to start the new shell. Only the executable path is accepted (no CLI flags or environment variables). macOS and Linux ignore `windowsShell` and use your OS account's login shell.
+
+For named shells or literal command-line arguments, use `windowsProfiles`
+instead. It cannot be combined with `windowsShell`. The default id must identify
+one of 1–16 profiles; ids use lowercase ASCII letters, digits, `.`, `_` or `-`,
+and each executable must be a bounded local drive-absolute path. `arguments` is
+an optional JSON array passed directly to the executable—OMXTerm never joins it
+into a command string.
+
+**PowerShell 7 without its startup logo and an explicit WSL distribution:**
+
+```json
+{
+  "version": 1,
+  "windowsProfiles": {
+    "default": "powershell-7",
+    "profiles": [
+      {
+        "id": "powershell-7",
+        "name": "PowerShell 7 (No Logo)",
+        "executable": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "arguments": ["-NoLogo"]
+      },
+      {
+        "id": "ubuntu",
+        "name": "Ubuntu (WSL)",
+        "executable": "C:\\Windows\\System32\\wsl.exe",
+        "arguments": ["--distribution", "Ubuntu"]
+      }
+    ]
+  }
+}
+```
+
+On Windows, every profile executable must resolve to an existing regular file
+or the entire configuration is rejected. OMXTerm does not verify that a WSL
+distribution name exists; a launch error is reported normally. A successful
+reload changes only future tabs. Settings shows the active profile executable
+as read-only; edit the collection and default selection on the **Config File**
+page. macOS and Linux validate the portable profile structure but ignore it for
+shell selection.
+
+When this setting is absent, Windows checks the standard Windows PowerShell 5.1
+path and then the standard Command Prompt path under `SystemRoot`. It does not
+execute the inherited `ComSpec` value or search `PATH`.
 
 ### Keybinds
 
@@ -410,7 +464,7 @@ Choose **View → Reload User Configuration** (`Cmd+Shift+,` / `Ctrl+Shift+,`) a
 | Existing and new tabs | Theme, font size, ligatures, padding, scrollback, Option keys |
 | All windows and tabs  | Background transparency and blur                              |
 | App behavior          | Close confirmation, log level, keyboard shortcuts, language   |
-| New tabs (or restart) | Font family, line height, Windows shell                       |
+| New tabs (or restart) | Font family, line height, Windows shell/profile               |
 | New windows           | Always-on-Top, title-bar, and tab-bar initial defaults        |
 
 If validation finds an error in your JSON, OMXTerm shows a banner naming the file and field to fix:

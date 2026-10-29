@@ -1,6 +1,21 @@
-import { SETTINGS_FIELDS, type SettingsPath } from "../../shared/settings";
+import {
+  SETTINGS_FIELDS,
+  type SettingsPath,
+  type SettingsSnapshot,
+} from "../../shared/settings";
 import { SUPPORTED_LANGUAGES, type MessageKey } from "../../shared/i18n";
 import type { RendererLanguage, Translate } from "../renderer-language";
+import type { WindowsShellKind } from "../../shared/windows-shells";
+
+const WINDOWS_SHELL_LABELS = {
+  "powershell-core": "settings.windowsShell.powershellCore",
+  "windows-powershell": "settings.windowsShell.windowsPowerShell",
+  "command-prompt": "settings.windowsShell.commandPrompt",
+  wsl: "settings.windowsShell.wsl",
+  "git-bash": "settings.windowsShell.gitBash",
+  msys2: "settings.windowsShell.msys2",
+  cygwin: "settings.windowsShell.cygwin",
+} as const satisfies Record<WindowsShellKind, MessageKey>;
 
 // Labels are message keys, so an open dialog relabels in place when the
 // Interface Language changes.
@@ -187,6 +202,9 @@ export interface SettingsViewHooks {
   readonly syncs: (() => void)[];
   readonly relabels: ((t: Translate) => void)[];
   readonly language: RendererLanguage;
+  readonly windowsShells: () => SettingsSnapshot["windowsShells"] | undefined;
+  readonly activeWindowsProfile: () =>
+    SettingsSnapshot["activeWindowsProfile"] | undefined;
 }
 
 export function renderControl(
@@ -194,7 +212,13 @@ export function renderControl(
   control: Control,
   value: (path: SettingsPath) => unknown,
   change: (path: SettingsPath, value: unknown) => void,
-  { syncs, relabels, language }: SettingsViewHooks,
+  {
+    syncs,
+    relabels,
+    language,
+    windowsShells,
+    activeWindowsProfile,
+  }: SettingsViewHooks,
 ): HTMLElement {
   const row = document.createElement("label");
   row.className = `settings-row settings-${control.kind}`;
@@ -240,12 +264,57 @@ export function renderControl(
         relabels.push((t) => {
           field.placeholder = t(placeholder);
         });
+        if (control.path === "windowsShell") {
+          const list = document.createElement("datalist");
+          list.id = "settings-windows-shells";
+          field.setAttribute("list", list.id);
+          relabels.push((t) => {
+            const shells = windowsShells() ?? [];
+            [...list.options].forEach((option, index) => {
+              const shell = shells[index];
+              if (shell) option.label = t(WINDOWS_SHELL_LABELS[shell.kind]);
+            });
+          });
+          syncs.push(() => {
+            const managed = activeWindowsProfile() !== undefined;
+            field.readOnly = managed;
+            field.toggleAttribute("aria-readonly", managed);
+            const description = managed
+              ? language.t("settings.windowsShell.profileManaged")
+              : "";
+            field.title = description;
+            if (managed) field.setAttribute("aria-description", description);
+            else field.removeAttribute("aria-description");
+            list.replaceChildren(
+              ...(managed ? [] : (windowsShells() ?? [])).map((shell) => {
+                const option = document.createElement("option");
+                option.value = shell.executable;
+                option.label = language.t(WINDOWS_SHELL_LABELS[shell.kind]);
+                return option;
+              }),
+            );
+          });
+          relabels.push((t) => {
+            const managed = activeWindowsProfile() !== undefined;
+            const description = managed
+              ? t("settings.windowsShell.profileManaged")
+              : "";
+            field.title = description;
+            if (managed) field.setAttribute("aria-description", description);
+            else field.removeAttribute("aria-description");
+          });
+          row.append(list);
+        }
       }
       const sync = () => {
         const current = value(control.path);
         field.value = current === undefined ? "" : String(current);
       };
       field.addEventListener("change", () => {
+        if (field.readOnly) {
+          sync();
+          return;
+        }
         const text = field.value.trim();
         const next =
           text === "" ? null : control.kind === "number" ? Number(text) : text;

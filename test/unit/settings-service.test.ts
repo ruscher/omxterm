@@ -76,6 +76,131 @@ describe("settings snapshot", () => {
     expect(await read()).toBe("{ broken");
     expect(reload).not.toHaveBeenCalled();
   });
+
+  it("adds passive Windows shell suggestions without changing config.json", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "omxterm-settings-"));
+    roots.push(root);
+    const discoverWindowsShells = vi.fn(async () => [
+      {
+        kind: "powershell-core" as const,
+        executable: "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      },
+    ]);
+    const service = createSettingsService({
+      loadOptions: {
+        environment: { XDG_CONFIG_HOME: root },
+        homeDirectory: root,
+        platform: "win32",
+        getInstalledFontFamilyMetrics: async () => undefined,
+      },
+      reload: async () => ({ applied: true, notices: [] }),
+      discoverWindowsShells,
+    });
+
+    const first = await service.snapshot();
+    const second = await service.snapshot();
+    expect(first.windowsShells).toEqual([
+      {
+        kind: "powershell-core",
+        executable: "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      },
+    ]);
+    expect(second.windowsShells).toEqual(first.windowsShells);
+    expect(discoverWindowsShells).toHaveBeenCalledTimes(2);
+    expect(await readdir(root)).toEqual([]);
+  });
+
+  it("bounds and validates discovery results before adding them to a snapshot", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "omxterm-settings-"));
+    roots.push(root);
+    const suggestions = Array.from({ length: 20 }, (_, index) => ({
+      kind: "powershell-core" as const,
+      executable: `C:\\Shells\\${index}\\pwsh.exe`,
+    }));
+    const service = createSettingsService({
+      loadOptions: {
+        environment: { XDG_CONFIG_HOME: root },
+        homeDirectory: root,
+        platform: "win32",
+        getInstalledFontFamilyMetrics: async () => undefined,
+      },
+      reload: async () => ({ applied: true, notices: [] }),
+      discoverWindowsShells: async () => [
+        { kind: "wsl", executable: "\\\\server\\share\\wsl.exe" },
+        ...suggestions,
+      ],
+    });
+
+    expect((await service.snapshot()).windowsShells).toEqual(
+      suggestions.slice(0, 16),
+    );
+  });
+
+  it("treats discovery failures as no available suggestions", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "omxterm-settings-"));
+    roots.push(root);
+    const service = createSettingsService({
+      loadOptions: {
+        environment: { XDG_CONFIG_HOME: root },
+        homeDirectory: root,
+        platform: "win32",
+        getInstalledFontFamilyMetrics: async () => undefined,
+      },
+      reload: async () => ({ applied: true, notices: [] }),
+      discoverWindowsShells: async () => {
+        throw new Error("inspection unavailable");
+      },
+    });
+
+    expect((await service.snapshot()).windowsShells).toBeUndefined();
+    expect(await readdir(root)).toEqual([]);
+  });
+
+  it("exposes the selected profile and its executable as display-only data", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "omxterm-settings-"));
+    roots.push(root);
+    const file = path.join(root, "omxterm", "config.json");
+    const executable = "C:\\Program Files\\PowerShell\\7\\pwsh.exe";
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(
+      file,
+      JSON.stringify({
+        version: 1,
+        windowsProfiles: {
+          default: "powershell-7",
+          profiles: [
+            {
+              id: "powershell-7",
+              name: "PowerShell 7 (No Logo)",
+              executable,
+              arguments: ["-NoLogo"],
+            },
+          ],
+        },
+      }),
+    );
+    const service = createSettingsService({
+      loadOptions: {
+        environment: { XDG_CONFIG_HOME: root },
+        homeDirectory: root,
+        platform: "win32",
+        inspectWindowsShell: (async () => ({ isFile: () => true })) as never,
+        getInstalledFontFamilyMetrics: async () => undefined,
+      },
+      reload: async () => ({ applied: true, notices: [] }),
+      discoverWindowsShells: async () => [],
+    });
+
+    expect(await service.snapshot()).toMatchObject({
+      values: { windowsShell: executable },
+      activeWindowsProfile: {
+        id: "powershell-7",
+        name: "PowerShell 7 (No Logo)",
+        executable,
+        arguments: ["-NoLogo"],
+      },
+    });
+  });
 });
 
 describe("graphical settings changes", () => {

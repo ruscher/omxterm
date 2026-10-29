@@ -127,6 +127,82 @@ describe("settings dialog", () => {
     expect(view.onActivityChange).toHaveBeenLastCalledWith(false);
   });
 
+  it("offers discovered Windows shells while preserving custom path input", async () => {
+    const windows: SettingsSnapshot = {
+      ...base,
+      platform: "win32",
+      values: { ...base.values, windowsShell: "" },
+      windowsShells: [
+        {
+          kind: "powershell-core",
+          executable: "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        },
+        {
+          kind: "windows-powershell",
+          executable:
+            "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        },
+      ],
+    };
+    const view = await open({ snapshot: vi.fn(async () => windows) });
+    const shell = view.field("Shell executable");
+    expect(shell.tagName).toBe("INPUT");
+    expect(shell.getAttribute("list")).toBe("settings-windows-shells");
+    expect(
+      [...document.querySelectorAll("#settings-windows-shells option")].map(
+        (option) => [
+          (option as HTMLOptionElement).label,
+          (option as HTMLOptionElement).value,
+        ],
+      ),
+    ).toEqual([
+      ["PowerShell 7", "C:\\Program Files\\PowerShell\\7\\pwsh.exe"],
+      [
+        "Windows PowerShell",
+        "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      ],
+    ]);
+
+    shell.value = "C:\\Tools\\custom-shell.exe";
+    shell.dispatchEvent(new Event("change"));
+    await view.settle();
+    expect(view.bridge.change).toHaveBeenCalledExactlyOnceWith({
+      path: "windowsShell",
+      value: "C:\\Tools\\custom-shell.exe",
+    });
+  });
+
+  it("shows a saved Windows profile as display-only", async () => {
+    const executable = "C:\\Program Files\\PowerShell\\7\\pwsh.exe";
+    const windows: SettingsSnapshot = {
+      ...base,
+      platform: "win32",
+      values: { ...base.values, windowsShell: executable },
+      windowsShells: [{ kind: "powershell-core", executable }],
+      activeWindowsProfile: {
+        id: "powershell-7",
+        name: "PowerShell 7 (No Logo)",
+        executable,
+        arguments: ["-NoLogo"],
+      },
+    };
+    const view = await open({ snapshot: vi.fn(async () => windows) });
+    const shell = view.field("Shell executable");
+
+    expect(shell.value).toBe(executable);
+    expect(shell.readOnly).toBe(true);
+    expect(shell.getAttribute("aria-readonly")).toBe("");
+    expect(shell.title).toMatch(/Config File/u);
+    expect(
+      document.querySelectorAll("#settings-windows-shells option"),
+    ).toHaveLength(0);
+
+    shell.value = "C:\\Windows\\System32\\cmd.exe";
+    shell.dispatchEvent(new Event("change"));
+    await view.settle();
+    expect(view.bridge.change).not.toHaveBeenCalled();
+  });
+
   it("moves between tabs with arrow keys", async () => {
     const view = await open();
     const first = document.activeElement as HTMLElement;

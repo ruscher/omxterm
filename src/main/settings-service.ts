@@ -22,6 +22,13 @@ import {
   type Translator,
 } from "../shared/i18n";
 import type { UserConfigurationReloadOutcome } from "./user-configuration-reloader";
+import { discoverWindowsShells } from "./windows-shell-discovery";
+import {
+  isWindowsShellSuggestion,
+  MAX_WINDOWS_SHELL_SUGGESTIONS,
+  type WindowsShellSuggestion,
+} from "../shared/windows-shells";
+import { defaultWindowsShellProfile } from "../shared/windows-shell-profiles";
 import {
   DEFAULT_USER_CONFIGURATION,
   loadUserConfiguration,
@@ -65,6 +72,9 @@ export function createSettingsService(options: {
   readonly files?: SettingsFiles;
   // The active Interface Language; the validator's own detail stays English.
   readonly translator?: () => Translator;
+  readonly discoverWindowsShells?: () => Promise<
+    readonly WindowsShellSuggestion[]
+  >;
 }): SettingsService {
   const files = options.files ?? nodeSettingsFiles;
   const t: Translator["t"] = (key, parameters) =>
@@ -77,6 +87,22 @@ export function createSettingsService(options: {
     options.loadOptions.homeDirectory,
   );
   let queue: Promise<unknown> = Promise.resolve();
+  let windowsShells: readonly WindowsShellSuggestion[] | undefined;
+  const refreshWindowsShells = async () => {
+    if ((options.loadOptions.platform ?? process.platform) !== "win32") return;
+    const discovered = await (
+      options.discoverWindowsShells ??
+      (() =>
+        discoverWindowsShells({
+          environment: options.loadOptions.environment,
+        }))
+    )().catch(() => Object.freeze([]));
+    windowsShells = Object.freeze(
+      discovered
+        .filter(isWindowsShellSuggestion)
+        .slice(0, MAX_WINDOWS_SHELL_SUGGESTIONS),
+    );
+  };
   const serialize = <Result>(task: () => Promise<Result>) => {
     const run = queue.then(task, task);
     queue = run.catch(() => {});
@@ -131,17 +157,26 @@ export function createSettingsService(options: {
       : { revision, text, document, configuration: load.configuration };
   };
 
-  const snapshotOf = (current: CurrentDocument): SettingsSnapshot => ({
-    configurationPath,
-    platform: options.loadOptions.platform ?? process.platform,
-    revision: current.revision,
-    text: current.text,
-    values: settingsValues(
-      current.configuration ?? DEFAULT_USER_CONFIGURATION,
-      current.document,
-    ),
-    ...(current.problem ? { problem: current.problem } : {}),
-  });
+  const snapshotOf = (current: CurrentDocument): SettingsSnapshot => {
+    const activeWindowsProfile =
+      (options.loadOptions.platform ?? process.platform) === "win32" &&
+      current.configuration?.windowsProfiles
+        ? defaultWindowsShellProfile(current.configuration.windowsProfiles)
+        : undefined;
+    return {
+      configurationPath,
+      platform: options.loadOptions.platform ?? process.platform,
+      revision: current.revision,
+      text: current.text,
+      values: settingsValues(
+        current.configuration ?? DEFAULT_USER_CONFIGURATION,
+        current.document,
+      ),
+      ...(windowsShells && windowsShells.length > 0 ? { windowsShells } : {}),
+      ...(activeWindowsProfile ? { activeWindowsProfile } : {}),
+      ...(current.problem ? { problem: current.problem } : {}),
+    };
+  };
 
   const commit = async (text: string): Promise<SettingsResult> => {
     const invalid = await validate(text);
@@ -169,7 +204,11 @@ export function createSettingsService(options: {
   };
 
   return {
-    snapshot: () => serialize(async () => snapshotOf(await readCurrent())),
+    snapshot: () =>
+      serialize(async () => {
+        await refreshWindowsShells();
+        return snapshotOf(await readCurrent());
+      }),
     change: (change) =>
       serialize(async () => {
         const current = await readCurrent();
@@ -238,7 +277,10 @@ function settingsValues(
     language: configuration.language,
     confirmClose: configuration.confirmClose,
     logLevel: configuration.logLevel,
-    windowsShell: configuration.windowsShell ?? "",
+    windowsShell:
+      (configuration.windowsProfiles
+        ? defaultWindowsShellProfile(configuration.windowsProfiles)?.executable
+        : configuration.windowsShell) ?? "",
     "font.family": configuration.fontFamily ?? "",
     "font.size": configuration.fontSize,
     "font.lineHeight": configuration.fontLineHeight,

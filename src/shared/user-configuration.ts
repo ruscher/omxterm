@@ -1,6 +1,7 @@
 import { isTerminalTheme, type TerminalTheme } from "./terminal-theme";
 import type { TerminalKeybinds } from "./terminal-keybinds";
 import { isSupportedLanguage, type SupportedLanguage } from "./i18n";
+import type { WindowsShellProfiles } from "./windows-shell-profiles";
 
 export const MIN_TERMINAL_FONT_SIZE = 8;
 export const MAX_TERMINAL_FONT_SIZE = 72;
@@ -61,6 +62,7 @@ export interface UserConfiguration {
   readonly confirmClose: boolean;
   readonly logLevel: OperationalLogLevel;
   readonly windowsShell?: string;
+  readonly windowsProfiles?: WindowsShellProfiles;
   readonly fontFamily?: string;
   readonly fontSize: number;
   readonly fontLineHeight: number;

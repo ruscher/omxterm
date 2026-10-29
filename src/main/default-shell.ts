@@ -1,5 +1,21 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
+import { isLocalWindowsDriveAbsolutePath } from "../shared/windows-shells";
+import {
+  defaultWindowsShellProfile,
+  type WindowsShellProfiles,
+} from "../shared/windows-shell-profiles";
+
+export interface DefaultShellLaunch {
+  readonly shell: string;
+  readonly arguments: readonly string[];
+  readonly title: string;
+}
+
+export interface WindowsShellConfiguration {
+  readonly windowsShell?: string;
+  readonly windowsProfiles?: WindowsShellProfiles;
+}
 
 export function createDefaultShellResolver(
   accountShell: string | null | undefined,
@@ -16,6 +32,52 @@ export function createDefaultShellResolver(
     );
 }
 
+export function createDefaultShellLaunchResolver(
+  accountShell: string | null | undefined,
+  configured: () => WindowsShellConfiguration,
+  platform: NodeJS.Platform | string = process.platform,
+  environment: Readonly<Record<string, string | undefined>> = process.env,
+): () => DefaultShellLaunch {
+  return () =>
+    resolveDefaultShellLaunch(
+      platform,
+      accountShell,
+      environment,
+      configured(),
+    );
+}
+
+export function resolveDefaultShellLaunch(
+  platform: NodeJS.Platform | string,
+  accountShell: string | null | undefined,
+  environment: Readonly<Record<string, string | undefined>>,
+  configured: WindowsShellConfiguration = {},
+  exists: (candidate: string) => boolean = existsSync,
+): DefaultShellLaunch {
+  if (platform === "win32" && configured.windowsProfiles) {
+    const profile = defaultWindowsShellProfile(configured.windowsProfiles);
+    if (!profile)
+      throw new Error("The configured Windows Default Profile does not exist");
+    return Object.freeze({
+      shell: profile.executable,
+      arguments: profile.arguments,
+      title: profile.name,
+    });
+  }
+  const shell = resolveDefaultShell(
+    platform,
+    accountShell,
+    environment,
+    configured.windowsShell,
+    exists,
+  );
+  return Object.freeze({
+    shell,
+    arguments: Object.freeze([]),
+    title: defaultShellName(platform, shell),
+  });
+}
+
 export function defaultShellName(platform: string, executable: string): string {
   return platform === "win32"
     ? path.win32.basename(executable)
@@ -23,8 +85,9 @@ export function defaultShellName(platform: string, executable: string): string {
 }
 
 // os.userInfo().shell is null on Windows: the operating system has no
-// login-shell concept there. The Windows Default Shell is Windows
-// PowerShell, falling back to the ComSpec command processor (#61).
+// login-shell concept there. The Windows Default Shell is resolved only from
+// the standard SystemRoot layouts. ComSpec is deliberately not executable
+// authority because it can name an arbitrary inherited path.
 export function resolveDefaultShell(
   platform: NodeJS.Platform | string,
   accountShell: string | null | undefined,
@@ -38,8 +101,11 @@ export function resolveDefaultShell(
     return accountShell;
   }
   if (configuredWindowsShell !== undefined) return configuredWindowsShell;
-  const systemRoot = environment["SystemRoot"] || "C:\\Windows";
-  const powershell = path.join(
+  const configuredSystemRoot = environment["SystemRoot"];
+  const systemRoot = isLocalWindowsDriveAbsolutePath(configuredSystemRoot)
+    ? path.win32.normalize(configuredSystemRoot)
+    : "C:\\Windows";
+  const powershell = path.win32.join(
     systemRoot,
     "System32",
     "WindowsPowerShell",
@@ -47,7 +113,7 @@ export function resolveDefaultShell(
     "powershell.exe",
   );
   if (exists(powershell)) return powershell;
-  const comspec = environment["ComSpec"];
-  if (comspec && exists(comspec)) return comspec;
+  const commandPrompt = path.win32.join(systemRoot, "System32", "cmd.exe");
+  if (exists(commandPrompt)) return commandPrompt;
   throw new Error("The operating system did not provide a Default Shell");
 }

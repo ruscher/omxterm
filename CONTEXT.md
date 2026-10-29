@@ -41,7 +41,18 @@ tmux.
 
 **Default Shell** — The shell used for a new session unless an explicit command
 was requested. macOS and Linux use the OS-configured shell. Windows uses
-`windowsShell` when configured, otherwise PowerShell with a ComSpec fallback.
+the default saved Windows Shell Profile or legacy `windowsShell` when configured,
+otherwise Windows PowerShell followed by Command Prompt at fixed `SystemRoot`
+layouts.
+
+**Windows Shell Profile** — A user-saved Windows launch identity containing a
+name, bounded local executable and literal argument vector. One profile is the
+default for new tabs. It is configuration, not discovery or a trust assertion.
+
+**Windows Shell Suggestion** — A passive Settings hint produced by checking a
+bounded list of fixed standard executable locations. It does not start or fully
+qualify a shell, search `PATH`, create a saved profile, or change the Default
+Shell until the user explicitly selects or enters a path and it validates.
 
 **Launch Request** — Startup `-e <program> [arguments...]`, consumed by the
 first tab. The program and literal argument list go directly to the PTY.
@@ -191,3 +202,8 @@ under [ADR 0034](docs/adr/0034-support-native-windows-x64-packages.md).
 Artifacts have no verified publisher identity; the macOS app has an ad-hoc
 integrity seal, not Developer ID signing or notarization. See the
 [release procedure](docs/release.md).
+
+**Windows Installer Live-Process Gate** — The Retry/Cancel boundary that
+refuses install, update or uninstall while OMXTerm is running. The user closes
+the app normally so Busy Session confirmation and native PTY drain remain in
+control; NSIS never kills the application process.
