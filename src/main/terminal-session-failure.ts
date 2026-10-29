@@ -1,5 +1,10 @@
+import {
+  DEFAULT_LANGUAGE,
+  translatorFor,
+  type MessageKey,
+  type Translator,
+} from "../shared/i18n";
 import type { TerminalSessionFailure } from "./terminal-application";
-import { mainTranslator } from "./main-translator";
 import type { TerminalExit } from "../shared/terminal-contract";
 import type { TerminalSessionEndContext } from "./terminal-ipc-types";
 
@@ -41,54 +46,42 @@ interface TerminalSessionFailureDialog {
   readonly title: string;
   readonly message: string;
   readonly detail: string;
-  readonly buttons: readonly ["OK"];
+  readonly buttons: readonly [string];
 }
 
 export function terminalSessionFailureDialog(
   failure: TerminalSessionFailure,
+  { t }: Translator = translatorFor(DEFAULT_LANGUAGE),
 ): TerminalSessionFailureDialog {
-  const t = mainTranslator().t.bind(mainTranslator());
-  if (failure.reason === "rendering") {
-    return {
-      type: "error",
-      title: t("failure.rendering.title"),
-      message: t("failure.rendering.message"),
-      detail: t("failure.rendering.detail"),
-      buttons: ["OK"],
-    };
-  }
-  const explicitCommand = failure.launchKind === "explicit-command";
-  if (failure.reason === "spawn") {
-    return {
-      type: "error",
-      title: t(
-        explicitCommand
-          ? "failure.commandStart.title"
-          : "failure.shellStart.title",
-      ),
-      message: t(
-        explicitCommand
-          ? "failure.commandStart.message"
-          : "failure.shellStart.message",
-      ),
-      detail: t("failure.spawnDetail"),
-      buttons: ["OK"],
-    };
-  }
-
-  return {
+  const dialog = (
+    title: MessageKey,
+    message: MessageKey,
+    detail: string,
+  ): TerminalSessionFailureDialog => ({
     type: "error",
-    title: t(
-      explicitCommand ? "failure.commandExit.title" : "failure.shellExit.title",
-    ),
-    message: t(
-      explicitCommand
-        ? "failure.commandExit.message"
-        : "failure.shellExit.message",
-    ),
-    detail: t("failure.signalDetail", {
+    title: t(title),
+    message: t(message),
+    detail,
+    buttons: [t("common.ok")],
+  });
+  if (failure.reason === "rendering")
+    return dialog(
+      "failure.rendering.title",
+      "failure.rendering.message",
+      t("failure.rendering.detail"),
+    );
+  const command = failure.launchKind === "explicit-command";
+  if (failure.reason === "spawn")
+    return dialog(
+      command ? "failure.commandStart.title" : "failure.shellStart.title",
+      command ? "failure.commandStart.message" : "failure.shellStart.message",
+      t("failure.spawnDetail"),
+    );
+  return dialog(
+    command ? "failure.commandExit.title" : "failure.shellExit.title",
+    command ? "failure.commandExit.message" : "failure.shellExit.message",
+    t("failure.signalDetail", {
       signal: failure.signal ?? t("failure.unknownSignal"),
     }),
-    buttons: ["OK"],
-  };
+  );
 }

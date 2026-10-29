@@ -73,6 +73,11 @@ describe("exact NSIS transaction side-effect refusal", () => {
         path.join(projectRoot, "electron-builder.yml"),
         path.join(root, "electron-builder.yml"),
       );
+      await mkdir(path.join(root, "build"));
+      await copyFile(
+        path.join(projectRoot, "build", "installer.nsh"),
+        path.join(root, "build", "installer.nsh"),
+      );
       await writeFile(
         path.join(root, "package.json"),
         JSON.stringify({ name: "other-product" }),

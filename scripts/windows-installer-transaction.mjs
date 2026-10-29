@@ -125,6 +125,7 @@ export async function verifyExactWindowsInstaller({
 }) {
   inspectWindowsInstallerInputs(
     await readFile(path.join(projectRoot, "electron-builder.yml"), "utf8"),
+    await readFile(path.join(projectRoot, "build", "installer.nsh"), "utf8"),
     require("app-builder-lib/package.json").version,
     JSON.parse(await readFile(path.join(projectRoot, "package.json"), "utf8"))
       .name,

@@ -6,7 +6,7 @@ See the [Restty guide](restty-development.md) for Terminal Surface internals and
 
 ## Platform prerequisites
 
-Development targets native ARM64 macOS, Linux, and Windows with **Node.js 22.13+ (22.x) or 24+** and npm. When working inside a virtual machine, clone and build on the guest's native filesystem rather than a shared host folder.
+Development targets native ARM64 macOS, Linux, and Windows (ARM64 or x64) with **Node.js 22.13+ (22.x) or 24+** and npm. When working inside a virtual machine, clone and build on the guest's native filesystem rather than a shared host folder.
 
 ### macOS
 
@@ -44,7 +44,7 @@ OMXTerm runs with `--no-sandbox` on Linux ([ADR 0024](adr/0024-disable-the-chrom
 
 1. Enable **Developer Mode** in Windows Settings before cloning or running tests so non-elevated processes can create symbolic links.
 2. Clone with `git clone -c core.autocrlf=false -c core.symlinks=true ...` to preserve LF line endings and repository symlinks.
-3. Install the **ARM64 Microsoft Visual C++ Redistributable** (and C++ build tools if building native addons from source).
+3. Install the Microsoft Visual C++ Redistributable that matches your machine (**ARM64** or **x64**), and C++ build tools if building native addons from source. Without it, `npm ci` fails while loading native modules.
 4. Run development and test commands as a normal (non-Administrator) user inside an interactive desktop session (not a headless SSH Session 0).
 
 To verify that your user account can create symlinks before running `npm ci`, run in a non-elevated PowerShell window:
@@ -111,6 +111,7 @@ While iterating on a specific subsystem, you can run targeted test files before 
 | Integrated host and retained sessions          | `npx vitest run test/integration/restty-host-integration.test.ts`                                                                                                                             |
 | Scrollback readiness and input                 | `npx vitest run test/integration/restty-native-scroll-feedback.test.ts test/integration/restty-scrollback-rendering.test.ts`                                                                  |
 | Hover and local-image activation               | `npx vitest run test/unit/restty-hover-evidence.test.ts test/unit/restty-hover-readiness.test.ts test/integration/restty-hover-readiness.test.ts test/integration/local-image-native.test.ts` |
+| Snippets auxiliary host                        | `npx vitest run test/integration/auxiliary-panel.test.ts`                                                                                                                                     |
 | Native window controls                         | `npx vitest run test/integration/window-chrome.test.ts test/integration/restty-cursor-rendering.test.ts`                                                                                      |
 | About startup                                  | `npx vitest run test/integration/application-about.test.ts`                                                                                                                                   |
 | Native failure acknowledgement                 | `npx vitest run test/integration/failure-acknowledgement.test.ts`                                                                                                                             |
@@ -118,6 +119,25 @@ While iterating on a specific subsystem, you can run targeted test files before 
 | Literal argv                                   | `npx vitest run test/integration/literal-argv.test.ts test/unit/postinstall.test.ts`                                                                                                          |
 | Unix native resize failure                     | `npx vitest run test/integration/terminal-resize-race.test.ts test/unit/terminal-resize-failure.test.ts`                                                                                      |
 | Linux foreground Busy decision                 | `npx vitest run test/unit/linux-foreground.test.ts test/unit/postinstall.test.ts test/integration/linux-foreground.test.ts`                                                                   |
+
+The `auxiliary-panel` suite uses the production window host, real Surfaces/PTYs,
+native menu callbacks and Chromium synthetic input through the main keybind
+matcher (default and remapped). It covers bounded geometry, captured pointer and
+keyboard resize, retained hidden-tab output/grid, window independence, small
+height, light/dark reload, chrome/fullscreen and About/image transitions. It does
+not establish physical keyboard layouts, OS pointer hardware or cross-platform
+pixel parity. Like the suites below, run it only on an idle unlocked desktop.
+
+The `window-chrome` suite includes an independent `about-only` scenario so an
+unrelated native geometry failure cannot skip About coverage. Run it alone with
+`npm test -- test/integration/window-chrome.test.ts -t about-only`. It exercises
+the real menu callback, preload, dialog and Terminal Surface, using synthetic
+keyboard input. For an explicitly scheduled browser handoff check, set
+`OMXTERM_TEST_ABOUT_BROWSER=1`: it opens the fixed project page in the default
+browser, observes focus leaving OMXTerm, then returns focus to the dialog.
+`OMXTERM_ABOUT_EVIDENCE_DIR` optionally saves fixture-only normal/small light/dark
+PNG captures. These checks still require an idle unlocked desktop; they do not
+claim physical keyboard navigation or pixel parity across platforms.
 
 ### Opt-in native test suites
 
@@ -160,11 +180,12 @@ Complete native checks run `check:portable`, build the platform installer into `
 | macOS ARM64   | `npm run check`                                                  |
 | Linux ARM64   | `npm run check:linux`                                            |
 | Windows ARM64 | `npm run check:win -- --disposable-vm-allow-omxterm-replacement` |
+| Windows x64   | `npm run check:win -- --disposable-vm-allow-omxterm-replacement` |
 
-> **Warning:** Full Windows verification (`check:win` or `package:verify` with `--disposable-vm-allow-omxterm-replacement`) runs the NSIS installer and can replace an existing OMXTerm installation on the machine. Run it only in a disposable VM with a recovery snapshot ([Windows release procedure](release.md#windows-arm64)). To verify only the unpacked Windows app directory without running the installer, use:
+> **Warning:** Full Windows verification (`check:win` or `package:verify` with `--disposable-vm-allow-omxterm-replacement`) runs the NSIS installer and can replace an existing OMXTerm installation on the machine. Run it only in a disposable VM with a recovery snapshot ([Windows release procedure](release.md#windows-arm64-and-x64)). To verify only the unpacked Windows app directory without running the installer, use:
 >
 > ```powershell
-> npm run package:win
+> npm run package:win        # ARM64; use npm run package:win:x64 on x64
 > npm run package:verify -- --windows-unpacked-only
 > ```
 

@@ -1,5 +1,7 @@
 import { isTerminalTheme, type TerminalTheme } from "./terminal-theme";
 import type { TerminalKeybinds } from "./terminal-keybinds";
+import { isSupportedLanguage, type SupportedLanguage } from "./i18n";
+import type { WindowsShellProfiles } from "./windows-shell-profiles";
 
 export const MIN_TERMINAL_FONT_SIZE = 8;
 export const MAX_TERMINAL_FONT_SIZE = 72;
@@ -40,6 +42,8 @@ export interface TerminalPadding {
 }
 
 export interface TerminalRendererConfiguration {
+  // Main always sends the configured language; absent means en-US.
+  readonly language?: SupportedLanguage;
   readonly fontConfigurationId?: string;
   readonly fontFamily?: string;
   readonly fontSize: number;
@@ -63,9 +67,11 @@ export interface TerminalRendererConfiguration {
 
 export interface UserConfiguration {
   readonly version: 1;
+  readonly language: SupportedLanguage;
   readonly confirmClose: boolean;
   readonly logLevel: OperationalLogLevel;
   readonly windowsShell?: string;
+  readonly windowsProfiles?: WindowsShellProfiles;
   readonly fontFamily?: string;
   readonly fontSize: number;
   readonly fontLineHeight: number;
@@ -85,6 +91,16 @@ export interface UserConfiguration {
   readonly keybinds: TerminalKeybinds;
 }
 
+function hasValidOptionalRendererFields(
+  value: Record<string, unknown>,
+): boolean {
+  return (
+    (value.language === undefined || isSupportedLanguage(value.language)) &&
+    isOptionalSurfaceFontIdentity(value.fontConfigurationId) &&
+    (value.fontFamily === undefined || typeof value.fontFamily === "string")
+  );
+}
+
 export function isTerminalRendererConfiguration(
   value: unknown,
 ): value is TerminalRendererConfiguration {
@@ -93,6 +109,7 @@ export function isTerminalRendererConfiguration(
   return (
     keys.every((key) =>
       [
+        "language",
         "fontConfigurationId",
         "fontFamily",
         "fontSize",
@@ -111,8 +128,7 @@ export function isTerminalRendererConfiguration(
         "userFileErrors",
       ].includes(key),
     ) &&
-    isOptionalSurfaceFontIdentity(value.fontConfigurationId) &&
-    (value.fontFamily === undefined || typeof value.fontFamily === "string") &&
+    hasValidOptionalRendererFields(value) &&
     Number.isInteger(value.fontSize) &&
     (value.fontSize as number) >= MIN_TERMINAL_FONT_SIZE &&
     (value.fontSize as number) <= MAX_TERMINAL_FONT_SIZE &&

@@ -1,4 +1,6 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
+import { createAboutBridge } from "./about-bridge";
+import { createSettingsBridge } from "./settings-bridge";
 import type { TerminalBridge } from "../shared/terminal-bridge";
 import {
   isWindowChromeCommand,
@@ -9,7 +11,6 @@ import {
   isBoundedTerminalPayload,
   isNonemptyClipboardText,
   isTerminalClipboardAction,
-  isTerminalContextMenuRequest,
   isTerminalFontZoom,
   isTerminalSessionExit,
   isTerminalSessionId,
@@ -18,9 +19,7 @@ import {
   isTerminalSessionTitle,
   isTerminalSize,
   isTerminalTabCommand,
-  isTerminalTabSelection,
   isTerminalTitleRequest,
-  MAX_PANES_PER_TAB,
   type TerminalExit,
   type TerminalFontZoom,
   type TerminalSessionId,
@@ -28,17 +27,6 @@ import {
   type TerminalTabCommand,
 } from "../shared/terminal-contract";
 import { terminalIpc } from "../shared/terminal-ipc";
-import { isTerminalLaunchSpec } from "../shared/terminal-launch";
-import { createSessionsBridge } from "./sessions-bridge";
-import { createHighlightsBridge } from "./highlights-bridge";
-import { createPreferencesBridge } from "./preferences-bridge";
-import { createFilesBridge } from "./files-bridge";
-import { createAssistantBridge } from "./assistant-bridge";
-import { createAboutBridge } from "./about-bridge";
-import { createCommandsBridge } from "./commands-bridge";
-import { createBackupBridge } from "./backup-bridge";
-import { isWorkspacePlan, isWorkspaceSnapshot } from "../shared/workspace";
-import { TERMINAL_ACTION_NAMES } from "../shared/terminal-keybinds";
 import {
   formatFilePathInsertion,
   isFilePathPlatform,
@@ -107,70 +95,6 @@ const terminal: TerminalBridge = {
       throw new TypeError("Invalid Snippets response");
     return response;
   },
-  async sessionDirectory(sessionId) {
-    if (!isTerminalSessionId(sessionId))
-      throw new TypeError("Invalid terminal session");
-    const response: unknown = await ipcRenderer.invoke(
-      terminalIpc.sessionDirectory,
-      sessionId,
-    );
-    if (response === null) return null;
-    const { directory, busy } = (response ?? {}) as Record<string, unknown>;
-    if (
-      typeof busy !== "boolean" ||
-      (directory !== null &&
-        (typeof directory !== "string" || directory.length > 4_096))
-    )
-      throw new TypeError("Invalid working directory response");
-    return { directory, busy };
-  },
-  onCommandPalette(listener: () => void) {
-    const handler = (_event: Electron.IpcRendererEvent, payload: unknown) => {
-      if (payload === undefined) listener();
-    };
-    ipcRenderer.on(terminalIpc.commandPalette, handler);
-    return () =>
-      ipcRenderer.removeListener(terminalIpc.commandPalette, handler);
-  },
-  runAction(action) {
-    if (!(TERMINAL_ACTION_NAMES as readonly unknown[]).includes(action))
-      throw new TypeError("Invalid application action");
-    ipcRenderer.send(terminalIpc.runAction, action);
-  },
-  onSaveOutputRequest(listener: () => void) {
-    const handler = (_event: Electron.IpcRendererEvent, payload: unknown) => {
-      if (payload === undefined) listener();
-    };
-    ipcRenderer.on(terminalIpc.saveOutputRequest, handler);
-    return () =>
-      ipcRenderer.removeListener(terminalIpc.saveOutputRequest, handler);
-  },
-  async detachTab(snapshot) {
-    if (!isWorkspaceSnapshot(snapshot) || snapshot.tabs.length !== 1)
-      throw new TypeError("Invalid tab");
-    return (await ipcRenderer.invoke(terminalIpc.detachTab, snapshot)) === true;
-  },
-  async saveOutput(text) {
-    if (typeof text !== "string" || text.length === 0)
-      throw new TypeError("Invalid terminal output");
-    const name: unknown = await ipcRenderer.invoke(
-      terminalIpc.saveOutput,
-      text,
-    );
-    if (name !== null && (typeof name !== "string" || name.length > 1_024))
-      throw new TypeError("Invalid save response");
-    return name;
-  },
-  openMainMenu(position) {
-    const coordinates = [position?.x, position?.y];
-    if (
-      !coordinates.every(
-        (value) => Number.isInteger(value) && (value as number) >= 0,
-      )
-    )
-      throw new TypeError("Invalid main menu position");
-    ipcRenderer.send(terminalIpc.mainMenu, { x: position.x, y: position.y });
-  },
   onSnippetsToggle(listener: () => void) {
     const handler = (_event: Electron.IpcRendererEvent, payload: unknown) => {
       if (payload === undefined) listener();
@@ -185,6 +109,13 @@ const terminal: TerminalBridge = {
     };
     ipcRenderer.on(terminalIpc.tabBarToggle, handler);
     return () => ipcRenderer.removeListener(terminalIpc.tabBarToggle, handler);
+  },
+  onFind(listener) {
+    const handler = (_event: Electron.IpcRendererEvent, payload: unknown) => {
+      if (payload === undefined) listener();
+    };
+    ipcRenderer.on(terminalIpc.find, handler);
+    return () => ipcRenderer.removeListener(terminalIpc.find, handler);
   },
   onTitleBarToggle(listener) {
     const handler = (_event: Electron.IpcRendererEvent, payload: unknown) => {
@@ -229,16 +160,12 @@ const terminal: TerminalBridge = {
       throw new TypeError("Invalid Surface identity");
     ipcRenderer.send(terminalIpc.releaseSurface, surfaceId);
   },
-  async start(surfaceId, launch) {
+  async start(surfaceId) {
     if (surfaceId !== undefined && !isSurfaceIdentity(surfaceId))
       throw new TypeError("Invalid Surface identity");
-    if (launch !== undefined && !isTerminalLaunchSpec(launch))
-      throw new TypeError("Invalid terminal launch request");
-    const sessionId: unknown = await (launch !== undefined
-      ? ipcRenderer.invoke(terminalIpc.start, surfaceId, launch)
-      : surfaceId === undefined
-        ? ipcRenderer.invoke(terminalIpc.start)
-        : ipcRenderer.invoke(terminalIpc.start, surfaceId));
+    const sessionId: unknown = await (surfaceId === undefined
+      ? ipcRenderer.invoke(terminalIpc.start)
+      : ipcRenderer.invoke(terminalIpc.start, surfaceId));
     if (!isTerminalSessionId(sessionId))
       throw new TypeError("Invalid Live Terminal Session identifier");
     return sessionId;
@@ -356,48 +283,10 @@ const terminal: TerminalBridge = {
       throw new TypeError("Invalid empty Terminal Tabs reason");
     ipcRenderer.send(terminalIpc.tabsEmpty, reason);
   },
-  notifyTabSelection(sessionId: TerminalSessionId, tabSessionIds) {
-    const payload =
-      tabSessionIds === undefined
-        ? { sessionId }
-        : { sessionId, tabSessionIds: [...tabSessionIds] };
-    if (!isTerminalTabSelection(payload))
+  notifyTabSelection(sessionId: TerminalSessionId) {
+    if (!isTerminalSessionId(sessionId))
       throw new TypeError("Invalid Terminal Tab selection");
-    ipcRenderer.send(terminalIpc.tabSelected, payload);
-  },
-  async confirmBroadcast(targetCount) {
-    if (
-      !Number.isInteger(targetCount) ||
-      targetCount < 1 ||
-      targetCount >= MAX_PANES_PER_TAB
-    )
-      throw new TypeError("Invalid broadcast target count");
-    const confirmed: unknown = await ipcRenderer.invoke(
-      terminalIpc.confirmBroadcast,
-      targetCount,
-    );
-    if (typeof confirmed !== "boolean")
-      throw new TypeError("Invalid broadcast confirmation response");
-    return confirmed;
-  },
-  reportWorkspace(snapshot) {
-    if (!isWorkspaceSnapshot(snapshot))
-      throw new TypeError("Invalid workspace snapshot");
-    ipcRenderer.send(terminalIpc.workspace, snapshot);
-  },
-  async workspacePlan() {
-    const plan: unknown = await ipcRenderer.invoke(terminalIpc.workspacePlan);
-    return isWorkspacePlan(plan) ? plan : null;
-  },
-  reportWorkingDirectory(sessionId, uri) {
-    if (
-      !isTerminalSessionId(sessionId) ||
-      typeof uri !== "string" ||
-      uri.length === 0 ||
-      uri.length > 4096
-    )
-      throw new TypeError("Invalid working directory report");
-    ipcRenderer.send(terminalIpc.workingDirectory, { sessionId, uri });
+    ipcRenderer.send(terminalIpc.tabSelected, { sessionId });
   },
   onFontZoom(listener: (command: TerminalFontZoom) => void) {
     const handler = (_event: Electron.IpcRendererEvent, command: unknown) => {
@@ -446,14 +335,8 @@ const terminal: TerminalBridge = {
       throw new TypeError("Invalid Protected Paste response");
     return confirmed;
   },
-  requestClipboardContextMenu(request) {
-    if (request === undefined) {
-      ipcRenderer.send(terminalIpc.clipboardContextMenu);
-      return;
-    }
-    if (!isTerminalContextMenuRequest(request))
-      throw new TypeError("Invalid context menu request");
-    ipcRenderer.send(terminalIpc.clipboardContextMenu, { closePane: true });
+  requestClipboardContextMenu() {
+    ipcRenderer.send(terminalIpc.clipboardContextMenu);
   },
   onClipboardAction(listener) {
     const handler = (_event: Electron.IpcRendererEvent, action: unknown) => {
@@ -469,13 +352,7 @@ contextBridge.exposeInMainWorld(
   "omxterm",
   Object.freeze({
     terminal: Object.freeze(terminal),
-    sessions: Object.freeze(createSessionsBridge(ipcRenderer)),
-    highlights: Object.freeze(createHighlightsBridge(ipcRenderer)),
-    preferences: Object.freeze(createPreferencesBridge(ipcRenderer)),
-    files: Object.freeze(createFilesBridge(ipcRenderer)),
-    assistant: Object.freeze(createAssistantBridge(ipcRenderer)),
-    commands: Object.freeze(createCommandsBridge(ipcRenderer)),
-    backup: Object.freeze(createBackupBridge(ipcRenderer)),
     about: Object.freeze(createAboutBridge(ipcRenderer)),
+    settings: Object.freeze(createSettingsBridge(ipcRenderer)),
   }),
 );

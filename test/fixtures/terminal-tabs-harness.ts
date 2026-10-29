@@ -1,9 +1,5 @@
 import { vi } from "vitest";
-import {
-  createTerminalTabs,
-  type PaneLaunch,
-  type TerminalTabsOptions,
-} from "../../src/renderer/terminal-tabs";
+import { createTerminalTabs } from "../../src/renderer/terminal-tabs";
 import type { ElectronTerminalAdapter } from "../../src/renderer/electron-terminal-adapter";
 import type {
   TerminalSessionAdapter,
@@ -21,7 +17,7 @@ export function createFakeSurface() {
     paste: vi.fn(async () => undefined),
     inject: vi.fn(async () => {}),
     selectAll: vi.fn(),
-    toggleSearch: vi.fn(),
+    find: vi.fn(),
     dispose: vi.fn(),
   };
 }
@@ -32,16 +28,6 @@ export function createTabsHarness(
   options: {
     failMountAt?: number;
     surfaceOptions?: TerminalSurfaceOptions;
-    confirmBroadcast?: (targetCount: number) => Promise<boolean>;
-    onBroadcastChange?: (targetCount: number) => void;
-    initialLaunch?: PaneLaunch;
-    initialWorkspace?: TerminalTabsOptions["initialWorkspace"];
-    onWorkspaceChange?: TerminalTabsOptions["onWorkspaceChange"];
-    paneBusy?: TerminalTabsOptions["paneBusy"];
-    detachTab?: TerminalTabsOptions["detachTab"];
-    endedSolution?: TerminalTabsOptions["endedSolution"];
-    describeRemote?: TerminalTabsOptions["describeRemote"];
-    onPanesChange?: TerminalTabsOptions["onPanesChange"];
   } = {},
 ) {
   document.body.innerHTML = "";
@@ -102,37 +88,10 @@ export function createTabsHarness(
       notifySelection,
       notifyTitle,
       notifyBell,
-      ...(options.confirmBroadcast
-        ? { confirmBroadcast: options.confirmBroadcast }
-        : {}),
-      ...(options.onBroadcastChange
-        ? { onBroadcastChange: options.onBroadcastChange }
-        : {}),
-      ...(options.initialLaunch
-        ? { initialLaunch: options.initialLaunch }
-        : {}),
-      ...(options.initialWorkspace
-        ? { initialWorkspace: options.initialWorkspace }
-        : {}),
-      ...(options.paneBusy ? { paneBusy: options.paneBusy } : {}),
-      ...(options.detachTab ? { detachTab: options.detachTab } : {}),
-      ...(options.endedSolution
-        ? { endedSolution: options.endedSolution }
-        : {}),
-      ...(options.describeRemote
-        ? { describeRemote: options.describeRemote }
-        : {}),
-      ...(options.onPanesChange
-        ? { onPanesChange: options.onPanesChange }
-        : {}),
-      ...(options.onWorkspaceChange
-        ? { onWorkspaceChange: options.onWorkspaceChange }
-        : {}),
     },
   );
   return {
     tabs,
-    createAdapter,
     strip,
     container,
     adapters,

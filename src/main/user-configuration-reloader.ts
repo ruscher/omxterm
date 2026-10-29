@@ -1,3 +1,4 @@
+import { translatorFor, type Translator } from "../shared/i18n";
 import { MAX_USER_FILE_ERROR_LENGTH } from "../shared/user-configuration";
 import type { OperationalEventLog } from "./operational-events";
 import {
@@ -29,9 +30,15 @@ interface UserConfigurationReloaderOptions {
   >[];
 }
 
+// What a reload actually did: applied with its current notices (warnings and
+// deferred restart-only settings), or rejected with the reported reason.
+export type UserConfigurationReloadOutcome =
+  | { readonly applied: true; readonly notices: readonly string[] }
+  | { readonly applied: false; readonly notice: string };
+
 export interface UserConfigurationReloader {
   current(): ActiveUserConfiguration;
-  reload(): Promise<void>;
+  reload(): Promise<UserConfigurationReloadOutcome>;
 }
 
 export function terminalSurfaceFontBaseline(
@@ -58,10 +65,10 @@ export function createUserConfigurationReloader(
     options.initial.configuration,
     options.initial.userFileErrors,
   );
-  let queue = Promise.resolve();
+  let queue: Promise<unknown> = Promise.resolve();
   const now = options.now ?? Date.now;
 
-  const run = async () => {
+  const run = async (): Promise<UserConfigurationReloadOutcome> => {
     const startedAt = now();
     options.operationalEvents?.write({
       name: "configuration.reload.requested",
@@ -70,13 +77,11 @@ export function createUserConfigurationReloader(
     });
     try {
       const load = await options.load();
-      if (load.fallback) {
-        reject(load.fallback, startedAt);
-        return;
-      }
+      if (load.fallback) return reject(load.fallback, startedAt);
       active = freezeState(
         load.configuration,
         currentNotices(
+          translatorFor(load.configuration.language),
           load.configuration,
           load.warnings ?? [],
           options.terminalSurfaceFontBaseline,
@@ -90,16 +95,20 @@ export function createUserConfigurationReloader(
         trigger: "manual",
         durationMs: elapsedMilliseconds(startedAt, now()),
       });
+      return { applied: true, notices: active.userFileErrors };
     } catch {
-      reject(undefined, startedAt);
+      return reject(undefined, startedAt);
     }
   };
 
   const reject = (
     fallback: UserConfigurationFallback | undefined,
     startedAt: number,
-  ) => {
-    const notice = boundedReloadNotice(fallback);
+  ): UserConfigurationReloadOutcome => {
+    const notice = boundedReloadNotice(
+      translatorFor(active.configuration.language),
+      fallback,
+    );
     options.writeStderr?.(`${notice}\n`);
     active = freezeState(active.configuration, [notice]);
     options.apply(active, false);
@@ -111,6 +120,7 @@ export function createUserConfigurationReloader(
         ? configurationRejectionReason(fallback.error, fallback.surface)
         : "unexpected-failure",
     });
+    return { applied: false, notice };
   };
 
   return {
@@ -134,6 +144,7 @@ function freezeState(
 }
 
 function currentNotices(
+  { t }: Translator,
   configuration: LoadedUserConfiguration,
   warnings: readonly string[],
   baseline:
@@ -158,24 +169,31 @@ function currentNotices(
       : ["font.lineHeight"]),
   ];
   if (deferred.length === 0) return warnings;
+  const settings =
+    deferred.length === 1
+      ? deferred[0]!
+      : t("notice.and", { first: deferred[0]!, second: deferred[1]! });
   return [
     ...warnings,
-    `Existing Terminal Surfaces continue using their previous ${deferred.join(" and ")} ${deferred.length === 1 ? "value" : "values"}. Restart OMXTerm to apply ${deferred.length === 1 ? "it" : "them"} everywhere; new tabs and windows use the latest validated values.`,
+    t("notice.restartDeferred", { count: deferred.length, settings }),
   ];
 }
 
+// The validator's detail stays English; the surrounding notice is translated.
 function boundedReloadNotice(
+  { t }: Translator,
   fallback: UserConfigurationFallback | undefined,
 ): string {
-  const prefix =
-    "User Configuration reload failed. OMXTerm kept the last valid configuration. ";
+  const frame = t("notice.reloadFailed", { detail: "{detail}" });
   const detail = fallback
     ? fallback.error.message.replace(" Fix the file and restart OMXTerm.", "")
-    : "The configuration could not be loaded because of an unexpected application failure.";
-  const suffix =
-    " Fix the file and choose View -> Reload User Configuration again.";
-  const available = MAX_USER_FILE_ERROR_LENGTH - prefix.length - suffix.length;
-  return `${prefix}${detail.slice(0, Math.max(0, available))}${suffix}`;
+    : t("notice.reloadUnexpected");
+  const available =
+    MAX_USER_FILE_ERROR_LENGTH - frame.length + "{detail}".length;
+  // A replacer function keeps `$` sequences in the detail literal.
+  return frame.replace("{detail}", () =>
+    detail.slice(0, Math.max(0, available)),
+  );
 }
 
 const MAX_RELOAD_DURATION_MS = 86_400_000;

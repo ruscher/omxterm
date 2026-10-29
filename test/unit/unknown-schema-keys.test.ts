@@ -35,7 +35,7 @@ async function fixture() {
   await mkdir(directory);
   const configurationPath = path.join(directory, "config.json");
   const themePath = path.join(directory, "theme.json");
-  const snippetsPath = path.join(directory, "snippets.json");
+  const snippetsPath = path.join(directory, "snippets.yaml");
   const options = {
     environment: { XDG_CONFIG_HOME: root },
     homeDirectory: root,
@@ -128,6 +128,7 @@ const configurationObjects = [
   "window",
   "theme",
   "keybinds",
+  "windowsProfiles",
 ];
 
 describe.each(configurationObjects)(
@@ -146,6 +147,17 @@ describe.each(configurationObjects)(
         window: { alwaysOnTop: true },
         theme: { path: "theme.json" },
         keybinds: {},
+        windowsProfiles: {
+          default: "powershell-7",
+          profiles: [
+            {
+              id: "powershell-7",
+              name: "PowerShell 7",
+              executable: "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+              arguments: ["-NoLogo"],
+            },
+          ],
+        },
       };
       let target: Record<string, unknown> = document;
       if (location !== "$") {

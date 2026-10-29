@@ -142,6 +142,7 @@ export interface TerminalSurfaceFontConfiguration {
 }
 
 export interface TerminalIpcRouter {
+  isTrustedSender(event: IpcEvent): boolean;
   registerController(
     options: TerminalIpcControllerOptions,
   ): TerminalIpcController;

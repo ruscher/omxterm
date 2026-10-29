@@ -1,38 +1,40 @@
+// Adapted from ruscher/omxterm PR #622 at
+// b3c3a4ad6c1f2224bded65873ba0b09a07ec5d38 (MIT).
 export const aboutIpc = {
   open: "about:open",
   info: "about:info",
   openLink: "about:open-link",
 } as const;
 
-// The About dialog's links; main owns the addresses.
-export const ABOUT_LINKS = ["website", "issues", "license"] as const;
+export const ABOUT_LINKS = [
+  "website",
+  "contributors",
+  "issues",
+  "license",
+] as const;
 export type AboutLink = (typeof ABOUT_LINKS)[number];
-
 export interface AboutInfo {
   readonly name: string;
   readonly version: string;
-  readonly authors: readonly string[];
-  readonly copyleft: string;
-  readonly website: string;
+  readonly copyright: string;
 }
-
+export interface AboutBridge {
+  info(): Promise<AboutInfo>;
+  openLink(link: AboutLink): Promise<void>;
+  onOpen(listener: () => void): () => void;
+}
 export const isAboutLink = (value: unknown): value is AboutLink =>
   typeof value === "string" &&
   (ABOUT_LINKS as readonly string[]).includes(value);
 
-const isShortText = (value: unknown): value is string =>
-  typeof value === "string" && value.length <= 256;
-
 export function isAboutInfo(value: unknown): value is AboutInfo {
-  if (typeof value !== "object" || value === null) return false;
+  if (!value || typeof value !== "object") return false;
   const info = value as Record<string, unknown>;
-  return (
-    isShortText(info.name) &&
-    isShortText(info.version) &&
-    isShortText(info.copyleft) &&
-    isShortText(info.website) &&
-    Array.isArray(info.authors) &&
-    info.authors.length <= 32 &&
-    info.authors.every(isShortText)
+  return [info.name, info.version, info.copyright].every(
+    (text) =>
+      typeof text === "string" &&
+      text.length > 0 &&
+      text.length <= 256 &&
+      !/[\u0000-\u001f\u007f]/u.test(text),
   );
 }

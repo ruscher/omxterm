@@ -1,8 +1,6 @@
 # User configuration
 
 > [!TIP]
-> **Prefer a settings window?** Open **☰ → Preferences…** (`Ctrl+Shift+X` on Linux and Windows, `Cmd+,` on macOS). It edits the settings below, offers 14 built-in color schemes, records shortcuts with conflict checks, and applies every change to all windows at once. It writes the same `config.json` described here and keeps settings it does not manage, such as `windowsShell`.
->
 > **Prefer visual editing?** [OMXTerm Studio](#edit-visually-with-omxterm-studio) lets you import, customize, and export your settings, themes, and shortcuts in the browser.
 
 OMXTerm works out of the box with its bundled font, theme, and default shortcuts. On your first launch, it creates three editable starter files:
@@ -10,7 +8,7 @@ OMXTerm works out of the box with its bundled font, theme, and default shortcuts
 ```text
 omxterm/
 ├── config.json
-├── snippets.json
+├── snippets.yaml
 └── themes/
     └── omtheme.json
 ```
@@ -20,8 +18,11 @@ You can find them in:
 - **macOS and Linux:** `~/.config/omxterm` (or `$XDG_CONFIG_HOME/omxterm`)
 - **Windows:** `%USERPROFILE%\.config\omxterm`
 
+**Prefer a form?** Choose **Settings…** in the OMXTerm application menu to change common settings without editing JSON. See [Settings](#settings).
+
 **The basic workflow: edit, save, reload.** Edit your files in any text editor or [OMXTerm Studio](#edit-visually-with-omxterm-studio), then choose **View → Reload User Configuration** (`Cmd+Shift+,` on macOS, `Ctrl+Shift+,` on Linux/Windows). Snippets reload automatically whenever you open the Snippets sidebar (`Cmd+Shift+S` / `Ctrl+Shift+S`).
 
+- [Change settings in the app](#settings)
 - [Make your first display change](#add-one-display-change)
 - [Find or create your configuration folder](#create-the-configuration-directory)
 - [Edit visually with OMXTerm Studio](#edit-visually-with-omxterm-studio)
@@ -31,6 +32,28 @@ You can find them in:
 - [Custom keyboard shortcuts](#keybinds)
 - [Snippets](#snippets) and [Themes](#terminal-themes)
 - [Reloading behavior and validation](#reloading-user-configuration)
+
+## Settings
+
+Choose **Settings…** in the OMXTerm application menu. Each change you make to a control is checked and saved to `config.json` right away, then applied; the status line tells you what happened:
+
+- **Saved.** The change is active.
+- **Saved. New tabs use it.** or **It applies to new windows.** Open tabs and windows keep their current value.
+- **Saved… restart OMXTerm to apply it to open tabs.** Font family and line height apply to new tabs immediately and to open tabs after a restart.
+- **Not saved: …** The value was rejected (for example, a font that isn't installed); your file is unchanged.
+
+**Language** on the **General** page switches OMXTerm between English and Brazilian Portuguese. Each language is listed by its own name, and the open Settings window, menus and other windows switch right after it saves.
+
+On Windows, **Shell executable** remains an editable path and also offers
+installed-shell suggestions found in fixed standard locations. OMXTerm does not
+start candidates while discovering them or search arbitrary `PATH` entries.
+PowerShell 7, Windows PowerShell, Command Prompt, WSL, Git Bash, MSYS2 and
+Cygwin appear only when the corresponding executable exists. You can type a
+different absolute executable path for a custom installation.
+
+Clearing a text or number field removes that entry from `config.json`, so the default applies again. Settings changes only the field you edited and keeps the rest of your file, including edits you make in another editor while it's open. It rewrites the file with two-space indentation.
+
+The **Config File** page shows `config.json` with an explicit **Save**. If the file changes on disk while you edit there, your draft is kept and saving it is refused until you choose **Reload File**, so nothing is overwritten by accident. Shortcuts, transparency, blur and snippets are still edited in the files.
 
 ## Add one display change
 
@@ -172,39 +195,37 @@ See the [Linux desktop guide](linux-desktop.md) for compositor-specific setup:
 
 ## Configuration reference
 
-Every field except `version` is optional and falls back to its default when omitted. At startup OMXTerm adds the settings a valid `config.json` does not list yet, with their current values, so the file always shows every option; values you wrote are kept as written. Only `font.family` (absent means the bundled font) and `windowsShell` (Windows) stay out until you set them:
+Every field except `version` is optional and falls back to its default when omitted:
 
-| Preference                | Accepted value                          | Default                          |
-| ------------------------- | --------------------------------------- | -------------------------------- |
-| `version`                 | `1`                                     | required                         |
-| `confirmClose`            | boolean                                 | `true`                           |
-| `logLevel`                | `"error"`, `"info"`, or `"debug"`       | `"info"`                         |
-| `windowsShell`            | non-empty absolute executable path      | Windows PowerShell, then ComSpec |
-| `font.family`             | exact installed system font-family name | bundled FiraCode Nerd Font Mono  |
-| `font.size`               | integer `8` – `72` (CSS px)             | `16`                             |
-| `font.lineHeight`         | number `1.0` – `2.0`                    | `1.0`                            |
-| `font.ligatures`          | boolean                                 | `true`                           |
-| `terminal.padding.top`    | integer `0` – `128` (CSS px)            | `6`                              |
-| `terminal.padding.right`  | integer `0` – `128` (CSS px)            | `12`                             |
-| `terminal.padding.bottom` | integer `0` – `128` (CSS px)            | `8`                              |
-| `terminal.padding.left`   | integer `0` – `128` (CSS px)            | `12`                             |
-| `terminal.filePreview`    | boolean                                 | `true`                           |
-| `scrollback.lines`        | integer `0` – `100000`                  | `10000`                          |
-| `keyboard.optionAsAlt`    | `"none"`, `"left"`, `"right"`, `"both"` | `"none"`                         |
-| `window.alwaysOnTop`      | boolean                                 | `false`                          |
-| `window.blur`             | boolean                                 | `false`                          |
-| `window.transparency`     | number `0` – `1`                        | `0`                              |
-| `window.showTitleBar`     | boolean                                 | `true`                           |
-| `window.showTabBar`       | boolean                                 | `true`                           |
-| `window.cornerRadius`     | integer `0` – `24` (CSS px)             | `0`                              |
-| `window.autoHideTitleBar` | boolean                                 | `false`                          |
-| `theme.path`              | relative or absolute file path          | bundled `omtheme`                |
-| `keybinds.<action>`       | Electron accelerator string             | built-in shortcut per action     |
+| Preference                | Accepted value                          | Default                         |
+| ------------------------- | --------------------------------------- | ------------------------------- |
+| `version`                 | `1`                                     | required                        |
+| `language`                | `"en-US"` or `"pt-BR"`                  | `"en-US"`                       |
+| `confirmClose`            | boolean                                 | `true`                          |
+| `logLevel`                | `"error"`, `"info"`, or `"debug"`       | `"info"`                        |
+| `windowsShell`            | absolute Windows executable path        | Windows PowerShell, then CMD    |
+| `windowsProfiles`         | saved Windows shell profile collection  | absent                          |
+| `font.family`             | exact installed system font-family name | bundled FiraCode Nerd Font Mono |
+| `font.size`               | integer `8` – `72` (CSS px)             | `16`                            |
+| `font.lineHeight`         | number `1.0` – `2.0`                    | `1.0`                           |
+| `font.ligatures`          | boolean                                 | `true`                          |
+| `terminal.padding.top`    | integer `0` – `128` (CSS px)            | `0`                             |
+| `terminal.padding.right`  | integer `0` – `128` (CSS px)            | `8`                             |
+| `terminal.padding.bottom` | integer `0` – `128` (CSS px)            | `8`                             |
+| `terminal.padding.left`   | integer `0` – `128` (CSS px)            | `8`                             |
+| `scrollback.lines`        | integer `0` – `100000`                  | `10000`                         |
+| `keyboard.optionAsAlt`    | `"none"`, `"left"`, `"right"`, `"both"` | `"none"`                        |
+| `window.alwaysOnTop`      | boolean                                 | `false`                         |
+| `window.blur`             | boolean                                 | `false`                         |
+| `window.transparency`     | number `0` – `1`                        | `0`                             |
+| `window.showTitleBar`     | boolean                                 | `true`                          |
+| `window.showTabBar`       | boolean                                 | `true`                          |
+| `theme.path`              | relative or absolute file path          | bundled `omtheme`               |
+| `keybinds.<action>`       | Electron accelerator string or `null`   | built-in shortcut per action    |
 
 ### Notes on specific settings
 
-- **`terminal.filePreview`:** hovering a file name printed in a local terminal shows a preview card (picture, first page or first lines, and details). Turn it off in Preferences → Terminal.
-- **Preferences → config.json** edits this file as text; saving validates it like a reload and keeps the previous version as `config.json.bak`.
+- **`language`:** chooses the language of OMXTerm's menus, dialogs, window controls, snippets panel, image preview, About and search controls. OMXTerm never picks it from your system language. Only the exact tags `"en-US"` and `"pt-BR"` are accepted; any other value is a configuration error, so OMXTerm uses its defaults until you fix it. Reloading the configuration switches the language in open windows without closing tabs. Some text stays in English: the validation detail inside a reload notice, failures that happen before the configuration loads, logs, snippet file diagnostics, and text owned by the operating system. Terminal output is never translated.
 - **`scrollback.lines`:** kept in memory per tab (up to a 10 MB per-screen core ceiling). Setting `0` clears and disables scrollback history.
 - **`keyboard.optionAsAlt` (macOS only):** `"none"` keeps standard macOS Option character input (like accented letters or symbols); `"left"`, `"right"`, or `"both"` sends terminal `Alt` sequences instead.
 - **`window.showTitleBar`, `window.showTabBar`, and `window.alwaysOnTop`:** set the initial state for new windows. Use the **View** and **Window** menus to toggle them in your current window.
@@ -225,7 +246,9 @@ To open new windows with a minimal, borderless layout:
 
 ### Choose the Windows default shell
 
-On Windows, set `windowsShell` to the full executable path of your preferred shell (remember to double backslashes in JSON).
+On Windows, choose an installed suggestion in **Settings → General → Shell
+executable**, or set `windowsShell` to the full executable path of your preferred
+shell (remember to double backslashes in JSON).
 
 **Git Bash:**
 
@@ -247,60 +270,76 @@ On Windows, set `windowsShell` to the full executable path of your preferred she
 
 Reload your configuration and open a new tab to start the new shell. Only the executable path is accepted (no CLI flags or environment variables). macOS and Linux ignore `windowsShell` and use your OS account's login shell.
 
+For named shells or literal command-line arguments, use `windowsProfiles`
+instead. It cannot be combined with `windowsShell`. The default id must identify
+one of 1–16 profiles; ids use lowercase ASCII letters, digits, `.`, `_` or `-`,
+and each executable must be a bounded local drive-absolute path. `arguments` is
+an optional JSON array passed directly to the executable—OMXTerm never joins it
+into a command string.
+
+**PowerShell 7 without its startup logo and an explicit WSL distribution:**
+
+```json
+{
+  "version": 1,
+  "windowsProfiles": {
+    "default": "powershell-7",
+    "profiles": [
+      {
+        "id": "powershell-7",
+        "name": "PowerShell 7 (No Logo)",
+        "executable": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "arguments": ["-NoLogo"]
+      },
+      {
+        "id": "ubuntu",
+        "name": "Ubuntu (WSL)",
+        "executable": "C:\\Windows\\System32\\wsl.exe",
+        "arguments": ["--distribution", "Ubuntu"]
+      }
+    ]
+  }
+}
+```
+
+On Windows, every profile executable must resolve to an existing regular file
+or the entire configuration is rejected. OMXTerm does not verify that a WSL
+distribution name exists; a launch error is reported normally. A successful
+reload changes only future tabs. Settings shows the active profile executable
+as read-only; edit the collection and default selection on the **Config File**
+page. macOS and Linux validate the portable profile structure but ignore it for
+shell selection.
+
+When this setting is absent, Windows checks the standard Windows PowerShell 5.1
+path and then the standard Command Prompt path under `SystemRoot`. It does not
+execute the inherited `ComSpec` value or search `PATH`.
+
 ### Keybinds
 
 Customize application shortcuts under `keybinds` using [Electron accelerator](https://www.electronjs.org/docs/latest/tutorial/keyboard-shortcuts#accelerators) syntax (or edit them with conflict checking in [OMXTerm Studio](#edit-visually-with-omxterm-studio)):
 
-| Action                      | macOS default               | Linux/Windows default     |
-| --------------------------- | --------------------------- | ------------------------- |
-| `quit`                      | `CommandOrControl+Q`        | `Control+Alt+Shift+Q`     |
-| `copy`                      | `CommandOrControl+C`        | `Control+Shift+C`         |
-| `paste`                     | `CommandOrControl+V`        | `Control+Shift+V`         |
-| `selectAll`                 | `CommandOrControl+A`        | `Control+Shift+A`         |
-| `newWindow`                 | `CommandOrControl+N`        | `Control+Shift+N`         |
-| `newTab`                    | `CommandOrControl+T`        | `Control+Shift+T`         |
-| `closeTab`                  | `CommandOrControl+W`        | `Control+Shift+W`         |
-| `closeWindow`               | `CommandOrControl+Shift+W`  | `Control+Shift+Q`         |
-| `nextTab`                   | `Control+Tab`               | `Control+PageDown`        |
-| `previousTab`               | `Control+Shift+Tab`         | `Control+PageUp`          |
-| `selectTab1` … `selectTab9` | `CommandOrControl+1` … `9`  | `Alt+1` … `9`             |
-| `zoomIn`                    | `CommandOrControl+Plus`     | `Control+Plus`            |
-| `zoomOut`                   | `CommandOrControl+-`        | `Control+-`               |
-| `actualSize`                | `CommandOrControl+0`        | `Control+0`               |
-| `toggleFullScreen`          | `Control+Command+F`         | `Control+Shift+F`         |
-| `toggleSnippets`            | `CommandOrControl+Shift+S`  | `Control+Shift+S`         |
-| `toggleTabBar`              | `CommandOrControl+Shift+B`  | `Control+Shift+B`         |
-| `toggleTitleBar`            | `CommandOrControl+Shift+D`  | `Control+Shift+D`         |
-| `reloadConfig`              | `CommandOrControl+Shift+,`  | `Control+Shift+,`         |
-| `splitRight`                | `Command+D`                 | `Control+Shift+O`         |
-| `splitDown`                 | `Command+Shift+E`           | `Control+Shift+E`         |
-| `closePane`                 | `Command+Alt+W`             | `Control+Shift+K`         |
-| `focusNextPane`             | `Command+]`                 | `Control+Shift+]`         |
-| `focusPreviousPane`         | `Command+[`                 | `Control+Shift+[`         |
-| `focusPaneLeft` … `Down`    | `Command+Alt+Left` … `Down` | `Alt+Shift+Left` … `Down` |
-| `toggleMaximizePane`        | `Command+Shift+Enter`       | `Control+Shift+Z`         |
-| `equalizePanes`             | `Command+Alt+0`             | `Control+Shift+0`         |
-| `toggleBroadcast`           | `Command+Alt+I`             | `Control+Shift+I`         |
-| `toggleSessions`            | `Command+Shift+J`           | `Control+Shift+H`         |
-| `toggleCommands`            | `Command+Shift+M`           | `Control+Shift+M`         |
-| `commandPalette`            | `Command+Shift+P`           | `Control+Shift+P`         |
-| `find`                      | `Command+F`                 | `Control+Shift+G`         |
-| `preferences`               | `Command+,`                 | `Control+Shift+X`         |
-| `toggleFiles`               | `Command+Shift+L`           | `Control+Shift+L`         |
-| `toggleAssistant`           | `Command+Shift+Y`           | `Control+Shift+Y`         |
-| `roundMore`                 | `Command+Alt+Shift+R`       | `Control+Alt+Shift+R`     |
-| `roundLess`                 | `Command+Alt+Shift+E`       | `Control+Alt+Shift+E`     |
-| `autoHideTitleBar`          | `Command+Alt+Shift+H`       | `Control+Alt+Shift+H`     |
-| `alwaysShowTitleBar`        | `Command+Alt+Shift+V`       | `Control+Alt+Shift+V`     |
-| `toggleAlwaysOnTop`         | `Command+Alt+Shift+T`       | `Control+Alt+Shift+T`     |
-| `toggleDevTools`            | `Command+Alt+Shift+I`       | `Control+Alt+Shift+I`     |
-| `openLocalImage`            | `Command+Alt+Shift+O`       | `Control+Alt+Shift+O`     |
-| `toggleHighlighting`        | `Command+Alt+Shift+C`       | `Control+Alt+Shift+C`     |
-| `highlightRules`            | `Command+Alt+Shift+G`       | `Control+Alt+Shift+G`     |
-| `backUpSettings`            | `Command+Alt+Shift+B`       | `Control+Alt+Shift+B`     |
-| `restoreSettings`           | `Command+Alt+Shift+U`       | `Control+Alt+Shift+U`     |
-| `toggleRestoreWindows`      | `Command+Alt+Shift+W`       | `Control+Alt+Shift+W`     |
-| `about`                     | `Command+Alt+Shift+A`       | `Control+Alt+Shift+A`     |
+| Action                      | macOS default              | Linux/Windows default |
+| --------------------------- | -------------------------- | --------------------- |
+| `quit`                      | `CommandOrControl+Q`       | `Control+Alt+Shift+Q` |
+| `copy`                      | `CommandOrControl+C`       | `Control+Shift+C`     |
+| `paste`                     | `CommandOrControl+V`       | `Control+Shift+V`     |
+| `selectAll`                 | `CommandOrControl+A`       | `Control+Shift+A`     |
+| `find`                      | `CommandOrControl+F`       | `Control+Shift+F`     |
+| `newWindow`                 | `CommandOrControl+N`       | `Control+Shift+N`     |
+| `newTab`                    | `CommandOrControl+T`       | `Control+Shift+T`     |
+| `closeTab`                  | `CommandOrControl+W`       | `Control+Shift+W`     |
+| `closeWindow`               | `CommandOrControl+Shift+W` | `Control+Shift+Q`     |
+| `nextTab`                   | `Control+Tab`              | `Control+PageDown`    |
+| `previousTab`               | `Control+Shift+Tab`        | `Control+PageUp`      |
+| `selectTab1` … `selectTab9` | `CommandOrControl+1` … `9` | `Alt+1` … `9`         |
+| `zoomIn`                    | `CommandOrControl+Plus`    | `Control+Plus`        |
+| `zoomOut`                   | `CommandOrControl+-`       | `Control+-`           |
+| `actualSize`                | `CommandOrControl+0`       | `Control+0`           |
+| `toggleFullScreen`          | `Control+Command+F`        | `F11`                 |
+| `toggleSnippets`            | `CommandOrControl+Shift+S` | `Control+Shift+S`     |
+| `toggleTabBar`              | `CommandOrControl+Shift+B` | `Control+Shift+B`     |
+| `toggleTitleBar`            | `CommandOrControl+Shift+D` | `Control+Shift+D`     |
+| `reloadConfig`              | `CommandOrControl+Shift+,` | `Control+Shift+,`     |
 
 Example overriding a single shortcut:
 
@@ -313,39 +352,48 @@ Example overriding a single shortcut:
 }
 ```
 
-- Every shortcut needs one key plus at least one modifier other than Shift (such as `CommandOrControl`, `Control`, `Alt`, or `AltGr`), so a shortcut can never swallow normal typing.
+- Every shortcut needs one key plus at least one modifier other than Shift (such as `CommandOrControl`, `Control`, `Alt`, or `AltGr`), so a shortcut can never swallow normal typing. Function keys `F1` through `F24` are the exception: they can be used alone, like the default `F11`.
+- Set an action to `null` to remove its shortcut. The action stays in the menu. OMXTerm stops using that key for the action, but another binding or your operating system may still use it. Leave an action out to keep its default.
 - Use literal punctuation characters (such as `Control+Shift+,`), except for `+`, which is written as `Plus`.
-- Each action needs its own shortcut. If you bind an action on Linux or Windows to a bare `Ctrl+<key>` that terminal programs use (like `Ctrl+C` or `Ctrl+D`), OMXTerm keeps the binding but shows a warning, since that key no longer reaches your shell.
+- Each action needs its own shortcut. If two actions end up on the same key, including through a default, OMXTerm reports both actions and the key; pick another shortcut for one of them or set one to `null`. OMXTerm never changes another action's shortcut or your file for you. If you bind an action on Linux or Windows to a bare `Ctrl+<key>` that terminal programs use (like `Ctrl+C` or `Ctrl+D`), OMXTerm keeps the binding but shows a warning, since that key no longer reaches your shell.
 
-## Saved sessions file
-
-Saved sessions live in `sessions.json` next to `config.json`. OMXTerm writes this file itself; edit sessions in the Sessions sidebar rather than by hand. If the file is damaged, OMXTerm renames it to `sessions.json.corrupt-<time>` and starts with an empty list, so nothing is silently lost. Secrets are never stored in it.
-
-## Commands file
-
-The Command Manager keeps your own commands, favorites and hidden built-in commands in `commands.json` next to `config.json`. OMXTerm writes this file itself; create and edit commands in the Commands sidebar. A damaged file is renamed to `commands.json.corrupt-<time>` and OMXTerm starts with only the built-in commands.
-
-## Snippets
-
-Snippets let you save commonly used commands or text in `snippets.json` (next to `config.json`) and insert them from the Snippets sidebar (`Cmd+Shift+S` / `Ctrl+Shift+S`).
+For example, to use `F11` for Snippets instead of full screen:
 
 ```json
 {
   "version": 1,
-  "snippets": [
-    {
-      "name": "Show current directory",
-      "body": "pwd",
-      "description": "Insert a command that prints the current directory",
-      "execute": false
-    }
-  ]
+  "keybinds": {
+    "toggleFullScreen": null,
+    "toggleSnippets": "F11"
+  }
 }
 ```
 
-- With `"execute": false` (the default), clicking a snippet inserts its text into the prompt so you can edit or review it before pressing Enter.
-- Set `"execute": true` if you want OMXTerm to append `Enter` automatically after inserting the snippet.
-- Up to 512 snippets are supported (`name` up to 128 characters, `body` up to 65,536 characters, optional `description` up to 512 characters).
+> **Upgrading on Linux or Windows:** Find now uses `Ctrl+Shift+F` and full screen uses `F11`. If your `config.json` sets `"toggleFullScreen": "Control+Shift+F"`, it now conflicts with Find. Remove that entry to use `F11`, move Find (for example `"find": "Control+Alt+F"`), or keep the old combination with `"find": null`. While `F11` is bound, terminal programs that use it don't receive it; `"toggleFullScreen": null` removes that binding, although your desktop may still claim the key.
+
+## Snippets
+
+Snippets let you save commonly used commands or text in `snippets.yaml` (next to `config.json`) and insert them from the Snippets sidebar (`Cmd+Shift+S` / `Ctrl+Shift+S`). Configuration and theme files remain JSON.
+
+```yaml
+version: 1
+snippets:
+  - name: Print a message
+    body: |-
+      printf '%s\n' "Hello"
+    execute: false
+  - name: Show current directory
+    body: pwd
+    description: Insert a command that prints the current directory
+```
+
+- Literal blocks preserve shell quotes and line breaks without JSON escaping. `|-` strips trailing line breaks, `|` keeps one, and `|+` keeps all trailing line breaks. Indent body lines beneath `body:`.
+- `execute: false` (the default) appends no Enter; `execute: true` appends Enter after the body. Embedded line breaks or control characters may themselves execute commands even with `false`. Multiline/control-character bodies use the existing Protected Paste confirmation when bracketed paste is disabled.
+- Up to 512 snippets are supported: `name` is 1–128 characters, `body` is 1–65,536, and optional `description` is at most 512 (UTF-16 code units). `execute` must be a boolean. Unknown fields are rejected.
+- The file must be one UTF-8 YAML 1.2 core document, at most 1 MiB. Collection nesting is limited to 16 levels (root collection is level 1), with at most 4,096 total mapping pairs and sequence entries. Duplicate keys, aliases, custom/non-core tags, and multiple documents are rejected. Quote scalar values that must be text, such as `"true"` or `"123"`.
+- Opening reveals search/loading immediately and rereads the catalog. Close and reopen to reload edits; query and scroll are retained in window memory. Old rows cannot run during loading, and empty/error results replace them. Invalid files show a path and safe diagnostic instead of the list; syntax errors include line/column coordinates, not command excerpts.
+- The [resizable panel](usage.md#resize-or-close-snippets) keeps its preferred width only for that window's lifetime. There are no panel configuration fields or persistent width/visibility settings. Close/Escape in the panel returns terminal focus; About and Local Image Preview keep it visible but inert.
+- Existing `snippets.json` files are not read, rewritten, or migrated. Move your entries into `snippets.yaml` yourself; JSON-formatted content is also valid YAML, subject to the same limits.
 
 ## Terminal themes
 
@@ -407,12 +455,6 @@ node scripts/convert-ghostty-theme.mjs input-theme output-theme.json
 
 </details>
 
-## Backing up and restoring settings
-
-**File → Back Up Settings…** saves your `config.json`, `snippets.json`, themes, saved sessions, highlight rules and commands in one `.omxbackup` file, encrypted with a passphrase of at least 8 characters. Keep the passphrase: without it the backup cannot be opened. Passwords and keys are never stored in a backup.
-
-**File → Restore Settings…** asks for the file and its passphrase, then replaces those settings in every open window. Files that are not in the backup, such as an extra theme, are kept. If any part of the backup is invalid, nothing is changed.
-
 ## Reloading user configuration
 
 Choose **View → Reload User Configuration** (`Cmd+Shift+,` / `Ctrl+Shift+,`) after saving edits to `config.json` or your theme file:
@@ -421,8 +463,8 @@ Choose **View → Reload User Configuration** (`Cmd+Shift+,` / `Ctrl+Shift+,`) a
 | --------------------- | ------------------------------------------------------------- |
 | Existing and new tabs | Theme, font size, ligatures, padding, scrollback, Option keys |
 | All windows and tabs  | Background transparency and blur                              |
-| App behavior          | Close confirmation, log level, keyboard shortcuts             |
-| New tabs (or restart) | Font family, line height, Windows shell                       |
+| App behavior          | Close confirmation, log level, keyboard shortcuts, language   |
+| New tabs (or restart) | Font family, line height, Windows shell/profile               |
 | New windows           | Always-on-Top, title-bar, and tab-bar initial defaults        |
 
 If validation finds an error in your JSON, OMXTerm shows a banner naming the file and field to fix:

@@ -2,8 +2,6 @@ import type {
   TerminalExit,
   TerminalFontZoom,
   TerminalClipboardAction,
-  TerminalPaneTarget,
-  TerminalSplitDirection,
   TerminalTabCommand,
 } from "../shared/terminal-contract";
 import type {
@@ -51,10 +49,7 @@ export type TerminalSessionFailure =
 // Whether the window's sessions run a foreground child process (ADR 0017):
 // close confirmations ask only for busy sessions, never for an idle shell.
 export interface TerminalSessionActivity {
-  // Every session of the selected tab, including all of its split panes.
   hasBusySelectedSession(): boolean;
-  // Only the focused pane's session; defaults to the selected-tab decision.
-  hasBusyFocusedSession?(): boolean;
   hasBusySession(): boolean;
 }
 
@@ -71,7 +66,6 @@ interface TerminalWindowState {
   closeConfirmed: boolean;
   closeRequest: Promise<void> | undefined;
   tabCloseRequest: Promise<void> | undefined;
-  paneCloseRequest: Promise<void> | undefined;
 }
 
 interface TerminalApplicationOptions<Window extends NativeTerminalWindow> {
@@ -86,7 +80,6 @@ interface TerminalApplicationOptions<Window extends NativeTerminalWindow> {
   ) => Promise<boolean>;
   readonly showCloseWindowConfirmation: (window: Window) => Promise<boolean>;
   readonly showCloseTabConfirmation: (window: Window) => Promise<boolean>;
-  readonly showClosePaneConfirmation?: (window: Window) => Promise<boolean>;
   readonly showSessionFailure: (
     window: Window,
     failure: TerminalSessionFailure,
@@ -97,9 +90,7 @@ interface TerminalApplicationOptions<Window extends NativeTerminalWindow> {
     action: TerminalClipboardAction,
   ) => void;
   readonly sendSnippetsToggle: (window: Window) => void;
-  readonly sendSessionsToggle?: (window: Window) => void;
-  readonly sendCommandsToggle?: (window: Window) => void;
-  readonly sendCommandPaletteToggle?: (window: Window) => void;
+  readonly sendFind: (window: Window) => void;
   readonly sendTabBarToggle: (window: Window) => void;
   readonly sendTitleBarToggle: (window: Window) => void;
   readonly sendLocalImageOpen: (window: Window) => void;
@@ -123,13 +114,6 @@ export interface TerminalApplication<
   requestQuit(): Promise<void>;
   newTabInSelectedWindow(): void;
   closeSelectedTab(): Promise<void>;
-  closeSelectedPane(): Promise<void>;
-  splitSelectedPane(direction: TerminalSplitDirection): void;
-  focusPaneInSelectedWindow(target: TerminalPaneTarget): void;
-  toggleSelectedPaneMaximized(): void;
-  equalizeSelectedPanes(): void;
-  findInSelectedWindow(): void;
-  toggleSelectedBroadcast(): void;
   selectNextTab(): void;
   selectPreviousTab(): void;
   selectTabInSelectedWindow(position: number): void;
@@ -138,10 +122,8 @@ export interface TerminalApplication<
   toggleSelectedDevTools(): void;
   zoomSelectedWindow(command: TerminalFontZoom): void;
   clipboardSelectedWindow(action: TerminalClipboardAction): void;
+  findInSelectedWindow(): void;
   toggleSelectedSnippets(): void;
-  toggleSelectedSessions(): void;
-  toggleSelectedCommands(): void;
-  toggleSelectedCommandPalette(): void;
   toggleSelectedTabBar(): void;
   toggleSelectedTitleBar(): void;
   openLocalImageInSelectedWindow(): void;
@@ -289,7 +271,6 @@ export function startTerminalApplication<Window extends NativeTerminalWindow>(
         closeConfirmed: false,
         closeRequest: undefined,
         tabCloseRequest: undefined,
-        paneCloseRequest: undefined,
       });
       options.operationalEvents?.write({ name: "window.opened", windowId });
       window.setAlwaysOnTop(alwaysOnTopDefault, "floating");
@@ -370,13 +351,6 @@ export function startTerminalApplication<Window extends NativeTerminalWindow>(
       });
       return state.tabCloseRequest;
     },
-    ...paneActions(
-      options,
-      selectedWindow,
-      (window) => windows.get(window),
-      confirmClose,
-      sendToSelected,
-    ),
     selectNextTab() {
       sendToSelected({ action: "next" });
     },
@@ -403,10 +377,10 @@ export function startTerminalApplication<Window extends NativeTerminalWindow>(
       const window = selectedWindow();
       if (window) options.sendClipboardAction(window, action);
     },
+    findInSelectedWindow: selectedWindowAction(options.sendFind),
     toggleSelectedTabBar: selectedWindowAction(options.sendTabBarToggle),
     toggleSelectedTitleBar: selectedWindowAction(options.sendTitleBarToggle),
     toggleSelectedSnippets: selectedWindowAction(options.sendSnippetsToggle),
-    ...sidebarToggles(options, selectedWindowAction),
     openLocalImageInSelectedWindow: selectedWindowAction(
       options.sendLocalImageOpen,
     ),
@@ -415,27 +389,6 @@ export function startTerminalApplication<Window extends NativeTerminalWindow>(
       alwaysOnTopDefault = configuration.alwaysOnTopDefault;
     },
     isQuitting: () => quitting,
-  };
-}
-
-// Workspace sidebar panels shown in the selected window.
-function sidebarToggles<Window extends NativeTerminalWindow>(
-  options: TerminalApplicationOptions<Window>,
-  forSelected: (action: (window: Window) => void) => () => void,
-): Pick<
-  TerminalApplication<Window>,
-  | "toggleSelectedSessions"
-  | "toggleSelectedCommands"
-  | "toggleSelectedCommandPalette"
-> {
-  const send = (
-    toggle:
-      "sendSessionsToggle" | "sendCommandsToggle" | "sendCommandPaletteToggle",
-  ) => forSelected((window) => options[toggle]?.(window));
-  return {
-    toggleSelectedSessions: send("sendSessionsToggle"),
-    toggleSelectedCommands: send("sendCommandsToggle"),
-    toggleSelectedCommandPalette: send("sendCommandPaletteToggle"),
   };
 }
 
@@ -460,83 +413,6 @@ function confirmTabClose<Window extends NativeTerminalWindow>(
       resolveClose(false);
       throw error;
     });
-}
-
-// Split-pane actions for the selected window. Close Pane asks only when the
-// focused pane's own session is Busy (ADR 0017), like Close Tab does for tabs.
-function paneActions<Window extends NativeTerminalWindow>(
-  options: TerminalApplicationOptions<Window>,
-  selectedWindow: () => Window | undefined,
-  stateOf: (window: Window) => TerminalWindowState | undefined,
-  confirmClose: () => boolean,
-  sendToSelected: (command: TerminalTabCommand) => void,
-): Pick<
-  TerminalApplication<Window>,
-  | "closeSelectedPane"
-  | "splitSelectedPane"
-  | "focusPaneInSelectedWindow"
-  | "toggleSelectedPaneMaximized"
-  | "equalizeSelectedPanes"
-  | "toggleSelectedBroadcast"
-  | "findInSelectedWindow"
-> {
-  return {
-    closeSelectedPane() {
-      const window = selectedWindow();
-      const state = window ? stateOf(window) : undefined;
-      if (!window || !state) return Promise.resolve();
-      if (state.paneCloseRequest) return state.paneCloseRequest;
-      const activity = state.sessionActivity;
-      const busy = activity.hasBusyFocusedSession
-        ? activity.hasBusyFocusedSession()
-        : activity.hasBusySelectedSession();
-      if (!confirmClose() || !busy) {
-        options.sendTabCommand(window, { action: "close-pane" });
-        return Promise.resolve();
-      }
-      state.paneCloseRequest = confirmPaneClose(
-        window,
-        options,
-        () => !window.isDestroyed() && stateOf(window) === state,
-      ).finally(() => {
-        state.paneCloseRequest = undefined;
-      });
-      return state.paneCloseRequest;
-    },
-    splitSelectedPane: (direction) =>
-      sendToSelected({ action: "split", direction }),
-    focusPaneInSelectedWindow: (target) =>
-      sendToSelected({ action: "focus-pane", target }),
-    toggleSelectedPaneMaximized: () =>
-      sendToSelected({ action: "toggle-maximize-pane" }),
-    equalizeSelectedPanes: () => sendToSelected({ action: "equalize-panes" }),
-    findInSelectedWindow: () => sendToSelected({ action: "find" }),
-    toggleSelectedBroadcast: () =>
-      sendToSelected({ action: "toggle-broadcast" }),
-  };
-}
-
-function confirmPaneClose<Window extends NativeTerminalWindow>(
-  window: Window,
-  options: Pick<
-    TerminalApplicationOptions<Window>,
-    "sendTabCommand" | "showCloseTabConfirmation" | "showClosePaneConfirmation"
-  >,
-  isOwnerAlive: () => boolean,
-): Promise<void> {
-  // The renderer captures the focused pane before any asynchronous decision,
-  // exactly like Close Tab: approval never retargets a later focus change.
-  options.sendTabCommand(window, { action: "prepare-close-pane" });
-  const resolveClose = (confirmed: boolean) => {
-    if (isOwnerAlive())
-      options.sendTabCommand(window, { action: "resolve-close", confirmed });
-  };
-  const confirm =
-    options.showClosePaneConfirmation ?? options.showCloseTabConfirmation;
-  return confirm(window).then(resolveClose, (error: unknown) => {
-    resolveClose(false);
-    throw error;
-  });
 }
 
 function elapsedMilliseconds(startedAt: number): number {

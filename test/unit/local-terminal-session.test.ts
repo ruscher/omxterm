@@ -185,6 +185,29 @@ describe("local PTY Adapter lifecycle", () => {
     expect(session.fallbackTitle).toBe("bash.exe");
   });
 
+  it("passes saved profile arguments literally and uses its display name", () => {
+    const harness = createPtyHarness();
+    const spawn = vi.fn<SpawnPty>(() => harness.pty);
+    const session = createLocalTerminalSession(spawn, {
+      shell: "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      shellArguments: ["-NoLogo", "", "two words", "&not-a-command"],
+      shellTitle: "PowerShell 7 (No Logo)",
+      platform: "win32",
+      homeDirectory: "C:\\Users\\example",
+      applicationVersionProvider: { getVersion: () => "1.2.3" },
+      environment: {},
+      onOutput: vi.fn(),
+      onExit: vi.fn(),
+    });
+
+    expect(spawn).toHaveBeenCalledWith(
+      "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      ["-NoLogo", "", "two words", "&not-a-command"],
+      expect.objectContaining({ cwd: "C:\\Users\\example" }),
+    );
+    expect(session.fallbackTitle).toBe("PowerShell 7 (No Logo)");
+  });
+
   it("counts a live Windows session as Busy because ConPTY hides the foreground name", () => {
     const harness = createPtyHarness();
     const session = createLocalTerminalSession(

@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
+import { surfaceLabels } from "../../src/renderer/renderer-language";
 import { mountTerminalWindowPage } from "../../src/renderer/terminal-window-host";
 import { TERMINAL_TAB_DRAG_DATA_TYPE } from "../../src/renderer/terminal-tabs";
 import { DEFAULT_TERMINAL_THEME } from "../../src/shared/terminal-theme";
@@ -51,7 +52,7 @@ function createSurface(overrides: Record<string, unknown> = {}) {
     copy: vi.fn(async () => undefined),
     paste: vi.fn(async () => undefined),
     selectAll: vi.fn(),
-    toggleSearch: vi.fn(),
+    find: vi.fn(),
     ...overrides,
   };
 }
@@ -186,10 +187,9 @@ describe("renderer Terminal Window page host", () => {
       expect.any(Object),
       {
         abortSignal: expect.any(AbortSignal) as AbortSignal,
-        onUserInput: expect.any(Function) as () => void,
-        // OSC 7 always reaches the tabs: the Files panel follows it.
-        onWorkingDirectory: expect.any(Function) as () => void,
         background: "host",
+        focus: false,
+        labels: surfaceLabels("en-US"),
         appearance: {
           fontSize: 19,
           lineHeight: 1.2,
@@ -821,6 +821,9 @@ describe("renderer Terminal Window page host continued", () => {
     const snippetsElement = document.createElement("aside");
     snippetsElement.hidden = true;
     document.body.append(snippetsElement);
+    vi.spyOn(document.body, "getBoundingClientRect").mockReturnValue({
+      width: 1000,
+    } as DOMRect);
     let toggleListener: (() => void) | undefined;
     let configurationListener:
       ((configuration: TerminalRendererConfiguration) => void) | undefined;

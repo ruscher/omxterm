@@ -1,13 +1,9 @@
 {
   "name": "omxterm",
-  "version": "0.22.1",
+  "version": "0.21.1-dev.0",
   "description": "Open-source personal desktop terminal for ARM64 macOS, Linux, and Windows",
   "desktopName": "omxterm.desktop",
-  "author": "Luiz Otávio Miranda <luizomf@gmail.com>",
-  "contributors": [
-    "Rafael Ruscher <rruscher@gmail.com>"
-  ],
-  "homepage": "https://github.com/luizomf/omxterm",
+  "author": "Luiz Otávio Miranda",
   "license": "MIT",
   "private": true,
   "type": "module",
@@ -25,9 +21,11 @@
     "package:mac": "npm run build && npm run package-built:mac",
     "package:linux": "npm run build && npm run package-built:linux",
     "package:win": "npm run build && npm run package-built:win",
-    "package-built:mac": "node scripts/package.mjs mac",
-    "package-built:linux": "node scripts/package.mjs linux",
-    "package-built:win": "node scripts/package.mjs win",
+    "package:win:x64": "npm run build && npm run package-built:win:x64",
+    "package-built:mac": "electron-builder --config electron-builder.yml --mac dmg --arm64 --publish never",
+    "package-built:linux": "node scripts/prepare-linux-launcher.mjs && electron-builder --config electron-builder.yml --linux AppImage --arm64 --publish never && node scripts/package-linux-assets.mjs",
+    "package-built:win": "electron-builder --config electron-builder.yml --win nsis --arm64 --publish never",
+    "package-built:win:x64": "electron-builder --config electron-builder.yml --win nsis --x64 --publish never",
     "package:verify": "node scripts/verify-packaged-app.mjs",
     "check": "npm run check:portable && npm run package-built:mac && npm run package:verify",
     "check:linux": "npm run check:portable && npm run package-built:linux && npm run package:verify",
@@ -40,12 +38,13 @@
   "dependencies": {
     "node-pty": "1.1.0",
     "restty": "0.3.0",
-    "text-shaper": "0.1.28"
+    "text-shaper": "0.1.28",
+    "yaml": "2.9.1"
   },
   "devDependencies": {
     "@electron/asar": "4.3.1",
     "@types/node": "24.19.1",
-    "electron": "43.7.7",
+    "electron": "43.8.1",
     "electron-builder": "26.15.3",
     "esbuild": "0.28.2",
     "jsdom": "29.1.1",
