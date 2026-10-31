@@ -223,6 +223,10 @@ nsis:
   oneClick: true
   perMachine: false
   deleteAppDataOnUninstall: false
+  # Live terminals must exit through OMXTerm's PTY drain barrier. The custom
+  # check refuses to let NSIS terminate Electron and asks the user to close the
+  # app normally before retrying an install, update or uninstall.
+  include: build/installer.nsh
   # On an ARM64 build host electron-builder compresses the app payload with the
   # ARM64 BCJ2 7-Zip filter, which the NSIS-bundled Nsis7z extraction plugin
   # cannot decode — it silently drops every PE file at install time, leaving a

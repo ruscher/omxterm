@@ -14,6 +14,7 @@ const inspectionScript = fileURLToPath(
 
 export function inspectWindowsInstallerInputs(
   configuration,
+  installerInclude,
   builderVersion,
   packageName,
 ) {
@@ -22,14 +23,20 @@ export function inspectWindowsInstallerInputs(
   // when changing packaging inputs; an unrecognized footprint must never mean absent.
   // #415 adds only a macOS unpacked addon and excludes it from Linux/Windows.
   // NSIS identity, registry/cache paths, shortcuts, templates and options are unchanged.
+  // #224 selects the node-pty prebuild by target architecture (arm64 or x64) for the same
+  // NSIS footprint; only the packaged native payload differs.
+  // The custom NSIS include is pinned beside the YAML because it controls the
+  // running-application boundary before install, update and uninstall.
   const digest = createHash("sha256")
     .update(configuration.replaceAll("\r\n", "\n"))
+    .update("\n-- installer include --\n")
+    .update(installerInclude.replaceAll("\r\n", "\n"))
     .digest("hex");
   if (
     builderVersion !== "26.15.3" ||
     packageName !== "omxterm" ||
     digest !==
-      "8c3eb6a18c81281a93f241c93c64c31d9b628997516baf959465e7a9e413a93d"
+      "e0dcc5f10193ce92251e2552381a3b1b11f9551db5a4f1c30ccfd0d36ea5d665"
   )
     throw new Error(
       "Unknown Windows installer footprint; review the pinned packaging inputs before exact installer verification",

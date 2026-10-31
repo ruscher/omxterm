@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { describe, expect, it, vi } from "vitest";
 import {
   inspectWindowsInstallation,
@@ -15,6 +16,27 @@ function adapter() {
 }
 
 describe("exact Windows installer verification", () => {
+  it("accepts the reviewed packaging footprint including YAML and About notices", async () => {
+    const configuration = await readFile(
+      new URL("../../electron-builder.yml", import.meta.url),
+      "utf8",
+    );
+    const installerInclude = await readFile(
+      new URL("../../build/installer.nsh", import.meta.url),
+      "utf8",
+    );
+    expect(() =>
+      inspectWindowsInstallerInputs(
+        configuration,
+        installerInclude,
+        "26.15.3",
+        "omxterm",
+      ),
+    ).not.toThrow();
+    expect(installerInclude).toContain("customCheckAppRunning");
+    expect(installerInclude).toContain("MB_RETRYCANCEL");
+    expect(installerInclude).not.toMatch(/KILL_PROCESS|Stop-Process/u);
+  });
   it("recognizes the persistent NSIS cache as existing installation state", async () => {
     const execute = vi.fn().mockResolvedValue({
       stdout: JSON.stringify({
@@ -51,7 +73,12 @@ describe("exact Windows installer verification", () => {
   });
   it("rejects changed packaging identity or builder before interpreting Windows state", () => {
     expect(() =>
-      inspectWindowsInstallerInputs("changed config", "26.15.3", "omxterm"),
+      inspectWindowsInstallerInputs(
+        "changed config",
+        "changed include",
+        "26.15.3",
+        "omxterm",
+      ),
     ).toThrow(/footprint/i);
   });
   it.each([

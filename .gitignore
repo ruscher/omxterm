@@ -33,7 +33,8 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
+build/*
+!build/installer.nsh
 develop-eggs/
 dist/
 downloads/
