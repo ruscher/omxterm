@@ -35,7 +35,16 @@ const disposers: (() => void)[] = [];
 afterEach(async () => {
   for (const dispose of disposers.splice(0)) dispose();
   await Promise.all(
-    roots.splice(0).map((root) => rm(root, { recursive: true, force: true })),
+    roots
+      .splice(0)
+      .map((root) =>
+        rm(root, {
+          recursive: true,
+          force: true,
+          maxRetries: 10,
+          retryDelay: 50,
+        }),
+      ),
   );
 });
 
