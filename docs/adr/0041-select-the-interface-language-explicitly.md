@@ -20,6 +20,10 @@ already behaved before this setting existed, so an upgrade keeps every existing
 user's language. An explicit value overrides the system, so all processes agree
 on a value the configuration records.
 
+Main is the only process that resolves the value: it sends new windows the
+resulting locale, because a renderer's `navigator.languages` can disagree with
+the operating system's preferred languages.
+
 English is the source catalog. Other catalogs fall back to English for a missing
 message, and unit tests require that every key is translated unless it is listed
 as shared. Plural forms use `Intl.PluralRules` for the selected language.

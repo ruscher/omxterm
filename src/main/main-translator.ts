@@ -3,6 +3,7 @@ import {
   resolveInterfaceLocale,
   resolveLocale,
   type InterfaceLanguage,
+  type SupportedLocale,
   type Translator,
 } from "../shared/i18n";
 
@@ -18,6 +19,12 @@ export function useSystemLanguages(languages: readonly string[]): Translator {
   systemLanguages = [...languages];
   active = createTranslator(resolveLocale(languages));
   return active;
+}
+
+// What a new window should use. The renderer's own navigator.languages can
+// disagree with the operating system's list, so main decides for every process.
+export function interfaceLocale(language: InterfaceLanguage): SupportedLocale {
+  return resolveInterfaceLocale(language, systemLanguages);
 }
 
 export function useInterfaceLanguage(language: InterfaceLanguage): Translator {

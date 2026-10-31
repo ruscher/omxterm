@@ -199,10 +199,7 @@ app
               BrowserWindow.getAllWindows(),
               terminalApplication,
               {
-                rebuildMenu: () => {
-                  useInterfaceLanguage(state.configuration.language);
-                  rebuildMenu();
-                },
+                rebuildMenu,
                 nativeTitleInset,
                 platform: process.platform,
                 applyBackgroundEffects: backgroundEffects.apply,

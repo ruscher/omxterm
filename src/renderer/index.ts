@@ -5,11 +5,7 @@ import { createElectronTerminalAdapter } from "./electron-terminal-adapter";
 import { mountTerminalWindowPage } from "./terminal-window-host";
 import { renderUserFileErrorBanner } from "./user-file-error-banner";
 import { mountResttyTerminalSurface } from "../terminal-surface/restty-terminal-surface";
-import {
-  createTranslator,
-  resolveInterfaceLocale,
-  resolveLocale,
-} from "../shared/i18n";
+import { createTranslator, resolveLocale } from "../shared/i18n";
 import { showStartupSplash } from "./startup-splash";
 
 const systemLanguages = [...navigator.languages];
@@ -41,7 +37,7 @@ void Promise.all([
   window.omxterm.terminal.workspacePlan().catch(() => null),
 ]).then(([configuration, startupConnection, workspacePlan]) => {
   const translator = createTranslator(
-    resolveInterfaceLocale(configuration.language ?? "system", systemLanguages),
+    configuration.language ?? resolveLocale(systemLanguages),
   );
   document.documentElement.lang = translator.locale;
   // Render before mounting so the Terminal Surface measures the space the
