@@ -1490,3 +1490,44 @@ describe("Terminal Font IPC", () => {
     router.dispose();
   });
 });
+
+describe("Files panel pane state", () => {
+  it("lets the Files panel type into a Windows shell waiting at its prompt", async () => {
+    const ipc = createIpcHarness();
+    const router = registerTerminalIpcRouter(ipc.ipcMain);
+    const mainFrame = {};
+    const webContents: TrustedWebContents = {
+      mainFrame,
+      isDestroyed: () => false,
+      send: vi.fn(),
+    };
+    let atPrompt = false;
+    router.registerController({
+      ...clipboardOptions(),
+      webContents,
+      createSession: vi.fn(() => ({
+        shellDialect: "powershell" as const,
+        write: vi.fn(),
+        resize: vi.fn(),
+        hasForegroundChildProcess: () => true,
+        atShellPrompt: () => atPrompt,
+        close: vi.fn(),
+      })),
+      onSessionStartError: vi.fn(),
+      onSessionExit: vi.fn(),
+    });
+    const owner = { sender: webContents, senderFrame: mainFrame };
+    ipc.handlers.get(terminalIpc.start)!(owner);
+    const paneState = () =>
+      ipc.handlers.get(terminalIpc.sessionDirectory)!(owner, "s1");
+
+    expect(await paneState()).toEqual({
+      directory: null,
+      busy: true,
+      dialect: "powershell",
+    });
+    atPrompt = true;
+    expect(await paneState()).toMatchObject({ busy: false });
+    router.dispose();
+  });
+});

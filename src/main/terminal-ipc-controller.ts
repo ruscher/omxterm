@@ -115,7 +115,9 @@ function paneState(
 ) {
   return {
     directory: directory ?? null,
-    busy: session.hasForegroundChildProcess(),
+    // Close confirmation keeps its own Busy rule (ADR 0017); typing a cd only
+    // needs a shell that waits at its prompt.
+    busy: session.hasForegroundChildProcess() && !session.atShellPrompt?.(),
     ...(session.shellDialect ? { dialect: session.shellDialect } : {}),
   };
 }

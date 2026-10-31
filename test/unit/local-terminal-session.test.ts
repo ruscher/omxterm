@@ -507,3 +507,73 @@ describe("Windows profile launch", () => {
     expect(session.fallbackTitle).not.toBe("PowerShell 7 (No Logo)");
   });
 });
+
+describe("Windows prompt detection", () => {
+  it("knows a Windows shell waits at its prompt from the prompt's drive folder report", () => {
+    const harness = createPtyHarness();
+    const session = createLocalTerminalSession(
+      vi.fn<SpawnPty>(() => harness.pty),
+      {
+        shell: "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        platform: "win32",
+        homeDirectory: "C:\\Users\\example",
+        applicationVersionProvider: { getVersion: () => "1.2.3" },
+        environment: {},
+        onOutput: vi.fn(),
+        onExit: vi.fn(),
+      },
+    );
+
+    expect(session.atShellPrompt?.()).toBe(false);
+    // The report may arrive split across ConPTY reads, with the colon
+    // escaped as the PowerShell integration sends it.
+    harness.emitData("\u001b]7;file://localhost/C%3");
+    harness.emitData("A/Users/example\u001b\\PS C:\\Users\\example> ");
+    expect(session.atShellPrompt?.()).toBe(true);
+    expect(session.hasForegroundChildProcess()).toBe(true);
+    session.write("pin");
+    expect(session.atShellPrompt?.()).toBe(true);
+    session.write("g example.org\r");
+    expect(session.atShellPrompt?.()).toBe(false);
+    harness.emitData("Pinging example.org\r\n");
+    expect(session.atShellPrompt?.()).toBe(false);
+    // A remote or WSL shell reports a POSIX path, not a drive folder.
+    harness.emitData("\u001b]7;file://localhost/home/example\u001b\\");
+    harness.emitData("\u001b]7;file://server/C:/x\u001b\\");
+    expect(session.atShellPrompt?.()).toBe(false);
+    harness.emitData("\u001b]7;file://localhost/D:/\u001b\\PS D:\\> ");
+    expect(session.atShellPrompt?.()).toBe(true);
+    session.close();
+    expect(session.atShellPrompt?.()).toBe(false);
+  });
+
+  it("never reports a prompt outside Windows or for an explicit command", () => {
+    for (const options of [
+      { shell: "/bin/bash", platform: "linux" },
+      {
+        shell: "C:\\Windows\\System32\\cmd.exe",
+        platform: "win32",
+        launchRequest: {
+          kind: "explicit-command" as const,
+          executable: "C:\\Tools\\tool.exe",
+          arguments: [],
+        },
+      },
+    ]) {
+      const harness = createPtyHarness();
+      const session = createLocalTerminalSession(
+        vi.fn<SpawnPty>(() => harness.pty),
+        {
+          ...options,
+          homeDirectory: "/home/example",
+          applicationVersionProvider: { getVersion: () => "1.2.3" },
+          environment: {},
+          onOutput: vi.fn(),
+          onExit: vi.fn(),
+        },
+      );
+      harness.emitData("\u001b]7;file://localhost/C:/\u001b\\");
+      expect(session.atShellPrompt?.()).toBe(false);
+    }
+  });
+});

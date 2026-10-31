@@ -35,6 +35,9 @@ export interface LocalTerminalSession {
   acknowledgeOutput?(bytes: number): boolean;
   outputFlowMetrics?(): TerminalOutputFlowMetrics;
   hasForegroundChildProcess(): boolean;
+  // Windows only: the shell's prompt reported its folder and no line was
+  // submitted since, so the shell waits for a command.
+  atShellPrompt?(): boolean;
   // The shell's current directory when the platform exposes it (Linux /proc).
   workingDirectory?(): string | undefined;
   close(): void;
@@ -154,6 +157,16 @@ export function createLocalTerminalSession(
     exitSubscription = undefined;
   };
 
+  // ConPTY hides the foreground process, so on Windows the shell is known to
+  // wait at its prompt only when the prompt reports a drive-letter folder, as
+  // the PowerShell integration does; Enter starts a command until the next one.
+  let atPrompt = false;
+  let promptReportTail = "";
+  const watchPrompt = options.platform === "win32" && !explicitCommand;
+  const noteTyped = (data: string) => {
+    if (data.includes("\r")) atPrompt = false;
+  };
+
   // A Saved Session's initial command is typed once the program has drawn
   // its first output (normally the prompt), so the line editor reads it
   // instead of the terminal driver echoing it a second time.
@@ -164,12 +177,22 @@ export function createLocalTerminalSession(
     if (!text) return;
     (options.schedule ?? setTimeout)(() => {
       if (closed || exited) return;
-      for (const chunk of splitTerminalPayload(text)) pty.write(chunk);
+      for (const chunk of splitTerminalPayload(text)) {
+        noteTyped(chunk);
+        pty.write(chunk);
+      }
     }, INITIAL_INPUT_SETTLE_MS);
   };
   dataSubscription = pty.onData((data) => {
     if (closed) return;
     typeInitialInput();
+    if (watchPrompt) {
+      const text = promptReportTail + data;
+      if (reportsLocalDriveFolder(text)) {
+        atPrompt = true;
+        promptReportTail = "";
+      } else promptReportTail = text.slice(-(PROMPT_REPORT.length + 3));
+    }
     largestNativeReadBytes = Math.max(
       largestNativeReadBytes,
       Buffer.byteLength(data, "utf8"),
@@ -230,7 +253,9 @@ export function createLocalTerminalSession(
       }
     },
     write(data) {
-      if (!closed && !exited && isBoundedTerminalPayload(data)) pty.write(data);
+      if (closed || exited || !isBoundedTerminalPayload(data)) return;
+      noteTyped(data);
+      pty.write(data);
     },
     resize(size) {
       if (closed || exited || !isTerminalSize(size)) return;
@@ -296,6 +321,9 @@ export function createLocalTerminalSession(
         return true;
       return normalizeProcessName(foreground) !== shellProcessName;
     },
+    atShellPrompt() {
+      return !closed && !exited && atPrompt;
+    },
     close() {
       if (closed) return;
       closed = true;
@@ -313,6 +341,25 @@ export function createLocalTerminalSession(
       if (!exited) pty.kill();
     },
   };
+}
+
+const PROMPT_REPORT = "\u001b]7;file://localhost/";
+
+// An OSC 7 report of a local drive-letter folder: file://localhost/C:/… or,
+// as the PowerShell integration escapes it, file://localhost/C%3A/….
+function reportsLocalDriveFolder(text: string): boolean {
+  for (
+    let at = text.indexOf(PROMPT_REPORT);
+    at >= 0;
+    at = text.indexOf(PROMPT_REPORT, at + 1)
+  ) {
+    const drive = text.slice(
+      at + PROMPT_REPORT.length,
+      at + PROMPT_REPORT.length + 4,
+    );
+    if (/^[A-Za-z](?::|%3a)/iu.test(drive)) return true;
+  }
+  return false;
 }
 
 // A login shell may report itself with a leading dash (e.g. "-zsh").

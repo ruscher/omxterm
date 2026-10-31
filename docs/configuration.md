@@ -273,7 +273,7 @@ Arguments go directly to the program, never through a shell. New tabs use the de
 
 Preferences suggests shells it finds at fixed installation locations (PowerShell 7, Windows PowerShell, Command Prompt, WSL, Git Bash, MSYS2 and Cygwin) without running them. OMXTerm never changes your shell on its own: PowerShell 7 is offered, not selected.
 
-`windowsShellIntegration` lets the Files panel and new panes follow PowerShell's folder. PowerShell keeps its location to itself, so a PowerShell started without arguments runs a small inline prompt wrapper that reports it through OSC 7 (no script file, no execution policy change, and your own prompt still runs). Set it to `false`, or use **Preferences → Advanced**, to start PowerShell untouched; arguments you set in a profile are never changed. Other shells can report their folder the same way with OSC 7.
+`windowsShellIntegration` lets the Files panel and new panes follow PowerShell's folder, and lets browsing in the Files panel move PowerShell along. PowerShell keeps its location to itself, so a PowerShell started without arguments runs a small inline prompt wrapper that reports it through OSC 7 (no script file, no execution policy change, and your own prompt still runs). Set it to `false`, or use **Preferences → Advanced**, to start PowerShell untouched; arguments you set in a profile are never changed. Other shells can report their folder the same way with OSC 7.
 
 ### Choose the interface language
 

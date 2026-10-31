@@ -19,6 +19,7 @@ Statuses: **PASS** (verified natively), **PARTIAL** (works with a stated gap),
 | New tab with any shell or WSL distro     | —     | —          | PASS       | Toolbar tab menu; one entry per `wsl --list` distribution; renderer sends only an opaque id                             |
 | Saved profiles with literal arguments    | —     | —          | PASS       | `windowsProfiles` in config.json; no graphical profile editor yet                                                       |
 | Files panel follows the shell            | PASS  | NOT TESTED | PASS       | PowerShell reports its location through OSC 7 (`windowsShellIntegration`); other shells must emit OSC 7                 |
+| Browsing in Files moves the shell        | PASS  | NOT TESTED | PASS       | PowerShell with `windowsShellIntegration`, only while its prompt waits; other shells must emit OSC 7 from their prompt  |
 | Paths quoted for the pane's shell        | PASS  | PASS       | PASS       | Explorer drop into PowerShell (`'…it''s…'`) and CMD (`"…"`) panes on Windows 11; WSL (`wslpath`) by unit tests          |
 | SSH Quick Connect, host key prompt       | PASS  | NOT TESTED | PASS       | Windows OpenSSH 9.5p2 against a Linux container                                                                         |
 | SFTP in the Files panel                  | PASS  | NOT TESTED | PASS       | Remote listing over the same OpenSSH client                                                                             |
@@ -47,6 +48,7 @@ OMXTerm 0.22.2, Node 24.22, Electron 43.8.1.
 | Windows 10 Pro 22H2 x64 (VM)                | Silent upgrade 0.21.1 → 0.22.2, then start                                                                                     | PASS — config.json byte-identical, app starts, shell menu lists six shells and no WSL                                |
 | Windows 10 Pro 22H2 x64 (VM), by hand       | Interactive installer while OMXTerm runs: Retry with the app open, then Retry after closing it                                 | PASS — no process killed; update completed with exit code 0 and restarted the app                                    |
 | Windows 11 x64 (VM), by hand                | Drag a file from Explorer into a PowerShell pane and a CMD pane, then read it through the inserted path                        | PASS — `gc` and `type` printed the file                                                                              |
+| Windows 11 x64 (VM), by hand                | Files panel: open a folder and click the breadcrumb at the PowerShell prompt, then again while `ping -t` runs                  | PASS — `Set-Location -LiteralPath` typed at the prompt; nothing typed into `ping`, the Busy notice shown             |
 
 ## Known limitations
 
@@ -56,8 +58,11 @@ OMXTerm 0.22.2, Node 24.22, Electron 43.8.1.
 
 - PowerShell started with folder reporting shows no startup banner (`-NoLogo`).
   Set `windowsShellIntegration` to `false` for an untouched PowerShell.
-- Windows panes always count as Busy because ConPTY hides the foreground
-  process, so the Files panel never types `cd` into a Windows pane by itself.
+- ConPTY hides the foreground process, so closing a Windows pane always asks
+  first, and the Files panel types `cd` only into a shell whose prompt reports
+  a drive-letter folder through OSC 7 (PowerShell with
+  `windowsShellIntegration`). CMD, Git Bash, MSYS2 and Cygwin panes are never
+  moved by the panel unless their prompt sends such a report.
 - WSL needs nested virtualization inside a VM; the test VM printed a warning but
   still ran Ubuntu 26.04.
 - CMD, Git Bash, MSYS2 and Cygwin do not report their folder unless their prompt

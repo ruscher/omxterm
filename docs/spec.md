@@ -1375,7 +1375,13 @@ AshyTerm's integrated file manager.
   the shell's kill ring) and types ` cd -- '<path>'` (leading space so shells
   that ignore such lines keep it out of history; PowerShell: Escape, then
   `Set-Location -LiteralPath`). For four seconds after that, the panel waits
-  for the shell to arrive instead of jumping back. With an SSH pane focused
+  for the shell to arrive instead of jumping back. ConPTY hides the
+  foreground program, so on Windows the panel types only while the shell
+  waits at its prompt: from a prompt's OSC 7 report of a drive-letter folder
+  (the `windowsShellIntegration` PowerShell wrapper sends one) until Enter is
+  pressed. Shells that send no such report never receive a typed `cd`. Close
+  confirmation keeps treating every live Windows session as Busy. With an SSH
+  pane focused
   (a Saved SSH Session or Quick Connect) it shows that host over SFTP and
   follows the remote shell through its OSC 7 reports; **Follow This Shell's
   Folder** in the folder menu types a one-line bash/zsh hook that makes the
