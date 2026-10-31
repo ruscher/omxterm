@@ -204,7 +204,12 @@ export async function installedFallbackFontData(
     platform === "darwin"
       ? ["Apple Color Emoji", "Hiragino Sans GB", "Apple Symbols"]
       : platform === "win32"
-        ? ["Segoe UI Emoji", "Microsoft YaHei UI", "Segoe UI Symbol"]
+        ? [
+            "Segoe UI Emoji",
+            "Microsoft YaHei UI",
+            "Malgun Gothic",
+            "Segoe UI Symbol",
+          ]
         : ["Noto Color Emoji", "Noto Sans CJK SC", "DejaVu Sans Mono"];
   const loaded = [];
   let remaining = Math.max(0, byteBudget);

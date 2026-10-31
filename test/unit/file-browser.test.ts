@@ -13,6 +13,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createFileBrowser } from "../../src/main/file-browser";
 import {
   changeDirectoryCommand,
+  isHiddenFileName,
   isFileName,
   isFilePath,
   quotePathForShell,
@@ -200,5 +201,30 @@ describe("directory tracker", () => {
     focused = undefined;
     tracker.focus("s2");
     expect(listener).toHaveBeenLastCalledWith("file:///c");
+  });
+});
+
+describe("hidden file names", () => {
+  it("hides dotfiles everywhere", () => {
+    expect(isHiddenFileName(".git", "linux")).toBe(true);
+    expect(isHiddenFileName(".git", "win32")).toBe(true);
+    expect(isHiddenFileName("src", "linux")).toBe(false);
+  });
+
+  it("hides the Windows profile junctions and records only on Windows", () => {
+    for (const name of [
+      "Application Data",
+      "Cookies",
+      "My Documents",
+      "NTUSER.DAT",
+      "ntuser.dat.LOG1",
+      "NTUSER.DAT{016888bd-6c6f-11de-8d1d-001e0bcde3ec}.TM.blf",
+      "desktop.ini",
+      "$RECYCLE.BIN",
+    ])
+      expect(isHiddenFileName(name, "win32"), name).toBe(true);
+    expect(isHiddenFileName("Cookies", "linux")).toBe(false);
+    expect(isHiddenFileName("Documents", "win32")).toBe(false);
+    expect(isHiddenFileName("Recent Work", "win32")).toBe(false);
   });
 });
