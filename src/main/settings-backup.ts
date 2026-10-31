@@ -11,6 +11,7 @@ import {
   MAX_APPLICATION_DATA_BYTES,
   writeAtomically,
 } from "./application-data";
+import { mainTranslator } from "./main-translator";
 
 // A settings backup is one passphrase-encrypted JSON file holding the user
 // configuration, snippets, themes and Application Data documents as text.
@@ -67,7 +68,9 @@ export function validatePassphrase(passphrase: unknown): string {
   )
     throw new BackupError(
       "passphrase",
-      `The passphrase must have at least ${MIN_PASSPHRASE_LENGTH} characters`,
+      mainTranslator().t("backup.error.passphraseLength", {
+        count: MIN_PASSPHRASE_LENGTH,
+      }),
     );
   return passphrase;
 }
@@ -81,7 +84,10 @@ export async function collectBackup(
     .filter(isBackupFileName)
     .sort();
   if (themes.length > MAX_THEMES)
-    throw new BackupError("too-large", `More than ${MAX_THEMES} theme files`);
+    throw new BackupError(
+      "too-large",
+      mainTranslator().t("backup.error.tooManyThemes", { count: MAX_THEMES }),
+    );
   const files: Record<string, string> = {};
   for (const name of [...USER_FILES, ...APPLICATION_DATA_FILES, ...themes]) {
     const text = await readText(path.join(directory, name));
@@ -99,7 +105,12 @@ async function readText(file: string): Promise<string | undefined> {
     throw cause;
   }
   if (bytes.byteLength > MAX_APPLICATION_DATA_BYTES)
-    throw new BackupError("too-large", `${path.basename(file)} is too large`);
+    throw new BackupError(
+      "too-large",
+      mainTranslator().t("backup.error.fileTooLarge", {
+        name: path.basename(file),
+      }),
+    );
   return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
 }
 
@@ -171,7 +182,7 @@ export async function decryptBackup(
   } catch {
     throw new BackupError(
       "passphrase",
-      "The passphrase is wrong or the backup is damaged",
+      mainTranslator().t("backup.error.wrongPassphrase"),
     );
   }
   try {
@@ -183,11 +194,17 @@ export async function decryptBackup(
 }
 
 const invalid = (detail: string) =>
-  new BackupError("invalid", `This is not an OMXTerm backup (${detail})`);
+  new BackupError(
+    "invalid",
+    mainTranslator().t("backup.error.notBackup", { detail }),
+  );
 
 function parseEnvelope(bytes: Uint8Array) {
   if (bytes.byteLength > MAX_BACKUP_BYTES)
-    throw new BackupError("too-large", "The backup file is too large");
+    throw new BackupError(
+      "too-large",
+      mainTranslator().t("backup.error.backupTooLarge"),
+    );
   let value: unknown;
   try {
     value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
@@ -200,7 +217,7 @@ function parseEnvelope(bytes: Uint8Array) {
     throw Number.isInteger(envelope.version) && (envelope.version as number) > 1
       ? new BackupError(
           "newer-version",
-          "The backup was made by a newer OMXTerm",
+          mainTranslator().t("backup.error.newerVersion"),
         )
       : invalid("version");
   const kdf = record(envelope.kdf, "kdf");
@@ -300,7 +317,10 @@ export async function restoreBackup(
     } catch (cause) {
       throw new BackupError(
         "invalid",
-        `${name} in the backup is invalid: ${cause instanceof Error ? cause.message : String(cause)}`,
+        mainTranslator().t("backup.error.invalidFile", {
+          name,
+          reason: cause instanceof Error ? cause.message : String(cause),
+        }),
       );
     }
   });

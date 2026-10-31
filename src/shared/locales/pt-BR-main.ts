@@ -126,6 +126,20 @@ export const brazilianPortugueseMainMessages: Pick<
   "chrome.restore": "Restaurar",
   "chrome.close": "Fechar Janela",
   "terminal.surface": "Terminal",
+  "backup.error.passphraseLength":
+    "A senha precisa ter pelo menos {count} caracteres",
+  "backup.error.tooManyThemes": "Mais de {count} arquivos de tema",
+  "backup.error.fileTooLarge": "{name} é grande demais",
+  "backup.error.wrongPassphrase":
+    "A senha está errada ou o backup está danificado",
+  "backup.error.notBackup": "Isto não é um backup do OMXTerm ({detail})",
+  "backup.error.backupTooLarge": "O arquivo de backup é grande demais",
+  "backup.error.newerVersion": "O backup foi feito por um OMXTerm mais novo",
+  "backup.error.invalidFile": "{name} no backup é inválido: {reason}",
+  "backup.error.failed": "Não foi possível concluir o backup",
+  "backup.error.unreadable": "Não foi possível ler o arquivo de backup",
+  "backup.error.noFile": "Escolha um arquivo de backup primeiro",
+  "backup.fileFilter": "Backup do OMXTerm",
   "sessions.error.missing": "A sessão salva não existe mais",
   "sessions.error.workingDirectory": "A pasta de trabalho da sessão não existe",
   "sessions.error.passwordUnsupported":

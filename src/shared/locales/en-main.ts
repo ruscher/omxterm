@@ -117,6 +117,20 @@ export const englishMainMessages = {
   "chrome.restore": "Restore",
   "chrome.close": "Close Window",
   "terminal.surface": "Terminal Surface",
+  "backup.error.passphraseLength":
+    "The passphrase must have at least {count} characters",
+  "backup.error.tooManyThemes": "More than {count} theme files",
+  "backup.error.fileTooLarge": "{name} is too large",
+  "backup.error.wrongPassphrase":
+    "The passphrase is wrong or the backup is damaged",
+  "backup.error.notBackup": "This is not an OMXTerm backup ({detail})",
+  "backup.error.backupTooLarge": "The backup file is too large",
+  "backup.error.newerVersion": "The backup was made by a newer OMXTerm",
+  "backup.error.invalidFile": "{name} in the backup is invalid: {reason}",
+  "backup.error.failed": "The backup could not be completed",
+  "backup.error.unreadable": "The backup file could not be read",
+  "backup.error.noFile": "Choose a backup file first",
+  "backup.fileFilter": "OMXTerm backup",
   "sessions.error.missing": "The Saved Session no longer exists",
   "sessions.error.workingDirectory":
     "The session's working directory does not exist",

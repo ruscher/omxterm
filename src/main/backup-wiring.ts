@@ -15,6 +15,7 @@ import {
 } from "./settings-backup";
 import type { IpcEvent, IpcMainPort } from "./terminal-ipc-types";
 import { registerTrustedHandlers } from "./trusted-ipc";
+import { mainTranslator } from "./main-translator";
 
 export interface SettingsBackup {
   // Starts the create or restore flow in the focused Terminal Window.
@@ -36,12 +37,17 @@ export function startSettingsBackup(options: {
   const chosen = new WeakMap<object, Uint8Array>();
   const ownerOf = (event: IpcEvent) =>
     BrowserWindow.fromWebContents(event.sender as Electron.WebContents);
-  const filters = [{ name: "OMXTerm backup", extensions: [BACKUP_EXTENSION] }];
+  const filters = () => [
+    {
+      name: mainTranslator().t("backup.fileFilter"),
+      extensions: [BACKUP_EXTENSION],
+    },
+  ];
   const userMessage = (cause: unknown) =>
     new Error(
       cause instanceof BackupError
         ? cause.message
-        : "The backup could not be completed",
+        : mainTranslator().t("backup.error.failed"),
     );
 
   registerTrustedHandlers(
@@ -58,7 +64,7 @@ export function startSettingsBackup(options: {
               options.homeDirectory,
               `omxterm-settings-${date}.${BACKUP_EXTENSION}`,
             ),
-            filters,
+            filters: filters(),
           };
           const result = owner
             ? await dialog.showSaveDialog(owner, saveOptions)
@@ -76,7 +82,7 @@ export function startSettingsBackup(options: {
         const owner = ownerOf(event);
         const openOptions: Electron.OpenDialogOptions = {
           properties: ["openFile"],
-          filters,
+          filters: filters(),
         };
         const result = owner
           ? await dialog.showOpenDialog(owner, openOptions)
@@ -85,16 +91,16 @@ export function startSettingsBackup(options: {
         if (result.canceled || !file) return false;
         // Fixed messages keep the chosen path out of errors and logs.
         const bytes = await readFile(file).catch(() => {
-          throw new Error("The backup file could not be read");
+          throw new Error(mainTranslator().t("backup.error.unreadable"));
         });
         if (bytes.byteLength > MAX_BACKUP_BYTES)
-          throw new Error("The backup file is too large");
+          throw new Error(mainTranslator().t("backup.error.backupTooLarge"));
         chosen.set(event.sender, bytes);
         return true;
       },
       [backupIpc.restore]: async (event, passphrase) => {
         const bytes = chosen.get(event.sender);
-        if (!bytes) throw new Error("Choose a backup file first");
+        if (!bytes) throw new Error(mainTranslator().t("backup.error.noFile"));
         try {
           const contents = await decryptBackup(bytes, passphrase as string);
           chosen.delete(event.sender);
