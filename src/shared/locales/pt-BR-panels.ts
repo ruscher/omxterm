@@ -137,6 +137,9 @@ export const brazilianPortuguesePanelMessages: Pick<
   "prefs.windowsShell.gitBash": "Git Bash",
   "prefs.windowsShell.msys2": "MSYS2",
   "prefs.windowsShell.cygwin": "Cygwin",
+  "prefs.windowsShellIntegration": "Informar a pasta atual do PowerShell",
+  "prefs.windowsShellIntegrationHint":
+    "Permite que o painel Arquivos e os novos painéis acompanhem o PowerShell. Altera só um PowerShell iniciado sem argumentos, envolvendo o prompt; novas abas usam esta opção.",
   "prefs.configFile": "config.json",
   "prefs.configFileHint":
     "Edite todas as configurações diretamente. Ao salvar, o arquivo é verificado como numa recarga, a versão anterior fica em config.json.bak e tudo é aplicado em todas as janelas.",

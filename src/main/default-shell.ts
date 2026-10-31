@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { isLocalWindowsDriveAbsolutePath } from "../shared/windows-shells";
+import { withPowerShellIntegration } from "./powershell-integration";
 import {
   defaultWindowsShellProfile,
   type WindowsShellProfiles,
@@ -15,6 +16,7 @@ export interface DefaultShellLaunch {
 export interface WindowsShellConfiguration {
   readonly windowsShell?: string;
   readonly windowsProfiles?: WindowsShellProfiles;
+  readonly windowsShellIntegration?: boolean;
 }
 
 export function createDefaultShellResolver(
@@ -58,11 +60,14 @@ export function resolveDefaultShellLaunch(
     const profile = defaultWindowsShellProfile(configured.windowsProfiles);
     if (!profile)
       throw new Error("The configured Windows Default Profile does not exist");
-    return Object.freeze({
-      shell: profile.executable,
-      arguments: profile.arguments,
-      title: profile.name,
-    });
+    return withPowerShellIntegration(
+      Object.freeze({
+        shell: profile.executable,
+        arguments: profile.arguments,
+        title: profile.name,
+      }),
+      configured.windowsShellIntegration === true,
+    );
   }
   const shell = resolveDefaultShell(
     platform,
@@ -71,11 +76,17 @@ export function resolveDefaultShellLaunch(
     configured.windowsShell,
     exists,
   );
-  return Object.freeze({
+  const launch: DefaultShellLaunch = Object.freeze({
     shell,
     arguments: Object.freeze([]),
     title: defaultShellName(platform, shell),
   });
+  return platform === "win32"
+    ? withPowerShellIntegration(
+        launch,
+        configured.windowsShellIntegration === true,
+      )
+    : launch;
 }
 
 export function defaultShellName(platform: string, executable: string): string {

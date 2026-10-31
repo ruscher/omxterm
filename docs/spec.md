@@ -955,6 +955,7 @@ track subsequent bundled palette changes. A present file must contain
 - `language`;
 - `windowsShell`;
 - `windowsProfiles`;
+- `windowsShellIntegration`;
 - `font.family`, `font.size`, `font.lineHeight`, and `font.ligatures`;
 - `terminal.padding.top`, `terminal.padding.right`, `terminal.padding.bottom`,
   and `terminal.padding.left`;
@@ -1080,6 +1081,14 @@ wrapper, argument expansion or shell probe is introduced. A valid reload
 affects future tabs only; live tabs retain their processes. macOS and Linux
 ignore `windowsProfiles` for shell selection and do not inspect its executable
 targets.
+
+`windowsShellIntegration` (default `true`) adds `-NoLogo -NoExit
+-EncodedCommand <inline prompt wrapper>` to a PowerShell started with an empty
+argument vector, so it reports its location through OSC 7; PowerShell's location
+is not its process working directory. The wrapper runs after the user's profile,
+calls the prompt it wraps, uses no script file and does not change the execution
+policy. Non-empty profile arguments and other shells are never altered, and
+`false` restores the empty argument vector.
 
 Without `windowsProfiles` or `windowsShell`, Windows checks Windows PowerShell
 5.1 and then Command Prompt at their fixed `SystemRoot` layouts. The root must

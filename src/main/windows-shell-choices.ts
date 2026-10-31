@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import path from "node:path";
 import { promisify } from "node:util";
 import type { DefaultShellLaunch } from "./default-shell";
+import { withPowerShellIntegration } from "./powershell-integration";
 import { discoverWindowsShells } from "./windows-shell-discovery";
 import type { WindowsShellProfiles } from "../shared/windows-shell-profiles";
 import {
@@ -19,6 +20,7 @@ const WSL_DISTRIBUTION = /^[A-Za-z0-9][\w.+ -]{0,63}$/u;
 export interface WindowsShellChoicesOptions {
   readonly environment: Readonly<Record<string, string | undefined>>;
   readonly profiles: () => WindowsShellProfiles | undefined;
+  readonly integration?: () => boolean;
   readonly kindLabel: (kind: WindowsShellKind) => string;
   readonly discover?: () => Promise<readonly WindowsShellSuggestion[]>;
   readonly listWslDistributions?: (wsl: string) => Promise<readonly string[]>;
@@ -45,7 +47,13 @@ export function createWindowsShellChoices(
       const choices: WindowsShellChoice[] = [];
       const add = (id: string, launch: DefaultShellLaunch) => {
         if (choices.length >= MAX_WINDOWS_SHELL_CHOICES || next.has(id)) return;
-        next.set(id, Object.freeze(launch));
+        next.set(
+          id,
+          withPowerShellIntegration(
+            Object.freeze(launch),
+            options.integration?.() === true,
+          ),
+        );
         choices.push(Object.freeze({ id, label: launch.title }));
       };
       for (const profile of options.profiles()?.profiles ?? [])

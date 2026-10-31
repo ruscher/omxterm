@@ -182,6 +182,7 @@ Every field except `version` is optional and falls back to its default when omit
 | `language`                | `"system"`, `"en-US"` or `"pt-BR"`      | `"system"`                      |
 | `windowsShell`            | non-empty absolute executable path      | Windows PowerShell, then CMD    |
 | `windowsProfiles`         | saved Windows shell profile collection  | absent                          |
+| `windowsShellIntegration` | boolean                                 | `true`                          |
 | `font.family`             | exact installed system font-family name | bundled FiraCode Nerd Font Mono |
 | `font.size`               | integer `8` – `72` (CSS px)             | `16`                            |
 | `font.lineHeight`         | number `1.0` – `2.0`                    | `1.0`                           |
@@ -271,6 +272,8 @@ For named shells or literal command-line arguments, use `windowsProfiles` instea
 Arguments go directly to the program, never through a shell. New tabs use the default profile and its name as the tab's fallback title. **Preferences → Advanced** then shows the Windows shell field as managed by this section.
 
 Preferences suggests shells it finds at fixed installation locations (PowerShell 7, Windows PowerShell, Command Prompt, WSL, Git Bash, MSYS2 and Cygwin) without running them. OMXTerm never changes your shell on its own: PowerShell 7 is offered, not selected.
+
+`windowsShellIntegration` lets the Files panel and new panes follow PowerShell's folder. PowerShell keeps its location to itself, so a PowerShell started without arguments runs a small inline prompt wrapper that reports it through OSC 7 (no script file, no execution policy change, and your own prompt still runs). Set it to `false`, or use **Preferences → Advanced**, to start PowerShell untouched; arguments you set in a profile are never changed. Other shells can report their folder the same way with OSC 7.
 
 ### Choose the interface language
 

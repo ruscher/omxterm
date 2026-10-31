@@ -130,6 +130,9 @@ export const englishPanelMessages = {
   "prefs.windowsShell.gitBash": "Git Bash",
   "prefs.windowsShell.msys2": "MSYS2",
   "prefs.windowsShell.cygwin": "Cygwin",
+  "prefs.windowsShellIntegration": "Report the current folder from PowerShell",
+  "prefs.windowsShellIntegrationHint":
+    "Lets the Files panel and new panes follow PowerShell. Changes only a PowerShell started without arguments, by wrapping its prompt; new tabs use this setting.",
   "prefs.configFile": "config.json",
   "prefs.configFileHint":
     "Edit every setting directly. Saving checks the file like a reload, keeps the previous version as config.json.bak and applies it to all windows.",

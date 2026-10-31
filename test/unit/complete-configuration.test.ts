@@ -43,6 +43,7 @@ describe("complete config.json", () => {
       "language",
       "confirmClose",
       "logLevel",
+      "windowsShellIntegration",
       "font",
       "terminal",
       "scrollback",

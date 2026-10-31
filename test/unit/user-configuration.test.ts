@@ -110,6 +110,7 @@ describe("strict version 1 User Configuration", () => {
     ).toEqual({
       version: 1,
       language: "system",
+      windowsShellIntegration: true,
       confirmClose: false,
       logLevel: "debug",
       windowsShell: "C:\\configured\\shell.exe",

@@ -34,6 +34,7 @@ export function completeConfigurationDocument(
     ...(configuration.windowsProfiles === undefined
       ? {}
       : { windowsProfiles: configuration.windowsProfiles }),
+    windowsShellIntegration: configuration.windowsShellIntegration,
     font: {
       ...(configuration.fontFamily === undefined
         ? {}

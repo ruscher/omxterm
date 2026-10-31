@@ -39,6 +39,7 @@ export function preferencesValues(
     logLevel: configuration.logLevel,
     filePreview: configuration.filePreview,
     windowsShell: configuration.windowsShell ?? "",
+    windowsShellIntegration: configuration.windowsShellIntegration,
     keybinds: { ...configuration.keybinds },
     restoreWindows: extras.restoreWindows,
     highlightOutput: extras.highlightOutput,
@@ -128,6 +129,8 @@ function applyGeneralSettings(document: Document, patch: PreferencesPatch) {
     document.confirmClose = patch.confirmClose;
   if (patch.logLevel !== undefined) document.logLevel = patch.logLevel;
   if (patch.language !== undefined) document.language = patch.language;
+  if (patch.windowsShellIntegration !== undefined)
+    document.windowsShellIntegration = patch.windowsShellIntegration;
   if (patch.windowsShell !== undefined) {
     if (patch.windowsShell.trim() === "") delete document.windowsShell;
     else document.windowsShell = patch.windowsShell.trim();

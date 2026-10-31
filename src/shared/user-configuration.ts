@@ -76,6 +76,8 @@ export interface UserConfiguration {
   readonly logLevel: OperationalLogLevel;
   readonly windowsShell?: string;
   readonly windowsProfiles?: WindowsShellProfiles;
+  // A PowerShell started without arguments reports its folder through OSC 7.
+  readonly windowsShellIntegration: boolean;
   readonly fontFamily?: string;
   readonly fontSize: number;
   readonly fontLineHeight: number;

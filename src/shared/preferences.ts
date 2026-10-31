@@ -87,6 +87,7 @@ export interface PreferencesValues {
   readonly filePreview: boolean;
   // Windows only; the empty string uses the default shell.
   readonly windowsShell: string;
+  readonly windowsShellIntegration: boolean;
   readonly keybinds: Readonly<Record<TerminalActionName, string>>;
   readonly restoreWindows: boolean;
   readonly highlightOutput: boolean;
@@ -187,6 +188,7 @@ const SCALAR_CHECKS: Readonly<
   filePreview: isBoolean,
   windowsShell: (value) =>
     typeof value === "string" && value.length <= 4_096 && !value.includes("\0"),
+  windowsShellIntegration: isBoolean,
   restoreWindows: isBoolean,
   highlightOutput: isBoolean,
 };

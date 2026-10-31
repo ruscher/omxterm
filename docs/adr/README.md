@@ -54,6 +54,7 @@ source/test boundaries and known limitations.
 | 0043 | [Resolve the Windows default shell from system layouts](0043-resolve-the-windows-default-shell-from-system-layouts.md)           |
 | 0044 | [Launch saved Windows shell profiles with literal arguments](0044-launch-saved-windows-shell-profiles-with-literal-arguments.md) |
 | 0045 | [Refuse installer forced close of live terminals](0045-refuse-installer-forced-close-of-live-terminals.md)                       |
+| 0046 | [Report the PowerShell location through OSC 7](0046-report-the-powershell-location-through-osc-7.md)                             |
 
 ## Related boundaries
 
@@ -63,4 +64,4 @@ source/test boundaries and known limitations.
 - User-owned configuration and live application: 0002, 0003, 0025, 0029, 0030.
 - Renderer privilege and explicit payload actions: 0006, 0009–0011, 0021, 0024, 0026.
 - Native distribution, verification and installers: 0015, 0019, 0020, 0023, 0031, 0040, 0045.
-- Windows shells and interface language: 0041, 0042, 0043, 0044.
+- Windows shells and interface language: 0041, 0042, 0043, 0044, 0046.

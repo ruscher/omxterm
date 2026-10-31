@@ -490,7 +490,16 @@ export function advancedPage(context: PreferencesContext): HTMLElement {
   return page(
     context,
     ...(context.snapshot().platform === "win32"
-      ? [heading(context, "prefs.shell"), windowsShellField(context)]
+      ? [
+          heading(context, "prefs.shell"),
+          windowsShellField(context),
+          toggle(
+            context,
+            "windowsShellIntegration",
+            "prefs.windowsShellIntegration",
+          ),
+          hint(context, "prefs.windowsShellIntegrationHint"),
+        ]
       : []),
     heading(context, "prefs.diagnostics"),
     choice(context, "logLevel", "prefs.logLevel", [

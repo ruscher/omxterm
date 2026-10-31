@@ -12,11 +12,15 @@ import {
 
 export function startWindowsShellChoices(
   router: Pick<TerminalIpcRouter, "isTrustedSender">,
-  profiles: () => WindowsShellProfiles | undefined,
+  configured: () => {
+    readonly windowsProfiles?: WindowsShellProfiles;
+    readonly windowsShellIntegration: boolean;
+  },
 ): WindowsShellChoices {
   const choices = createWindowsShellChoices({
     environment: process.env,
-    profiles,
+    profiles: () => configured().windowsProfiles,
+    integration: () => configured().windowsShellIntegration,
     kindLabel: (kind) => mainTranslator().t(WINDOWS_SHELL_LABELS[kind]),
   });
   app.once(

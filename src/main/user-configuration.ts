@@ -52,12 +52,8 @@ import {
   userConfigurationDiagnostic,
 } from "./user-configuration-error";
 import {
-  assertWindowsShellConfigurationExclusive,
   configuredWindowsShellTargets,
-  validateWindowsProfiles,
-  validateWindowsShell,
-  windowsProfilesProperty,
-  windowsShellProperty,
+  validateWindowsSettings,
 } from "./windows-shell-profile-configuration";
 export {
   UserConfigurationError,
@@ -71,6 +67,7 @@ export const USER_CONFIGURATION_VERSION = 1;
 export const DEFAULT_USER_CONFIGURATION: UserConfiguration = Object.freeze({
   version: USER_CONFIGURATION_VERSION,
   language: DEFAULT_INTERFACE_LANGUAGE,
+  windowsShellIntegration: true,
   confirmClose: true,
   logLevel: "info",
   fontSize: DEFAULT_TERMINAL_FONT_SIZE,
@@ -371,6 +368,7 @@ export function validateUserConfiguration(
     "logLevel",
     "windowsShell",
     "windowsProfiles",
+    "windowsShellIntegration",
     "font",
     "terminal",
     "scrollback",
@@ -461,21 +459,6 @@ export function validateUserConfiguration(
         "must be a non-empty string without a NUL character",
       );
   }
-
-  const windowsShell = validateWindowsShell(
-    root.windowsShell,
-    configurationPath,
-    platform,
-  );
-  const windowsProfiles = validateWindowsProfiles(
-    root.windowsProfiles,
-    configurationPath,
-  );
-  assertWindowsShellConfigurationExclusive(
-    windowsShell,
-    windowsProfiles,
-    configurationPath,
-  );
 
   const fontFamily = font?.family;
   if (fontFamily !== undefined) {
@@ -590,8 +573,7 @@ export function validateUserConfiguration(
     language,
     confirmClose,
     logLevel,
-    ...windowsShellProperty(windowsShell),
-    ...windowsProfilesProperty(windowsProfiles),
+    ...validateWindowsSettings(root, configurationPath, platform),
     ...(fontFamily === undefined ? {} : { fontFamily }),
     fontSize,
     fontLineHeight,

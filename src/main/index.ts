@@ -212,7 +212,7 @@ app
         );
         const windowsShellChoices = startWindowsShellChoices(
           terminalIpcRouter,
-          () => configurationReloader.current().configuration.windowsProfiles,
+          () => configurationReloader.current().configuration,
         );
         const windowPlacement = await startWindowPlacement(account.homedir);
         terminalApplication = windowPlacement.preparing(
