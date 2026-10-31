@@ -10,24 +10,24 @@ Statuses: **PASS** (verified natively), **PARTIAL** (works with a stated gap),
 
 ## Feature parity
 
-| Feature                                  | Linux | macOS      | Windows     | Windows evidence or gap                                                                                 |
-| ---------------------------------------- | ----- | ---------- | ----------- | ------------------------------------------------------------------------------------------------------- |
-| ConPTY sessions, resize, Ctrl+C          | —     | —          | PASS        | Windows 10 and 11 x64; bundled `conpty.dll`/`OpenConsole.exe`                                           |
-| Unicode, emoji, CJK, Hangul, SGR, 24-bit | PASS  | NOT TESTED | PASS        | Hangul needed a Malgun Gothic fallback (fixed)                                                          |
-| Tabs, splits, broadcast                  | PASS  | NOT TESTED | PASS        | Split inherits the PowerShell folder through OSC 7                                                      |
-| Installed shells offered in Preferences  | —     | —          | PASS        | PowerShell 7, Windows PowerShell, CMD, Git Bash, MSYS2, Cygwin; never executed during discovery         |
-| New tab with any shell or WSL distro     | —     | —          | PASS        | Toolbar tab menu; one entry per `wsl --list` distribution; renderer sends only an opaque id             |
-| Saved profiles with literal arguments    | —     | —          | PASS        | `windowsProfiles` in config.json; no graphical profile editor yet                                       |
-| Files panel follows the shell            | PASS  | NOT TESTED | PASS        | PowerShell reports its location through OSC 7 (`windowsShellIntegration`); other shells must emit OSC 7 |
-| Paths quoted for the pane's shell        | PASS  | PASS       | PASS (unit) | PowerShell, CMD, POSIX shells and WSL (`wslpath`); native drag-and-drop not exercised                   |
-| SSH Quick Connect, host key prompt       | PASS  | NOT TESTED | PASS        | Windows OpenSSH 9.5p2 against a Linux container                                                         |
-| SFTP in the Files panel                  | PASS  | NOT TESTED | PASS        | Remote listing over the same OpenSSH client                                                             |
-| Stored SSH passwords                     | PASS  | NOT TESTED | ABSENT      | Needs an executable askpass launcher; a `.cmd` launcher is unsafe (see below)                           |
-| SSH connection reuse (ControlMaster)     | PASS  | PASS       | ABSENT      | Windows OpenSSH has no ControlMaster; each pane opens its own connection                                |
-| Interface language                       | PASS  | PASS       | PASS        | `system`, `en-US`, `pt-BR`; main resolves it for every window                                           |
-| NSIS install, start and uninstall        | —     | —          | PASS        | Exact-installer verification on Windows 11 x64                                                          |
-| Installer refuses to kill live terminals | —     | —          | PARTIAL     | Include tracked and pinned; refusal dialog not re-exercised in this round                               |
-| Windows ARM64                            | —     | —          | NOT TESTED  | No ARM64 hardware or VM available                                                                       |
+| Feature                                  | Linux | macOS      | Windows    | Windows evidence or gap                                                                                                 |
+| ---------------------------------------- | ----- | ---------- | ---------- | ----------------------------------------------------------------------------------------------------------------------- |
+| ConPTY sessions, resize, Ctrl+C          | —     | —          | PASS       | Windows 10 and 11 x64; bundled `conpty.dll`/`OpenConsole.exe`                                                           |
+| Unicode, emoji, CJK, Hangul, SGR, 24-bit | PASS  | NOT TESTED | PASS       | Hangul needed a Malgun Gothic fallback (fixed)                                                                          |
+| Tabs, splits, broadcast                  | PASS  | NOT TESTED | PASS       | Split inherits the PowerShell folder through OSC 7                                                                      |
+| Installed shells offered in Preferences  | —     | —          | PASS       | PowerShell 7, Windows PowerShell, CMD, Git Bash, MSYS2, Cygwin; never executed during discovery                         |
+| New tab with any shell or WSL distro     | —     | —          | PASS       | Toolbar tab menu; one entry per `wsl --list` distribution; renderer sends only an opaque id                             |
+| Saved profiles with literal arguments    | —     | —          | PASS       | `windowsProfiles` in config.json; no graphical profile editor yet                                                       |
+| Files panel follows the shell            | PASS  | NOT TESTED | PASS       | PowerShell reports its location through OSC 7 (`windowsShellIntegration`); other shells must emit OSC 7                 |
+| Paths quoted for the pane's shell        | PASS  | PASS       | PASS       | Explorer drop into PowerShell (`'…it''s…'`) and CMD (`"…"`) panes on Windows 11; WSL (`wslpath`) by unit tests          |
+| SSH Quick Connect, host key prompt       | PASS  | NOT TESTED | PASS       | Windows OpenSSH 9.5p2 against a Linux container                                                                         |
+| SFTP in the Files panel                  | PASS  | NOT TESTED | PASS       | Remote listing over the same OpenSSH client                                                                             |
+| Stored SSH passwords                     | PASS  | NOT TESTED | ABSENT     | Needs an executable askpass launcher; a `.cmd` launcher is unsafe (see below)                                           |
+| SSH connection reuse (ControlMaster)     | PASS  | PASS       | ABSENT     | Windows OpenSSH has no ControlMaster; each pane opens its own connection                                                |
+| Interface language                       | PASS  | PASS       | PASS       | `system`, `en-US`, `pt-BR`; main resolves it for every window                                                           |
+| NSIS install, start and uninstall        | —     | —          | PASS       | Exact-installer verification on Windows 11 x64                                                                          |
+| Installer refuses to kill live terminals | —     | —          | PASS       | Windows 10: the pt-BR refusal dialog repeats on Retry while OMXTerm runs, and the update completes after a normal close |
+| Windows ARM64                            | —     | —          | NOT TESTED | No ARM64 hardware or VM available                                                                                       |
 
 ## Verification on 2026-10-31
 
@@ -35,7 +35,7 @@ OMXTerm 0.22.2, Node 24.22, Electron 43.8.1.
 
 | Environment                                 | Command or check                                                                                                               | Result                                                                                                               |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| Linux x64 host                              | `npx vitest run test/unit`                                                                                                     | PASS — 228 files, 2651 tests                                                                                         |
+| Linux x64 host                              | `npx vitest run test/unit`                                                                                                     | PASS — 228 files, 2656 tests                                                                                         |
 | Linux x64 host                              | `npm run typecheck`, `npm run lint`, `prettier --check .`                                                                      | PASS                                                                                                                 |
 | Windows 11 Enterprise 26300 x64 (VM)        | `npm ci`, `tsc --noEmit`                                                                                                       | PASS                                                                                                                 |
 | Windows 11 x64 (VM)                         | `npx vitest run test/unit`                                                                                                     | PASS — 226 files, 2589 tests, 62 skipped as Unix-only                                                                |
@@ -45,12 +45,14 @@ OMXTerm 0.22.2, Node 24.22, Electron 43.8.1.
 | Windows 10 Pro 22H2 x64 (VM)                | `npm ci`, `tsc --noEmit`, `npx vitest run test/unit`, `npm run package:win`                                                    | PASS — 226 files, 2589 tests, 62 skipped as Unix-only                                                                |
 | Windows 10 Pro 22H2 x64 (VM)                | Exact NSIS verification                                                                                                        | NOT RUN — the verifier refused the VM's pre-existing 0.21.1 installer cache, as designed; a clean snapshot is needed |
 | Windows 10 Pro 22H2 x64 (VM)                | Silent upgrade 0.21.1 → 0.22.2, then start                                                                                     | PASS — config.json byte-identical, app starts, shell menu lists six shells and no WSL                                |
+| Windows 10 Pro 22H2 x64 (VM), by hand       | Interactive installer while OMXTerm runs: Retry with the app open, then Retry after closing it                                 | PASS — no process killed; update completed with exit code 0 and restarted the app                                    |
+| Windows 11 x64 (VM), by hand                | Drag a file from Explorer into a PowerShell pane and a CMD pane, then read it through the inserted path                        | PASS — `gc` and `type` printed the file                                                                              |
 
 ## Known limitations
 
 - On Windows 10, an OMXTerm started by the scripted upgrade disappeared shortly
-  after launch once; it was not reproduced, and a later launch stayed up. Cause
-  unknown.
+  after launch once. Three later scripted launches stayed up, and the event log
+  and Crashpad hold no OMXTerm crash. Cause unknown.
 
 - PowerShell started with folder reporting shows no startup banner (`-NoLogo`).
   Set `windowsShellIntegration` to `false` for an untouched PowerShell.
@@ -73,4 +75,4 @@ OMXTerm 0.22.2, Node 24.22, Electron 43.8.1.
   launcher that passes its argument to the helper without a shell, plus a named
   pipe instead of the Unix socket.
 - A graphical editor for `windowsProfiles`.
-- Native drag-and-drop and Explorer "Open in OMXTerm" checks.
+- An Explorer "Open in OMXTerm" entry.
