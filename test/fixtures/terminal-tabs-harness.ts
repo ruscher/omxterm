@@ -42,6 +42,7 @@ export function createTabsHarness(
     endedSolution?: TerminalTabsOptions["endedSolution"];
     describeRemote?: TerminalTabsOptions["describeRemote"];
     onPanesChange?: TerminalTabsOptions["onPanesChange"];
+    surfaceLabel?: string;
   } = {},
 ) {
   document.body.innerHTML = "";
@@ -128,6 +129,7 @@ export function createTabsHarness(
       ...(options.onWorkspaceChange
         ? { onWorkspaceChange: options.onWorkspaceChange }
         : {}),
+      ...(options.surfaceLabel ? { surfaceLabel: options.surfaceLabel } : {}),
     },
   );
   return {

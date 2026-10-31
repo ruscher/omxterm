@@ -61,6 +61,7 @@ describe("split Terminal Panes", () => {
     const spec = { kind: "quick-ssh", target: "admin@example.com" } as const;
     const harness = createTabsHarness({
       initialLaunch: { spec, label: "admin@example.com", retainOnExit: true },
+      surfaceLabel: "Superfície do terminal",
     });
     await harness.tabs.ready;
     expect(harness.createAdapter).toHaveBeenLastCalledWith(spec);
@@ -72,6 +73,11 @@ describe("split Terminal Panes", () => {
     await vi.waitFor(() => expect(harness.surfaces).toHaveLength(2));
     expect(harness.createAdapter).toHaveBeenLastCalledWith(spec);
     expect(harness.container.querySelector(".pane-ended-banner")).toBeNull();
+    expect(
+      [...harness.container.querySelectorAll("[aria-label]")].map((node) =>
+        node.getAttribute("aria-label"),
+      ),
+    ).not.toContain("Terminal Surface");
   });
 
   it("opens search in the focused pane only", async () => {

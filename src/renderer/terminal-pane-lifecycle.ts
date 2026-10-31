@@ -459,6 +459,7 @@ export function reconnect(ctx: TabsContext, old: TerminalPane): void {
     ctx.document,
     ctx.options.createAdapter,
     old.launch,
+    ctx.options.surfaceLabel,
   );
   old.removed = true;
   tab.layout = replacePane(tab.layout, old, pane);
