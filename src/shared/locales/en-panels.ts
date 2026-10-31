@@ -189,7 +189,6 @@ export const englishPanelMessages = {
   "assistant.provider": "Provider",
   "assistant.model": "Model",
   "assistant.modelHint": "Type a model id or load the provider's list.",
-  "assistant.loadModels": "Load Models",
   "assistant.baseUrl": "Server address",
   "assistant.baseUrlHint":
     "OpenAI-compatible address, for example http://localhost:11434/v1 for Ollama or http://localhost:1234/v1 for LM Studio. Plain http is accepted only for this computer and the local network.",
@@ -246,7 +245,6 @@ export const englishPanelMessages = {
   "about.version": "Version {version}",
   "about.summary": "A terminal for macOS, Linux, and Windows.",
   "about.authors": "Authors",
-  "about.website": "Website",
   "about.license": "License",
   "about.warrantyBefore":
     "This application comes with absolutely no warranty. See the ",

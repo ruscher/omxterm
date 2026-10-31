@@ -199,7 +199,6 @@ export const brazilianPortuguesePanelMessages: Pick<
   "assistant.model": "Modelo",
   "assistant.modelHint":
     "Digite o id de um modelo ou carregue a lista do provedor.",
-  "assistant.loadModels": "Carregar Modelos",
   "assistant.baseUrl": "Endereço do servidor",
   "assistant.baseUrlHint":
     "Endereço compatível com OpenAI, por exemplo http://localhost:11434/v1 para Ollama ou http://localhost:1234/v1 para LM Studio. http sem criptografia só é aceito para este computador e a rede local.",
@@ -257,7 +256,6 @@ export const brazilianPortuguesePanelMessages: Pick<
   "about.version": "Versão {version}",
   "about.summary": "Um terminal para macOS, Linux e Windows.",
   "about.authors": "Autores",
-  "about.website": "Site",
   "about.license": "Licença",
   "about.warrantyBefore":
     "Este aplicativo vem sem absolutamente nenhuma garantia. Consulte a ",

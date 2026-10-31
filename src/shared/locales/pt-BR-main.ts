@@ -126,6 +126,10 @@ export const brazilianPortugueseMainMessages: Pick<
   "chrome.restore": "Restaurar",
   "chrome.close": "Fechar Janela",
   "terminal.surface": "Terminal",
+  "window.tabStrip": "Abas do Terminal",
+  "window.snippetsSidebar": "Barra Lateral de Snippets",
+  "window.userFileErrors": "Problemas de Configuração",
+  "window.surfaceFailure": "Falha na Renderização do Terminal",
   "confirm.broadcast.detail": {
     one: "Tudo o que for digitado no painel em foco também será enviado para {count} outro painel desta aba até a transmissão ser interrompida.",
     other:

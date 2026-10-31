@@ -117,6 +117,10 @@ export const englishMainMessages = {
   "chrome.restore": "Restore",
   "chrome.close": "Close Window",
   "terminal.surface": "Terminal Surface",
+  "window.tabStrip": "Terminal Tabs",
+  "window.snippetsSidebar": "Snippets Sidebar",
+  "window.userFileErrors": "Configuration Problems",
+  "window.surfaceFailure": "Terminal Rendering Failure",
   "confirm.broadcast.detail": {
     one: "Everything typed in the focused pane will also be sent to {count} other pane in this tab until broadcasting is stopped.",
     other:

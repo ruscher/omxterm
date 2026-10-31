@@ -40,6 +40,16 @@ void Promise.all([
     configuration.language ?? resolveLocale(systemLanguages),
   );
   document.documentElement.lang = translator.locale;
+  tabStrip.setAttribute("aria-label", translator.t("window.tabStrip"));
+  snippetsElement.setAttribute(
+    "aria-label",
+    translator.t("window.snippetsSidebar"),
+  );
+  errorBanner.setAttribute("aria-label", translator.t("window.userFileErrors"));
+  surfaceFailure.setAttribute(
+    "aria-label",
+    translator.t("window.surfaceFailure"),
+  );
   // Render before mounting so the Terminal Surface measures the space the
   // banner leaves, instead of resizing right after it appears.
   renderUserFileErrorBanner(errorBanner, configuration.userFileErrors);
