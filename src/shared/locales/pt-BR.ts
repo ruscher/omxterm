@@ -340,6 +340,7 @@ export const brazilianPortugueseMessages: EnglishMessages = {
   "commands.field.options": "Opções",
   "commands.field.optionsHint": "Uma por linha: valor=Rótulo",
   "commands.field.flag": "Texto quando ligado",
+  "commands.validation.template": "Digite o comando a executar.",
   "commands.type.text": "Texto",
   "commands.type.textArea": "Texto em Várias Linhas",
   "commands.type.password": "Senha",

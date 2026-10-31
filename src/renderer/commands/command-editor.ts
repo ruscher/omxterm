@@ -216,6 +216,8 @@ export async function editCommand(
         const message = cause instanceof Error ? cause.message : String(cause);
         if (candidate.name.trim() === "")
           name.setError(t("sessions.validation.name"));
+        else if (candidate.template.trim() === "")
+          template.setError(t("commands.validation.template"));
         else template.setError(message);
         return false;
       }

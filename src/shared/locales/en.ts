@@ -337,6 +337,7 @@ export const englishMessages = {
   "commands.field.options": "Options",
   "commands.field.optionsHint": "One per line: value=Label",
   "commands.field.flag": "Text when on",
+  "commands.validation.template": "Enter the command to run.",
   "commands.type.text": "Text",
   "commands.type.textArea": "Multiline Text",
   "commands.type.password": "Password",
