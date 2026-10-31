@@ -24,6 +24,7 @@ import {
   sshDisplayTarget,
 } from "./ssh-command";
 import { readSshConfigHosts, type SshConfigHost } from "./ssh-config-import";
+import { mainTranslator } from "./main-translator";
 
 export type SessionLaunchBase = Omit<
   LocalTerminalSessionOptions,
@@ -259,7 +260,9 @@ export function createSavedSessionService(
       const session =
         typeof reference === "string" ? find(reference) : reference;
       if (!session)
-        throw new SavedSessionError("The Saved Session no longer exists");
+        throw new SavedSessionError(
+          mainTranslator().t("sessions.error.missing"),
+        );
       if (typeof reference === "string")
         void markUsed(reference).catch(() => {});
       if (session.kind === "local") {
@@ -272,7 +275,7 @@ export function createSavedSessionService(
           : undefined;
         if (workingDirectory !== undefined && !isDirectory(workingDirectory))
           throw new SavedSessionError(
-            "The session's working directory does not exist",
+            mainTranslator().t("sessions.error.workingDirectory"),
           );
         return {
           ...base,

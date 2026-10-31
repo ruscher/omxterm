@@ -1,4 +1,5 @@
 import type { Readable, Writable } from "node:stream";
+import { mainTranslator } from "./main-translator";
 
 // A minimal SFTP version 3 client (draft-ietf-secsh-filexfer-02), spoken over
 // the stdin/stdout of `ssh -s <host> sftp`, as OpenSSH's own sftp does. Paths
@@ -412,10 +413,14 @@ export function isRegularMode(permissions: number | undefined): boolean {
 }
 
 export function sftpErrorMessage(cause: unknown): string {
+  const t = mainTranslator().t.bind(mainTranslator());
   if (cause instanceof SftpError) {
-    if (cause.code === STATUS.noSuchFile) return "The item no longer exists.";
-    if (cause.code === STATUS.permissionDenied) return "Permission denied.";
+    if (cause.code === STATUS.noSuchFile) return t("files.error.missing");
+    if (cause.code === STATUS.permissionDenied)
+      return t("files.error.permissionDenied");
     return cause.message.slice(0, 512);
   }
-  return cause instanceof Error ? cause.message.slice(0, 512) : "Failed.";
+  return cause instanceof Error
+    ? cause.message.slice(0, 512)
+    : t("files.error.failed");
 }

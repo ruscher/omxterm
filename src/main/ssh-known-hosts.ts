@@ -20,6 +20,7 @@ import {
 } from "../shared/session-ipc";
 import type { IpcEvent, IpcMainPort } from "./terminal-ipc-types";
 import { registerTrustedHandlers } from "./trusted-ipc";
+import { mainTranslator } from "./main-translator";
 
 // Removes a host's keys from the user's own known_hosts. `ssh-keygen -R`
 // decides which lines belong to the host, run on a private copy because it
@@ -145,9 +146,10 @@ export function registerHostKeyIpc(
           throw new Error("Invalid session reference");
         const session = options.resolve(payload);
         if (session?.kind !== "ssh")
-          throw new Error("The session is not an SSH session");
+          throw new Error(mainTranslator().t("sessions.error.notSsh"));
         const sshKeygen = options.sshKeygen();
-        if (!sshKeygen) throw new Error("ssh-keygen was not found on PATH");
+        if (!sshKeygen)
+          throw new Error(mainTranslator().t("sessions.error.noSshKeygen"));
         try {
           return {
             removed: await forgetHostKey(session, {
@@ -157,7 +159,9 @@ export function registerHostKeyIpc(
             }),
           };
         } catch {
-          throw new Error("ssh-keygen could not update known_hosts");
+          throw new Error(
+            mainTranslator().t("sessions.error.knownHostsUpdate"),
+          );
         }
       },
     },

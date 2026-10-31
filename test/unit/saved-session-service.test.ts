@@ -11,6 +11,7 @@ import {
   workingDirectoryFromReport,
 } from "../../src/shared/terminal-launch";
 import { findExecutable } from "../../src/main/executable-lookup";
+import { useInterfaceLanguage } from "../../src/main/main-translator";
 
 const roots: string[] = [];
 afterEach(async () => {
@@ -132,6 +133,14 @@ describe("Saved Session service", () => {
     expect(() => sessions.launchOptions("missing", base)).toThrow(
       /no longer exists/u,
     );
+    useInterfaceLanguage("pt-BR");
+    try {
+      expect(() => sessions.launchOptions("missing", base)).toThrow(
+        "A sessão salva não existe mais",
+      );
+    } finally {
+      useInterfaceLanguage("en-US");
+    }
   });
 
   it("starts local sessions in their directory with literal program arguments", async () => {

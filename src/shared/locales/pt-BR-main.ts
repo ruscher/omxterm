@@ -126,6 +126,28 @@ export const brazilianPortugueseMainMessages: Pick<
   "chrome.restore": "Restaurar",
   "chrome.close": "Fechar Janela",
   "terminal.surface": "Terminal",
+  "sessions.error.missing": "A sessão salva não existe mais",
+  "sessions.error.workingDirectory": "A pasta de trabalho da sessão não existe",
+  "sessions.error.passwordUnsupported":
+    "Salvar senhas não é suportado neste sistema",
+  "sessions.error.noPassword": "A sessão não usa senha",
+  "sessions.error.passwordNotStored": "Não foi possível guardar a senha",
+  "sessions.error.fileTooLarge": "O arquivo é grande demais",
+  "sessions.error.notExport":
+    "O arquivo não é uma exportação de sessões do OMXTerm",
+  "sessions.error.notSsh": "A sessão não é uma sessão SSH",
+  "sessions.error.noSshKeygen": "ssh-keygen não foi encontrado no PATH",
+  "sessions.error.knownHostsUpdate":
+    "ssh-keygen não conseguiu atualizar o known_hosts",
+  "files.error.permissionDenied": "Permissão negada.",
+  "files.error.exists": "Já existe um item com esse nome.",
+  "files.error.missing": "O item não existe mais.",
+  "files.error.notEmpty": "A pasta não está vazia.",
+  "files.error.crossDevice": "O item não pode ser movido entre dispositivos.",
+  "files.error.copyIntoItself":
+    "Uma pasta não pode ser copiada para dentro de si mesma.",
+  "files.error.failed": "Falhou.",
+  "files.error.tooManyToDelete": "Itens demais para excluir de uma vez.",
   "window.tabStrip": "Abas do Terminal",
   "window.snippetsSidebar": "Barra Lateral de Snippets",
   "window.userFileErrors": "Problemas de Configuração",

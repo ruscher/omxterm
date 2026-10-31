@@ -6,6 +6,7 @@ import type { CredentialStore } from "./credential-store";
 import type { SshAskpass } from "./ssh-askpass";
 import type { IpcEvent, IpcMainPort } from "./terminal-ipc-types";
 import { registerTrustedHandlers } from "./trusted-ipc";
+import { mainTranslator } from "./main-translator";
 
 // Stored SSH passwords of Saved Sessions, keyed "session:<id>" in the shared
 // Credential Store. A synchronous cache of which sessions have one lets a
@@ -44,7 +45,9 @@ export async function createSessionPasswords(
     },
     async set(sessionId, password) {
       if (!askpass)
-        throw new Error("Saving a password is not supported on this system");
+        throw new Error(
+          mainTranslator().t("sessions.error.passwordUnsupported"),
+        );
       await credentials.set(credentialId(sessionId), password);
       saved.add(sessionId);
     },
@@ -104,11 +107,13 @@ export function registerSessionPasswordIpc(
           (candidate) => candidate.id === payload.id,
         );
         if (session?.kind !== "ssh" || session.authentication !== "password")
-          throw new Error("The session does not use a password");
+          throw new Error(mainTranslator().t("sessions.error.noPassword"));
         try {
           await passwords.set(payload.id, payload.password);
         } catch {
-          throw new Error("The password could not be stored");
+          throw new Error(
+            mainTranslator().t("sessions.error.passwordNotStored"),
+          );
         }
       },
     },

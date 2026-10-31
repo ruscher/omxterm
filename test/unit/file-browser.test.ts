@@ -11,6 +11,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createFileBrowser } from "../../src/main/file-browser";
+import { useInterfaceLanguage } from "../../src/main/main-translator";
 import {
   changeDirectoryCommand,
   isHiddenFileName,
@@ -81,6 +82,20 @@ describe.skipIf(process.platform === "win32")("local file browser", () => {
     expect(await browser.resolve(pathToFileURL(root).href + "/missing")).toBe(
       undefined,
     );
+  });
+
+  it("reports failures in the interface language", async () => {
+    const { root, browser } = await setup();
+    await browser.createFolder(root, "a");
+    useInterfaceLanguage("pt-BR");
+    try {
+      expect(await browser.createFolder(root, "a")).toEqual({
+        ok: false,
+        error: "Já existe um item com esse nome.",
+      });
+    } finally {
+      useInterfaceLanguage("en-US");
+    }
   });
 
   it("creates, renames, copies and moves without replacing anything", async () => {
