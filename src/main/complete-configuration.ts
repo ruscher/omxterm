@@ -30,6 +30,9 @@ export function completeConfigurationDocument(
     ...(configuration.windowsShell === undefined
       ? {}
       : { windowsShell: configuration.windowsShell }),
+    ...(configuration.windowsProfiles === undefined
+      ? {}
+      : { windowsProfiles: configuration.windowsProfiles }),
     font: {
       ...(configuration.fontFamily === undefined
         ? {}

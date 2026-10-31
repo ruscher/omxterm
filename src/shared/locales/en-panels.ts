@@ -115,6 +115,15 @@ export const englishPanelMessages = {
   "prefs.windowsShell": "Windows shell",
   "prefs.windowsShellHint":
     "Absolute path of the program new local terminals start. Empty uses Windows PowerShell.",
+  "prefs.windowsShellManaged":
+    "Managed by the windowsProfiles section of config.json. Edit it on the config.json page.",
+  "prefs.windowsShell.powershellCore": "PowerShell 7",
+  "prefs.windowsShell.windowsPowerShell": "Windows PowerShell",
+  "prefs.windowsShell.commandPrompt": "Command Prompt",
+  "prefs.windowsShell.wsl": "WSL",
+  "prefs.windowsShell.gitBash": "Git Bash",
+  "prefs.windowsShell.msys2": "MSYS2",
+  "prefs.windowsShell.cygwin": "Cygwin",
   "prefs.configFile": "config.json",
   "prefs.configFileHint":
     "Edit every setting directly. Saving checks the file like a reload, keeps the previous version as config.json.bak and applies it to all windows.",

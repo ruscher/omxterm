@@ -58,6 +58,8 @@ export interface ApplicationVersionProvider {
 
 export interface LocalTerminalSessionOptions {
   readonly shell: string;
+  readonly shellArguments?: readonly string[];
+  readonly shellTitle?: string;
   readonly launchRequest?: LaunchRequest;
   readonly platform: NodeJS.Platform | string;
   readonly homeDirectory: string;
@@ -99,7 +101,7 @@ export function createLocalTerminalSession(
   const arguments_ = explicitCommand
     ? [...launchRequest.arguments]
     : options.platform === "win32"
-      ? []
+      ? [...(options.shellArguments ?? [])]
       : ["-l"];
   let pty: IPty;
   try {
@@ -209,6 +211,7 @@ export function createLocalTerminalSession(
     launchKind: explicitCommand ? "explicit-command" : "default-shell",
     fallbackTitle:
       options.title ??
+      (explicitCommand ? undefined : options.shellTitle) ??
       (options.platform === "win32"
         ? path.win32.basename(options.shell)
         : path.posix.basename(options.shell)),

@@ -16,6 +16,10 @@ import {
   type TerminalActionName,
 } from "./terminal-keybinds";
 import { TERMINAL_THEME_COLOR_KEYS } from "./terminal-theme";
+import {
+  isWindowsShellSuggestions,
+  type WindowsShellSuggestion,
+} from "./windows-shells";
 
 export const preferencesIpc = {
   get: "preferences:get",
@@ -110,6 +114,10 @@ export interface PreferencesSnapshot {
   // Installed monospace families to suggest; free text is still accepted.
   readonly fontFamilies: readonly string[];
   readonly platform: string;
+  // Windows only: shells found at fixed installation layouts, never executed.
+  readonly windowsShells?: readonly WindowsShellSuggestion[];
+  // A saved windowsProfiles collection chooses the shell instead of this field.
+  readonly windowsShellManaged?: boolean;
   // Why config.json is not active right now, when it is not.
   readonly problem?: string;
 }
@@ -268,6 +276,10 @@ export function isPreferencesSnapshot(
     value.fontFamilies.length <= MAX_LIST &&
     value.fontFamilies.every(text) &&
     text(value.platform) &&
+    (value.windowsShells === undefined ||
+      isWindowsShellSuggestions(value.windowsShells)) &&
+    (value.windowsShellManaged === undefined ||
+      typeof value.windowsShellManaged === "boolean") &&
     (value.problem === undefined ||
       (typeof value.problem === "string" && value.problem.length <= 4_096))
   );

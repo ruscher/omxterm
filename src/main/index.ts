@@ -19,7 +19,7 @@ import {
   terminalClipboardContextMenuTemplate,
 } from "./application-menu";
 import { deliverKeybindsFromKeyEvents } from "./keybind-delivery";
-import { createDefaultShellResolver, defaultShellName } from "./default-shell";
+import { createDefaultShellLaunchResolver } from "./default-shell";
 import { registerTerminalShutdown } from "./terminal-shutdown";
 import { prepareStartup } from "./startup-preparation";
 import { readStartupCommandLine } from "./command-line-startup";
@@ -237,9 +237,9 @@ app
               },
             ),
         });
-        const resolveCurrentDefaultShell = createDefaultShellResolver(
+        const resolveCurrentDefaultShell = createDefaultShellLaunchResolver(
           account.shell,
-          () => configurationReloader.current().configuration.windowsShell,
+          () => configurationReloader.current().configuration,
         );
         const windowPlacement = await startWindowPlacement(account.homedir);
         terminalApplication = windowPlacement.preparing(
@@ -262,10 +262,7 @@ app
                   linuxWindowIconPath,
                 ),
               );
-              const shellName = defaultShellName(
-                process.platform,
-                initialShell,
-              );
+              const shellName = initialShell.title;
               lockTerminalRendererNavigation(window.webContents);
               deliverKeybindsFromKeyEvents(
                 window.webContents,
@@ -319,11 +316,14 @@ app
                 ),
                 webContents: window.webContents,
                 localHostNames: [hostname()],
-                createSession: (callbacks, launch) =>
-                  launchTerminalSession(
+                createSession: (callbacks, launch) => {
+                  const shell = resolveCurrentDefaultShell();
+                  return launchTerminalSession(
                     launch,
                     {
-                      shell: resolveCurrentDefaultShell(),
+                      shell: shell.shell,
+                      shellArguments: shell.arguments,
+                      shellTitle: shell.title,
                       platform: process.platform,
                       homeDirectory: account.homedir,
                       applicationVersionProvider: app,
@@ -337,7 +337,8 @@ app
                       start: (sessionOptions) =>
                         shutdown.createSession(nodePty.spawn, sessionOptions),
                     },
-                  ),
+                  );
+                },
                 confirmBroadcast: (targetCount) =>
                   confirmBroadcast(window, targetCount),
                 onSessionStartError: lifecycle.onSessionStartError,

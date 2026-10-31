@@ -141,5 +141,8 @@ export function defaultPreferencesDocument(original: Document): Document {
     ...(typeof original.windowsShell === "string"
       ? { windowsShell: original.windowsShell }
       : {}),
+    ...(original.windowsProfiles === undefined
+      ? {}
+      : { windowsProfiles: original.windowsProfiles }),
   };
 }

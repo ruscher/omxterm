@@ -21,6 +21,7 @@ import {
   MIN_TERMINAL_FONT_SIZE,
   MIN_TERMINAL_LINE_HEIGHT,
 } from "../../shared/user-configuration";
+import type { WindowsShellKind } from "../../shared/windows-shells";
 import { checkbox, field, selectInput, textInput } from "../ui/form";
 import {
   acceleratorFromKeyEvent,
@@ -468,16 +469,34 @@ function hint(context: PreferencesContext, key: MessageKey): HTMLElement {
   return element;
 }
 
-// Windows only: the program new local terminals start.
+const WINDOWS_SHELL_LABELS = {
+  "powershell-core": "prefs.windowsShell.powershellCore",
+  "windows-powershell": "prefs.windowsShell.windowsPowerShell",
+  "command-prompt": "prefs.windowsShell.commandPrompt",
+  wsl: "prefs.windowsShell.wsl",
+  "git-bash": "prefs.windowsShell.gitBash",
+  msys2: "prefs.windowsShell.msys2",
+  cygwin: "prefs.windowsShell.cygwin",
+} as const satisfies Record<WindowsShellKind, MessageKey>;
+
+// Windows only: the program new local terminals start. Installed shells are
+// offered as suggestions; any absolute path stays valid free text.
 function windowsShellField(context: PreferencesContext): HTMLElement {
-  const input = textInput(
-    context.document,
-    context.snapshot().values.windowsShell,
-    {
-      placeholder:
-        "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
-    },
-  );
+  const snapshot = context.snapshot();
+  const input = textInput(context.document, snapshot.values.windowsShell, {
+    placeholder:
+      "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+  });
+  const list = context.document.createElement("datalist");
+  list.id = "preferences-windows-shells";
+  for (const suggestion of snapshot.windowsShells ?? []) {
+    const option = context.document.createElement("option");
+    option.value = suggestion.executable;
+    option.label = context.t(WINDOWS_SHELL_LABELS[suggestion.kind]);
+    list.append(option);
+  }
+  input.setAttribute("list", list.id);
+  input.disabled = snapshot.windowsShellManaged === true;
   commitOnEnter(input);
   input.addEventListener("change", () =>
     context.save({ windowsShell: input.value.trim() }),
@@ -485,12 +504,18 @@ function windowsShellField(context: PreferencesContext): HTMLElement {
   context.onSync((values) => {
     input.value = values.windowsShell;
   });
-  return field(
+  const wrapper = field(
     context.document,
     context.t("prefs.windowsShell"),
     input,
-    context.t("prefs.windowsShellHint"),
-  ).element;
+    context.t(
+      snapshot.windowsShellManaged
+        ? "prefs.windowsShellManaged"
+        : "prefs.windowsShellHint",
+    ),
+  );
+  wrapper.element.append(list);
+  return wrapper.element;
 }
 
 export function advancedPage(context: PreferencesContext): HTMLElement {

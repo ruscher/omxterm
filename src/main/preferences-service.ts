@@ -18,6 +18,10 @@ import {
   type UserConfigurationLoad,
 } from "./user-configuration";
 import type { UserConfiguration } from "../shared/user-configuration";
+import {
+  MAX_WINDOWS_SHELL_SUGGESTIONS,
+  type WindowsShellSuggestion,
+} from "../shared/windows-shells";
 import { validateTerminalTheme } from "./terminal-theme";
 import { completeConfigurationText } from "./complete-configuration";
 import {
@@ -51,6 +55,23 @@ export interface PreferencesServiceOptions {
     setHighlightOutput(enabled: boolean): Promise<void>;
   };
   readonly fontFamilies: () => Promise<readonly string[]>;
+  // Passive: fixed-location checks refreshed whenever the dialog loads.
+  readonly windowsShells?: () => Promise<readonly WindowsShellSuggestion[]>;
+}
+
+async function windowsShellOffer(
+  configuration: UserConfiguration,
+  options: PreferencesServiceOptions,
+): Promise<{
+  readonly windowsShells?: readonly WindowsShellSuggestion[];
+  readonly windowsShellManaged?: boolean;
+}> {
+  if (options.platform !== "win32" || !options.windowsShells) return {};
+  const windowsShells = await options.windowsShells().catch(() => []);
+  return {
+    windowsShells: windowsShells.slice(0, MAX_WINDOWS_SHELL_SUGGESTIONS),
+    ...(configuration.windowsProfiles ? { windowsShellManaged: true } : {}),
+  };
 }
 
 export interface PreferencesService {
@@ -181,6 +202,7 @@ export function createPreferencesService(
       ],
       fontFamilies: await options.fontFamilies().catch(() => []),
       platform: options.platform,
+      ...(await windowsShellOffer(configuration, options)),
       ...(userFileErrors[0]
         ? { problem: userFileErrors[0].slice(0, 4_096) }
         : {}),

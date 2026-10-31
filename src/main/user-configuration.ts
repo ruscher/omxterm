@@ -47,6 +47,14 @@ import {
   UserConfigurationError,
   userConfigurationDiagnostic,
 } from "./user-configuration-error";
+import {
+  assertWindowsShellConfigurationExclusive,
+  configuredWindowsShellTargets,
+  validateWindowsProfiles,
+  validateWindowsShell,
+  windowsProfilesProperty,
+  windowsShellProperty,
+} from "./windows-shell-profile-configuration";
 export {
   UserConfigurationError,
   userConfigurationDiagnostic,
@@ -219,27 +227,25 @@ export async function loadUserConfiguration(
       return configurationFallback(cause.location, cause.reason);
     throw cause;
   }
-  if (
-    (options.platform ?? "darwin") === "win32" &&
-    preliminary.windowsShell !== undefined
-  ) {
-    let finalTargetIsFile: boolean;
-    try {
-      finalTargetIsFile = (
-        await (options.inspectWindowsShell ?? stat)(preliminary.windowsShell)
-      ).isFile();
-    } catch {
-      return configurationFallback(
-        "windowsShell",
-        "the final target could not be inspected",
-      );
+  if ((options.platform ?? "darwin") === "win32")
+    for (const target of configuredWindowsShellTargets(preliminary)) {
+      let finalTargetIsFile: boolean;
+      try {
+        finalTargetIsFile = (
+          await (options.inspectWindowsShell ?? stat)(target.executable)
+        ).isFile();
+      } catch {
+        return configurationFallback(
+          target.location,
+          "the final target could not be inspected",
+        );
+      }
+      if (!finalTargetIsFile)
+        return configurationFallback(
+          target.location,
+          "the final target must be an existing regular file",
+        );
     }
-    if (!finalTargetIsFile)
-      return configurationFallback(
-        "windowsShell",
-        "the final target must be an existing regular file",
-      );
-  }
   // Keybinds are valid but may still shadow PTY control keys on this platform;
   // that is a non-fatal warning, not a fallback (#102).
   const keybindWarnings = keybindPortabilityWarnings(
@@ -358,6 +364,7 @@ export function validateUserConfiguration(
     "confirmClose",
     "logLevel",
     "windowsShell",
+    "windowsProfiles",
     "font",
     "terminal",
     "scrollback",
@@ -453,6 +460,15 @@ export function validateUserConfiguration(
     root.windowsShell,
     configurationPath,
     platform,
+  );
+  const windowsProfiles = validateWindowsProfiles(
+    root.windowsProfiles,
+    configurationPath,
+  );
+  assertWindowsShellConfigurationExclusive(
+    windowsShell,
+    windowsProfiles,
+    configurationPath,
   );
 
   const fontFamily = font?.family;
@@ -561,6 +577,7 @@ export function validateUserConfiguration(
     confirmClose,
     logLevel,
     ...windowsShellProperty(windowsShell),
+    ...windowsProfilesProperty(windowsProfiles),
     ...(fontFamily === undefined ? {} : { fontFamily }),
     fontSize,
     fontLineHeight,
@@ -614,33 +631,6 @@ function windowPreferences(
     ),
     autoHideTitleBar: read("autoHideTitleBar", false),
   };
-}
-
-function windowsShellProperty(windowsShell: string | undefined): {
-  readonly windowsShell?: string;
-} {
-  return windowsShell === undefined ? {} : { windowsShell };
-}
-
-function validateWindowsShell(
-  value: unknown,
-  configurationPath: string,
-  platform: string,
-): string | undefined {
-  if (value === undefined) return undefined;
-  if (typeof value !== "string" || value.length === 0 || value.includes("\0"))
-    fail(
-      configurationPath,
-      "windowsShell",
-      "must be a non-empty string without a NUL character",
-    );
-  if (platform === "win32" && !path.win32.isAbsolute(value))
-    fail(
-      configurationPath,
-      "windowsShell",
-      "must be an absolute Windows filesystem path",
-    );
-  return value;
 }
 
 function validateTerminalKeybinds(

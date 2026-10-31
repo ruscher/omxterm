@@ -122,6 +122,15 @@ export const brazilianPortuguesePanelMessages: Pick<
   "prefs.windowsShell": "Shell do Windows",
   "prefs.windowsShellHint":
     "Caminho absoluto do programa que os novos terminais locais iniciam. Vazio usa o Windows PowerShell.",
+  "prefs.windowsShellManaged":
+    "Gerenciado pela seção windowsProfiles do config.json. Edite-a na página config.json.",
+  "prefs.windowsShell.powershellCore": "PowerShell 7",
+  "prefs.windowsShell.windowsPowerShell": "Windows PowerShell",
+  "prefs.windowsShell.commandPrompt": "Prompt de Comando",
+  "prefs.windowsShell.wsl": "WSL",
+  "prefs.windowsShell.gitBash": "Git Bash",
+  "prefs.windowsShell.msys2": "MSYS2",
+  "prefs.windowsShell.cygwin": "Cygwin",
   "prefs.configFile": "config.json",
   "prefs.configFileHint":
     "Edite todas as configurações diretamente. Ao salvar, o arquivo é verificado como numa recarga, a versão anterior fica em config.json.bak e tudo é aplicado em todas as janelas.",
