@@ -1,3 +1,5 @@
+# Maintainer: ruscher
+#
 # Arch Linux / Manjaro package for OMXTerm, built from this source tree.
 #
 #   cd packaging/arch && makepkg -si
