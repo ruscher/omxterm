@@ -225,6 +225,7 @@ export function createFilesPanel(
   const actions = createFilesActions(document, {
     t,
     notify: options.notify,
+    focusedPane: options.focusedPane,
     typeInTerminal: options.typeInTerminal,
     copyText: options.copyText,
     source: () => source,

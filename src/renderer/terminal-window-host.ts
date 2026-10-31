@@ -1,3 +1,4 @@
+import type { ShellDialect } from "../shared/shell-dialect";
 import {
   applyWindowFrame,
   mountWindowChrome,
@@ -103,7 +104,10 @@ export interface TerminalWindowPageOptions {
   readonly subscribeToClipboardActions?: (
     listener: (action: "copy" | "paste" | "select-all") => void,
   ) => () => void;
-  readonly droppedFilePathInsertion?: (files: readonly File[]) => string;
+  readonly droppedFilePathInsertion?: (
+    files: readonly File[],
+    dialect?: ShellDialect,
+  ) => string;
   readonly subscribeToTabCommands?: (
     listener: (command: TerminalTabCommand) => void,
   ) => () => void;
@@ -157,6 +161,7 @@ export interface TerminalWindowPageOptions {
     readonly sessionDirectory?: (sessionId: TerminalSessionId) => Promise<{
       readonly directory: string | null;
       readonly busy: boolean;
+      readonly dialect?: ShellDialect;
     } | null>;
     readonly palette?: {
       readonly onToggle: (listener: () => void) => () => void;
@@ -312,8 +317,25 @@ export function mountTerminalWindowPage(
     const files = event.dataTransfer?.files;
     if (!files || files.length === 0 || !options.droppedFilePathInsertion)
       return;
-    const insertion = options.droppedFilePathInsertion([...files]);
-    if (insertion.length > 0) tabs.injectText(insertion);
+    const dropped = [...files];
+    const insert = options.droppedFilePathInsertion;
+    const insertFor = (dialect?: ShellDialect) => {
+      const insertion =
+        dialect === undefined ? insert(dropped) : insert(dropped, dialect);
+      if (insertion.length > 0) tabs.injectText(insertion);
+    };
+    // The quoting follows the focused pane's shell when main can name it.
+    const focused = tabs.focusedSessionId();
+    const sessionDirectory = options.workspace?.sessionDirectory;
+    if (focused === undefined || !sessionDirectory) {
+      insertFor();
+      return;
+    }
+    void sessionDirectory(focused)
+      .catch(() => null)
+      .then((pane) => {
+        if (!disposed) insertFor(pane?.dialect);
+      });
   };
   const dispose = () => {
     if (disposed) return;

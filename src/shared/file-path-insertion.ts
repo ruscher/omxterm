@@ -1,3 +1,9 @@
+import {
+  platformShellDialect,
+  quotePathForDialect,
+  type ShellDialect,
+} from "./shell-dialect";
+
 export const MAX_INSERTED_PATHS = 256;
 export const MAX_INSERTED_PATH_LENGTH = 32_768;
 export const MAX_INSERTED_PATHS_LENGTH = 1_048_576;
@@ -17,11 +23,13 @@ export interface NativeClipboardReader {
 export function formatFilePathInsertion(
   values: readonly unknown[],
   platform: FilePathPlatform,
+  dialect: ShellDialect = platformShellDialect(platform),
 ): string {
   const paths = validateFilePaths(values, platform);
   if (!paths) return "";
-  const quote = platform === "win32" ? quotePowerShellPath : quotePosixPath;
-  const insertion = paths.map(quote).join(" ");
+  const insertion = paths
+    .map((path) => quotePathForDialect(path, dialect))
+    .join(" ");
   return insertion.length <= MAX_INSERTED_PATHS_LENGTH ? insertion : "";
 }
 
@@ -82,14 +90,6 @@ function isWindowsAbsolutePath(value: string): boolean {
       : value.slice(2);
   const parts = withoutPrefix.split(/[\\/]/u);
   return parts.length >= 2 && parts[0]!.length > 0 && parts[1]!.length > 0;
-}
-
-function quotePosixPath(path: string): string {
-  return `'${path.replaceAll("'", `'\\''`)}'`;
-}
-
-function quotePowerShellPath(path: string): string {
-  return `'${path.replace(/[\u0027\u2018-\u201b]/gu, "$&$&")}'`;
 }
 
 function readLinuxPaths(

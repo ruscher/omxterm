@@ -1,3 +1,4 @@
+import type { ShellDialect } from "./shell-dialect";
 import type { AboutInfo, AboutLink } from "./about";
 import type { FilePeek } from "./file-peek";
 import type {
@@ -213,6 +214,7 @@ export interface TerminalBridge {
   sessionDirectory(sessionId: TerminalSessionId): Promise<{
     readonly directory: string | null;
     readonly busy: boolean;
+    readonly dialect?: ShellDialect;
   } | null>;
   onSnippetsToggle(listener: () => void): () => void;
   onCommandPalette(listener: () => void): () => void;
@@ -273,7 +275,10 @@ export interface TerminalBridge {
   onFontZoom(listener: (command: TerminalFontZoom) => void): () => void;
   writeClipboardText(text: string): Promise<void>;
   readClipboardText(): Promise<string>;
-  droppedFilePathInsertion(files: readonly File[]): string;
+  droppedFilePathInsertion(
+    files: readonly File[],
+    dialect?: ShellDialect,
+  ): string;
   confirmPaste(text: string): Promise<boolean>;
   requestClipboardContextMenu(request?: TerminalContextMenuRequest): void;
   onClipboardAction(

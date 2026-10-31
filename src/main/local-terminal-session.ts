@@ -1,3 +1,4 @@
+import { shellDialectOf, type ShellDialect } from "../shared/shell-dialect";
 import { readlinkSync } from "node:fs";
 import path from "node:path";
 import type { IPty, IPtyForkOptions, IDisposable } from "node-pty";
@@ -28,6 +29,7 @@ export interface TerminalOutputFlowMetrics {
 export interface LocalTerminalSession {
   readonly launchKind?: TerminalSessionLaunchKind;
   readonly fallbackTitle?: string;
+  readonly shellDialect?: ShellDialect;
   write(data: string): void;
   resize(size: TerminalSize): void;
   acknowledgeOutput?(bytes: number): boolean;
@@ -209,6 +211,7 @@ export function createLocalTerminalSession(
 
   return {
     launchKind: explicitCommand ? "explicit-command" : "default-shell",
+    shellDialect: shellDialectOf(executable, options.platform),
     fallbackTitle:
       options.title ??
       (explicitCommand ? undefined : options.shellTitle) ??

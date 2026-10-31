@@ -1,3 +1,4 @@
+import type { ShellDialect } from "../shared/shell-dialect";
 import type {
   TerminalExit,
   TerminalSessionId,
@@ -102,6 +103,7 @@ interface RoutedTerminalIpcController
   sessionDirectory(payload?: unknown): {
     readonly directory: string | null;
     readonly busy: boolean;
+    readonly dialect?: ShellDialect;
   } | null;
   sessionLaunch(payload?: unknown): TerminalSessionLaunch | undefined;
   activeTerminalSurfaceFontConfigurations(): readonly TerminalSurfaceFontConfiguration[];
@@ -724,6 +726,9 @@ function createTerminalIpcController(
       return {
         directory: launches.directoryOf(payload as string) ?? null,
         busy: state.session.hasForegroundChildProcess(),
+        ...(state.session.shellDialect
+          ? { dialect: state.session.shellDialect }
+          : {}),
       };
     },
     sessionLaunch: (payload) =>

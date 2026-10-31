@@ -1,23 +1,29 @@
 import {
-  changeDirectoryCommand,
   isFileName,
-  quotePathForShell,
   type FileEntry,
   type FileOperationResult,
   type FileTransfer,
 } from "../../shared/file-browser";
 import type { Translator } from "../../shared/i18n";
+import {
+  changeDirectoryForDialect,
+  platformShellDialect,
+  quotePathForDialect,
+  type ShellDialect,
+} from "../../shared/shell-dialect";
 import type { MenuPosition } from "../tab-strip";
 import { showContextMenu, type ContextMenuItem } from "../ui/context-menu";
 import { confirmAction, promptText } from "../ui/modal";
 import { isDirectoryLike } from "./files-list";
 import type { FilesSource } from "./files-source";
+import type { PaneState } from "./files-sync";
 
 export interface FilesActionsContext {
   readonly t: Translator["t"];
   readonly typeInTerminal: (text: string, submit: boolean) => void;
   readonly copyText: (text: string) => void;
   readonly notify: (message: string) => void;
+  readonly focusedPane: () => Promise<PaneState | null>;
   source(): FilesSource | undefined;
   // The listed directory, if any.
   directory(): string | undefined;
@@ -57,8 +63,22 @@ export function createFilesActions(
   const validate = (value: string) =>
     isFileName(value.trim()) ? undefined : t("files.invalidName");
   const platform = () => context.source()?.platform ?? "linux";
+  // A local folder reaches whichever shell runs in the focused pane; a remote
+  // one is always read by the remote host's shell.
+  const typingDialect = async (): Promise<ShellDialect> => {
+    const pane =
+      context.source()?.kind === "local"
+        ? await context.focusedPane().catch(() => null)
+        : null;
+    return pane?.dialect ?? platformShellDialect(platform());
+  };
   const terminalHere = (directory: string) =>
-    context.typeInTerminal(changeDirectoryCommand(directory, platform()), true);
+    void typingDialect().then((dialect) =>
+      context.typeInTerminal(
+        changeDirectoryForDialect(directory, dialect),
+        true,
+      ),
+    );
 
   const actions: FilesActions = {
     async create(kind) {
@@ -185,9 +205,11 @@ export function createFilesActions(
       {
         label: t("files.insertPath"),
         action: () =>
-          context.typeInTerminal(
-            `${paths.map((item) => quotePathForShell(item, platform())).join(" ")} `,
-            false,
+          void typingDialect().then((dialect) =>
+            context.typeInTerminal(
+              `${paths.map((item) => quotePathForDialect(item, dialect)).join(" ")} `,
+              false,
+            ),
           ),
       },
       {

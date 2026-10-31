@@ -37,6 +37,7 @@ import { createAssistantBridge } from "./assistant-bridge";
 import { createAboutBridge } from "./about-bridge";
 import { createCommandsBridge } from "./commands-bridge";
 import { createBackupBridge } from "./backup-bridge";
+import { isShellDialect } from "../shared/shell-dialect";
 import { isWorkspacePlan, isWorkspaceSnapshot } from "../shared/workspace";
 import { TERMINAL_ACTION_NAMES } from "../shared/terminal-keybinds";
 import {
@@ -115,14 +116,18 @@ const terminal: TerminalBridge = {
       sessionId,
     );
     if (response === null) return null;
-    const { directory, busy } = (response ?? {}) as Record<string, unknown>;
+    const { directory, busy, dialect } = (response ?? {}) as Record<
+      string,
+      unknown
+    >;
     if (
       typeof busy !== "boolean" ||
       (directory !== null &&
-        (typeof directory !== "string" || directory.length > 4_096))
+        (typeof directory !== "string" || directory.length > 4_096)) ||
+      (dialect !== undefined && !isShellDialect(dialect))
     )
       throw new TypeError("Invalid working directory response");
-    return { directory, busy };
+    return { directory, busy, ...(dialect ? { dialect } : {}) };
   },
   onCommandPalette(listener: () => void) {
     const handler = (_event: Electron.IpcRendererEvent, payload: unknown) => {
@@ -417,8 +422,9 @@ const terminal: TerminalBridge = {
       throw new TypeError("Invalid clipboard read response");
     return text;
   },
-  droppedFilePathInsertion(files: readonly File[]) {
+  droppedFilePathInsertion(files: readonly File[], dialect?: unknown) {
     if (
+      (dialect !== undefined && !isShellDialect(dialect)) ||
       !Array.isArray(files) ||
       files.length === 0 ||
       files.length > MAX_INSERTED_PATHS
@@ -430,6 +436,7 @@ const terminal: TerminalBridge = {
       return formatFilePathInsertion(
         droppedFiles.map((file) => webUtils.getPathForFile(file)),
         process.platform,
+        dialect,
       );
     } catch {
       return "";
