@@ -5,7 +5,7 @@ import {
   type CommandField,
   type CommandFieldType,
 } from "../../shared/commands";
-import type { Translator } from "../../shared/i18n";
+import type { MessageKey, Translator } from "../../shared/i18n";
 import {
   field,
   selectInput,
@@ -23,6 +23,21 @@ const EDITOR_TYPES: readonly CommandFieldType[] = [
   "file_path",
   "directory_path",
 ];
+
+// Built-ins also use types the editor does not offer; duplicating one keeps
+// them, so every type needs a label.
+const TYPE_LABELS: Readonly<Record<CommandFieldType, MessageKey>> = {
+  text: "commands.type.text",
+  text_area: "commands.type.textArea",
+  password: "commands.type.password",
+  number: "commands.type.number",
+  switch: "commands.type.switch",
+  dropdown: "commands.type.dropdown",
+  radio: "commands.type.radio",
+  multi_select: "commands.type.multiSelect",
+  file_path: "commands.type.file",
+  directory_path: "commands.type.directory",
+};
 
 // Creates or edits a custom command. Each {name} in the template becomes a
 // field whose label and type can be set; duplicating a built-in keeps its
@@ -104,14 +119,7 @@ export async function editCommand(
     (existing?.fields ?? []).map((item) => [item.id, item]),
   );
   const readers = new Map<string, () => CommandField>();
-  const typeLabel = (type: CommandFieldType) =>
-    t(
-      type === "file_path"
-        ? "commands.type.file"
-        : type === "directory_path"
-          ? "commands.type.directory"
-          : (`commands.type.${type}` as "commands.type.text"),
-    );
+  const typeLabel = (type: CommandFieldType) => t(TYPE_LABELS[type]);
   const renderRows = () => {
     for (const [id, read] of readers) definitions.set(id, read());
     readers.clear();

@@ -135,6 +135,27 @@ describe("Commands panel", () => {
     );
   });
 
+  it("duplicates a built-in whose fields use types the editor does not offer", async () => {
+    const { panel } = await mount("linux");
+    rowNamed(panel.element, "Compress").dispatchEvent(
+      new MouseEvent("contextmenu", { bubbles: true }),
+    );
+    [
+      ...document.querySelectorAll<HTMLButtonElement>(
+        ".omx-context-menu button",
+      ),
+    ]
+      .find((button) => button.textContent === "Duplicate")!
+      .click();
+    const dialog = await vi.waitFor(() =>
+      document.querySelector<HTMLDialogElement>(".command-editor-dialog")!,
+    );
+    const labels = [...dialog.querySelectorAll("option")].map(
+      (option) => option.textContent,
+    );
+    expect(labels).toContain("Multiline Text");
+  });
+
   it("uses PowerShell commands and quoting on Windows, translated for pt-BR", async () => {
     const { panel } = await mount("win32", "pt-BR");
     const names = [...panel.element.querySelectorAll(".sessions-name")].map(
