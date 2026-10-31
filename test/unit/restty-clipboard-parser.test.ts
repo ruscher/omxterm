@@ -153,3 +153,24 @@ describe("Restty parsed OSC 52 seam", () => {
     expect(writeText).toHaveBeenCalledOnce();
   });
 });
+
+describe("Restty parsed OSC 7 seam", () => {
+  it.each(["\u0007", "\u001b\\"])(
+    "delivers a working directory report terminated by %j and keeps later output",
+    (terminator) => {
+      const onOsc = vi.fn();
+      const handler = createInputHandler({
+        onOsc,
+      } as Parameters<typeof createInputHandler>[0] & ResttyOscInputOptions);
+      expect(
+        handler.filterOutput(
+          `\u001b]7;file://localhost/C%3A/Users/me${terminator}later`,
+        ),
+      ).toBe("later");
+      expect(onOsc).toHaveBeenCalledExactlyOnceWith(
+        7,
+        "file://localhost/C%3A/Users/me",
+      );
+    },
+  );
+});
