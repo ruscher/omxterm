@@ -44,9 +44,10 @@ OMXTerm:
 
 - opens the Default Shell in the user's home directory: on macOS and Linux the
   operating-system-configured shell as an interactive login shell; on Windows,
-  which has no login-shell concept, a configured `windowsShell` executable when
-  present, otherwise Windows PowerShell — falling back to the ComSpec command
-  processor — started interactively without a login flag; or, when startup
+  which has no login-shell concept, the selected `windowsProfiles` entry or a
+  configured `windowsShell` executable when present, otherwise Windows
+  PowerShell — falling back to Command Prompt, both from the standard SystemRoot
+  layouts — started interactively without a login flag; or, when startup
   includes `-e <program> [arguments...]`, runs that executable and literal
   argument vector directly in the first Terminal Tab without an implicit shell;
 - provides a terminal targeting ordinary shells, SSH started by the user, tmux,
@@ -951,7 +952,9 @@ track subsequent bundled palette changes. A present file must contain
 
 - `confirmClose`;
 - `logLevel`;
+- `language`;
 - `windowsShell`;
+- `windowsProfiles`;
 - `font.family`, `font.size`, `font.lineHeight`, and `font.ligatures`;
 - `terminal.padding.top`, `terminal.padding.right`, `terminal.padding.bottom`,
   and `terminal.padding.left`;
@@ -1058,6 +1061,31 @@ readability or executability, preflight a spawn, add arguments, use a wrapper,
 or construct a command string. On macOS and Linux the key is accepted without
 filesystem access or warning but has no effect on operating-system shell
 selection.
+
+`windowsProfiles` is an optional saved Windows launch collection and is
+mutually exclusive with `windowsShell`. It contains a lowercase ASCII `default`
+id and from 1 through 16 `profiles`. Every profile contains exactly a unique
+lowercase ASCII `id`, a trimmed printable `name` of at most 128 characters, a
+bounded local drive-absolute `executable`, and an optional `arguments` array.
+The normalized array contains at most 32 literal strings; no argument contains
+NUL, each is at most 8192 characters, and their aggregate length is at most
+32768 characters. Empty arguments and whitespace are preserved.
+
+This structure is validated on every platform. On Windows, the final target of
+every profile executable must also be an existing regular file; one failure
+rejects the complete configuration. A new tab resolves the current default
+profile, sends its executable and literal argument vector directly to the PTY,
+and uses its name as the fallback tab title. No command string, quoting layer,
+wrapper, argument expansion or shell probe is introduced. A valid reload
+affects future tabs only; live tabs retain their processes. macOS and Linux
+ignore `windowsProfiles` for shell selection and do not inspect its executable
+targets.
+
+Without `windowsProfiles` or `windowsShell`, Windows checks Windows PowerShell
+5.1 and then Command Prompt at their fixed `SystemRoot` layouts. The root must
+be a bounded local drive-absolute path; an absent or malformed value uses
+`C:\\Windows`. OMXTerm does not inspect `ComSpec` or search `PATH` while
+resolving the Default Shell.
 
 An optional `keybinds` object remaps application-chrome shortcuts for a fixed
 action vocabulary: `quit`, `copy`, `paste`, `selectAll`, `newWindow`,
@@ -1432,8 +1460,10 @@ Application Data switches.
   Alt, Highlight Output, Highlight Rules…), **Window and Tabs** (title bar,
   tab bar and always-on-top for new windows, confirm close, Restore Windows
   at Startup), **Shortcuts** (every keybind action), **Assistant** (see AI
-  assistant), **Advanced** (log level; the Windows shell on Windows) and
-  **config.json**. The Terminal page also turns file hover previews
+  assistant), **Advanced** (log level; the Windows shell on Windows, with
+  installed shells suggested without running them, read-only while
+  `windowsProfiles` is active) and **config.json**. The Window and Tabs page
+  also chooses the interface language (`language`). The Terminal page also turns file hover previews
   (`terminal.filePreview`) on or off.
 - **config.json page:** the whole file as text, with its path, a live JSON
   check, Format, Reload from Disk and Save (also `Ctrl+S`/`Cmd+S` in the

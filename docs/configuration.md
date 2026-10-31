@@ -174,32 +174,34 @@ See the [Linux desktop guide](linux-desktop.md) for compositor-specific setup:
 
 Every field except `version` is optional and falls back to its default when omitted. At startup OMXTerm adds the settings a valid `config.json` does not list yet, with their current values, so the file always shows every option; values you wrote are kept as written. Only `font.family` (absent means the bundled font) and `windowsShell` (Windows) stay out until you set them:
 
-| Preference                | Accepted value                          | Default                          |
-| ------------------------- | --------------------------------------- | -------------------------------- |
-| `version`                 | `1`                                     | required                         |
-| `confirmClose`            | boolean                                 | `true`                           |
-| `logLevel`                | `"error"`, `"info"`, or `"debug"`       | `"info"`                         |
-| `windowsShell`            | non-empty absolute executable path      | Windows PowerShell, then ComSpec |
-| `font.family`             | exact installed system font-family name | bundled FiraCode Nerd Font Mono  |
-| `font.size`               | integer `8` – `72` (CSS px)             | `16`                             |
-| `font.lineHeight`         | number `1.0` – `2.0`                    | `1.0`                            |
-| `font.ligatures`          | boolean                                 | `true`                           |
-| `terminal.padding.top`    | integer `0` – `128` (CSS px)            | `6`                              |
-| `terminal.padding.right`  | integer `0` – `128` (CSS px)            | `12`                             |
-| `terminal.padding.bottom` | integer `0` – `128` (CSS px)            | `8`                              |
-| `terminal.padding.left`   | integer `0` – `128` (CSS px)            | `12`                             |
-| `terminal.filePreview`    | boolean                                 | `true`                           |
-| `scrollback.lines`        | integer `0` – `100000`                  | `10000`                          |
-| `keyboard.optionAsAlt`    | `"none"`, `"left"`, `"right"`, `"both"` | `"none"`                         |
-| `window.alwaysOnTop`      | boolean                                 | `false`                          |
-| `window.blur`             | boolean                                 | `false`                          |
-| `window.transparency`     | number `0` – `1`                        | `0`                              |
-| `window.showTitleBar`     | boolean                                 | `true`                           |
-| `window.showTabBar`       | boolean                                 | `true`                           |
-| `window.cornerRadius`     | integer `0` – `24` (CSS px)             | `0`                              |
-| `window.autoHideTitleBar` | boolean                                 | `false`                          |
-| `theme.path`              | relative or absolute file path          | bundled `omtheme`                |
-| `keybinds.<action>`       | Electron accelerator string             | built-in shortcut per action     |
+| Preference                | Accepted value                          | Default                         |
+| ------------------------- | --------------------------------------- | ------------------------------- |
+| `version`                 | `1`                                     | required                        |
+| `confirmClose`            | boolean                                 | `true`                          |
+| `logLevel`                | `"error"`, `"info"`, or `"debug"`       | `"info"`                        |
+| `language`                | `"system"`, `"en-US"` or `"pt-BR"`      | `"system"`                      |
+| `windowsShell`            | non-empty absolute executable path      | Windows PowerShell, then CMD    |
+| `windowsProfiles`         | saved Windows shell profile collection  | absent                          |
+| `font.family`             | exact installed system font-family name | bundled FiraCode Nerd Font Mono |
+| `font.size`               | integer `8` – `72` (CSS px)             | `16`                            |
+| `font.lineHeight`         | number `1.0` – `2.0`                    | `1.0`                           |
+| `font.ligatures`          | boolean                                 | `true`                          |
+| `terminal.padding.top`    | integer `0` – `128` (CSS px)            | `6`                             |
+| `terminal.padding.right`  | integer `0` – `128` (CSS px)            | `12`                            |
+| `terminal.padding.bottom` | integer `0` – `128` (CSS px)            | `8`                             |
+| `terminal.padding.left`   | integer `0` – `128` (CSS px)            | `12`                            |
+| `terminal.filePreview`    | boolean                                 | `true`                          |
+| `scrollback.lines`        | integer `0` – `100000`                  | `10000`                         |
+| `keyboard.optionAsAlt`    | `"none"`, `"left"`, `"right"`, `"both"` | `"none"`                        |
+| `window.alwaysOnTop`      | boolean                                 | `false`                         |
+| `window.blur`             | boolean                                 | `false`                         |
+| `window.transparency`     | number `0` – `1`                        | `0`                             |
+| `window.showTitleBar`     | boolean                                 | `true`                          |
+| `window.showTabBar`       | boolean                                 | `true`                          |
+| `window.cornerRadius`     | integer `0` – `24` (CSS px)             | `0`                             |
+| `window.autoHideTitleBar` | boolean                                 | `false`                         |
+| `theme.path`              | relative or absolute file path          | bundled `omtheme`               |
+| `keybinds.<action>`       | Electron accelerator string             | built-in shortcut per action    |
 
 ### Notes on specific settings
 
@@ -246,6 +248,33 @@ On Windows, set `windowsShell` to the full executable path of your preferred she
 ```
 
 Reload your configuration and open a new tab to start the new shell. Only the executable path is accepted (no CLI flags or environment variables). macOS and Linux ignore `windowsShell` and use your OS account's login shell.
+
+For named shells or literal command-line arguments, use `windowsProfiles` instead. It cannot be combined with `windowsShell`. The `default` id must identify one profile, and each profile needs a stable `id`, a `name`, an absolute `executable` and optional literal `arguments`:
+
+```json
+{
+  "version": 1,
+  "windowsProfiles": {
+    "default": "pwsh-nologo",
+    "profiles": [
+      {
+        "id": "pwsh-nologo",
+        "name": "PowerShell 7",
+        "executable": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "arguments": ["-NoLogo"]
+      }
+    ]
+  }
+}
+```
+
+Arguments go directly to the program, never through a shell. New tabs use the default profile and its name as the tab's fallback title. **Preferences → Advanced** then shows the Windows shell field as managed by this section.
+
+Preferences suggests shells it finds at fixed installation locations (PowerShell 7, Windows PowerShell, Command Prompt, WSL, Git Bash, MSYS2 and Cygwin) without running them. OMXTerm never changes your shell on its own: PowerShell 7 is offered, not selected.
+
+### Choose the interface language
+
+`language` is `"system"` (follow the operating system's preferred languages, the default), `"en-US"` or `"pt-BR"`. **Preferences → Window → Language** edits it. Menus change at once; open windows keep their language until they are reopened.
 
 ### Keybinds
 

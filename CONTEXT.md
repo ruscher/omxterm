@@ -41,7 +41,8 @@ tmux.
 
 **Default Shell** — The shell used for a new session unless an explicit command
 was requested. macOS and Linux use the OS-configured shell. Windows uses
-`windowsShell` when configured, otherwise PowerShell with a ComSpec fallback.
+the selected `windowsProfiles` entry or `windowsShell` when configured, otherwise
+Windows PowerShell with a Command Prompt fallback from the SystemRoot layouts.
 
 **Launch Request** — Startup `-e <program> [arguments...]`, consumed by the
 first tab. The program and literal argument list go directly to the PTY.
