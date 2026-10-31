@@ -28,6 +28,7 @@ import type { CredentialStore } from "./credential-store";
 import type { OperationalEventLog } from "./operational-events";
 import type { IpcEvent, IpcMainPort } from "./terminal-ipc-types";
 import { registerTrustedHandlers } from "./trusted-ipc";
+import { mainTranslator } from "./main-translator";
 
 function validSettings(value: unknown): AssistantSettings {
   if (!isAssistantSettings(value))
@@ -197,7 +198,8 @@ export async function startAssistant(options: {
         count: (await service.models(await endpoint(provider(payload)))).length,
       }),
       [assistantIpc.chat]: async (event, payload) => {
-        if (!settings.enabled) throw new Error("The assistant is turned off.");
+        if (!settings.enabled)
+          throw new Error(mainTranslator().t("assistant.error.off"));
         if (typeof payload !== "object" || payload === null)
           throw new TypeError("Invalid assistant request");
         const request = payload as Record<string, unknown>;
