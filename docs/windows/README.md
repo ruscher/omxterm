@@ -10,28 +10,28 @@ Statuses: **PASS** (verified natively), **PARTIAL** (works with a stated gap),
 
 ## Feature parity
 
-| Feature                                  | Linux | macOS      | Windows     | Windows evidence or gap                                                                                    |
-| ---------------------------------------- | ----- | ---------- | ----------- | ---------------------------------------------------------------------------------------------------------- |
-| ConPTY sessions, resize, Ctrl+C          | —     | —          | PASS        | Windows 10 and 11 x64; bundled `conpty.dll`/`OpenConsole.exe`                                              |
-| Unicode, emoji, CJK, Hangul, SGR, 24-bit | PASS  | NOT TESTED | PASS        | Hangul needed a Malgun Gothic fallback (fixed)                                                             |
-| Tabs, splits, broadcast                  | PASS  | NOT TESTED | PASS        | Split inherits the PowerShell folder through OSC 7                                                         |
-| Installed shells offered in Preferences  | —     | —          | PASS        | PowerShell 7, Windows PowerShell, CMD, Git Bash, MSYS2, Cygwin; never executed during discovery            |
-| New tab with any shell or WSL distro     | —     | —          | PASS        | Toolbar tab menu; one entry per `wsl --list` distribution; renderer sends only an opaque id                |
-| Saved profiles with literal arguments    | —     | —          | PASS        | `windowsProfiles` in config.json; no graphical profile editor yet                                          |
-| Files panel follows the shell            | PASS  | NOT TESTED | PASS        | PowerShell reports its location through OSC 7 (`windowsShellIntegration`); other shells must emit OSC 7    |
-| Paths quoted for the pane's shell        | PASS  | PASS       | PASS (unit) | PowerShell, CMD, POSIX shells and WSL (`wslpath`); native drag-and-drop not exercised                      |
-| SSH Quick Connect, host key prompt       | PASS  | NOT TESTED | PASS        | Windows OpenSSH 9.5p2 against a Linux container                                                            |
-| SFTP in the Files panel                  | PASS  | NOT TESTED | PASS        | Remote listing over the same OpenSSH client                                                                |
-| Stored SSH passwords                     | PASS  | NOT TESTED | ABSENT      | Askpass broker uses a Unix socket; Windows keeps ssh's own prompt. A native broker is feasible (see below) |
-| SSH connection reuse (ControlMaster)     | PASS  | PASS       | ABSENT      | Windows OpenSSH has no ControlMaster; each pane opens its own connection                                   |
-| Interface language                       | PASS  | PASS       | PASS        | `system`, `en-US`, `pt-BR`; main resolves it for every window                                              |
-| NSIS install, start and uninstall        | —     | —          | PASS        | Exact-installer verification on Windows 11 x64                                                             |
-| Installer refuses to kill live terminals | —     | —          | PARTIAL     | Include tracked and pinned; refusal dialog not re-exercised in this round                                  |
-| Windows ARM64                            | —     | —          | NOT TESTED  | No ARM64 hardware or VM available                                                                          |
+| Feature                                  | Linux | macOS      | Windows     | Windows evidence or gap                                                                                 |
+| ---------------------------------------- | ----- | ---------- | ----------- | ------------------------------------------------------------------------------------------------------- |
+| ConPTY sessions, resize, Ctrl+C          | —     | —          | PASS        | Windows 10 and 11 x64; bundled `conpty.dll`/`OpenConsole.exe`                                           |
+| Unicode, emoji, CJK, Hangul, SGR, 24-bit | PASS  | NOT TESTED | PASS        | Hangul needed a Malgun Gothic fallback (fixed)                                                          |
+| Tabs, splits, broadcast                  | PASS  | NOT TESTED | PASS        | Split inherits the PowerShell folder through OSC 7                                                      |
+| Installed shells offered in Preferences  | —     | —          | PASS        | PowerShell 7, Windows PowerShell, CMD, Git Bash, MSYS2, Cygwin; never executed during discovery         |
+| New tab with any shell or WSL distro     | —     | —          | PASS        | Toolbar tab menu; one entry per `wsl --list` distribution; renderer sends only an opaque id             |
+| Saved profiles with literal arguments    | —     | —          | PASS        | `windowsProfiles` in config.json; no graphical profile editor yet                                       |
+| Files panel follows the shell            | PASS  | NOT TESTED | PASS        | PowerShell reports its location through OSC 7 (`windowsShellIntegration`); other shells must emit OSC 7 |
+| Paths quoted for the pane's shell        | PASS  | PASS       | PASS (unit) | PowerShell, CMD, POSIX shells and WSL (`wslpath`); native drag-and-drop not exercised                   |
+| SSH Quick Connect, host key prompt       | PASS  | NOT TESTED | PASS        | Windows OpenSSH 9.5p2 against a Linux container                                                         |
+| SFTP in the Files panel                  | PASS  | NOT TESTED | PASS        | Remote listing over the same OpenSSH client                                                             |
+| Stored SSH passwords                     | PASS  | NOT TESTED | ABSENT      | Needs an executable askpass launcher; a `.cmd` launcher is unsafe (see below)                           |
+| SSH connection reuse (ControlMaster)     | PASS  | PASS       | ABSENT      | Windows OpenSSH has no ControlMaster; each pane opens its own connection                                |
+| Interface language                       | PASS  | PASS       | PASS        | `system`, `en-US`, `pt-BR`; main resolves it for every window                                           |
+| NSIS install, start and uninstall        | —     | —          | PASS        | Exact-installer verification on Windows 11 x64                                                          |
+| Installer refuses to kill live terminals | —     | —          | PARTIAL     | Include tracked and pinned; refusal dialog not re-exercised in this round                               |
+| Windows ARM64                            | —     | —          | NOT TESTED  | No ARM64 hardware or VM available                                                                       |
 
 ## Verification on 2026-10-31
 
-Branch `fix/reintegrate-main`, OMXTerm 0.22.2, Node 24.22, Electron 43.8.1.
+OMXTerm 0.22.2, Node 24.22, Electron 43.8.1.
 
 | Environment                                 | Command or check                                                                                                               | Result                                                                                                               |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
@@ -65,8 +65,12 @@ Branch `fix/reintegrate-main`, OMXTerm 0.22.2, Node 24.22, Electron 43.8.1.
 
 ## Next steps (not implemented)
 
-- A Windows askpass broker over a named pipe. A spike confirmed that Windows
-  OpenSSH 9.5 honors `SSH_ASKPASS_REQUIRE=force` with a `.cmd` launcher that runs
-  Electron as Node, so stored passwords can work without new dependencies.
+- Stored SSH passwords. Windows OpenSSH 9.5 honors `SSH_ASKPASS_REQUIRE=force`,
+  but `SSH_ASKPASS` must not be a `.cmd` or `.bat` launcher: Windows starts it
+  through `cmd.exe`, which parses the whole command line, and the prompt text can
+  come from the server (keyboard-interactive). A prompt containing `"` and `&`
+  would run commands on the client. A safe broker needs a small executable
+  launcher that passes its argument to the helper without a shell, plus a named
+  pipe instead of the Unix socket.
 - A graphical editor for `windowsProfiles`.
 - Native drag-and-drop and Explorer "Open in OMXTerm" checks.
