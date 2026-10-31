@@ -40,6 +40,7 @@ describe("complete config.json", () => {
     expectCompleteConfiguration(document);
     expect(Object.keys(document)).toEqual([
       "version",
+      "language",
       "confirmClose",
       "logLevel",
       "font",

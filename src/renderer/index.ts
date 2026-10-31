@@ -5,12 +5,16 @@ import { createElectronTerminalAdapter } from "./electron-terminal-adapter";
 import { mountTerminalWindowPage } from "./terminal-window-host";
 import { renderUserFileErrorBanner } from "./user-file-error-banner";
 import { mountResttyTerminalSurface } from "../terminal-surface/restty-terminal-surface";
-import { createTranslator, resolveLocale } from "../shared/i18n";
+import {
+  createTranslator,
+  resolveInterfaceLocale,
+  resolveLocale,
+} from "../shared/i18n";
 import { showStartupSplash } from "./startup-splash";
 
-const translator = createTranslator(resolveLocale([...navigator.languages]));
+const systemLanguages = [...navigator.languages];
 const hideStartupSplash = showStartupSplash(document);
-document.documentElement.lang = translator.locale;
+document.documentElement.lang = resolveLocale(systemLanguages);
 
 const tabStrip = document.querySelector<HTMLElement>("#tab-strip");
 if (!tabStrip) throw new Error("Terminal Tab strip container is missing");
@@ -36,6 +40,13 @@ void Promise.all([
   window.omxterm.sessions.startupConnection().catch(() => null),
   window.omxterm.terminal.workspacePlan().catch(() => null),
 ]).then(([configuration, startupConnection, workspacePlan]) => {
+  const translator = createTranslator(
+    resolveInterfaceLocale(
+      configuration.language ?? "system",
+      systemLanguages,
+    ),
+  );
+  document.documentElement.lang = translator.locale;
   // Render before mounting so the Terminal Surface measures the space the
   // banner leaves, instead of resizing right after it appears.
   renderUserFileErrorBanner(errorBanner, configuration.userFileErrors);

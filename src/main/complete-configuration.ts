@@ -25,6 +25,7 @@ export function completeConfigurationDocument(
 ): Document {
   return {
     version: 1,
+    language: configuration.language,
     confirmClose: configuration.confirmClose,
     logLevel: configuration.logLevel,
     ...(configuration.windowsShell === undefined

@@ -34,6 +34,7 @@ export function preferencesValues(
     cornerRadius: configuration.cornerRadius,
     autoHideTitleBar: configuration.autoHideTitleBar,
     alwaysOnTop: configuration.alwaysOnTop,
+    language: configuration.language,
     confirmClose: configuration.confirmClose,
     logLevel: configuration.logLevel,
     filePreview: configuration.filePreview,
@@ -126,6 +127,7 @@ function applyGeneralSettings(document: Document, patch: PreferencesPatch) {
   if (patch.confirmClose !== undefined)
     document.confirmClose = patch.confirmClose;
   if (patch.logLevel !== undefined) document.logLevel = patch.logLevel;
+  if (patch.language !== undefined) document.language = patch.language;
   if (patch.windowsShell !== undefined) {
     if (patch.windowsShell.trim() === "") delete document.windowsShell;
     else document.windowsShell = patch.windowsShell.trim();

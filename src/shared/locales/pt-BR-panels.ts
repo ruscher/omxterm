@@ -118,6 +118,12 @@ export const brazilianPortuguesePanelMessages: Pick<
     "Mostrar prévia ao passar o mouse sobre nomes de arquivos",
   "prefs.filePreviewHint":
     "Deixe o ponteiro sobre um nome de arquivo exibido num terminal local (por exemplo pelo ls) para ver a imagem, a primeira página ou as primeiras linhas, com os detalhes.",
+  "prefs.language": "Idioma",
+  "prefs.languageHint":
+    "Os menus mudam na hora; as janelas abertas mantêm o idioma até serem reabertas.",
+  "prefs.language.system": "Igual ao do sistema",
+  "prefs.language.enUS": "English",
+  "prefs.language.ptBR": "Português (Brasil)",
   "prefs.shell": "Shell",
   "prefs.windowsShell": "Shell do Windows",
   "prefs.windowsShellHint":

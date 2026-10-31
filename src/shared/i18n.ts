@@ -47,6 +47,28 @@ export function resolveLocale(preferences: readonly string[]): SupportedLocale {
   return DEFAULT_LOCALE;
 }
 
+// What config.json may choose. "system" follows the operating system's
+// preferred languages; any other value overrides them.
+export const INTERFACE_LANGUAGES = ["system", "en-US", "pt-BR"] as const;
+export type InterfaceLanguage = (typeof INTERFACE_LANGUAGES)[number];
+export const DEFAULT_INTERFACE_LANGUAGE: InterfaceLanguage = "system";
+
+export function isInterfaceLanguage(
+  value: unknown,
+): value is InterfaceLanguage {
+  return (
+    typeof value === "string" &&
+    (INTERFACE_LANGUAGES as readonly string[]).includes(value)
+  );
+}
+
+export function resolveInterfaceLocale(
+  language: InterfaceLanguage,
+  systemLanguages: readonly string[],
+): SupportedLocale {
+  return resolveLocale(language === "system" ? systemLanguages : [language]);
+}
+
 export interface Translator {
   readonly locale: SupportedLocale;
   t(key: MessageKey, parameters?: MessageParameters): string;

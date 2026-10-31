@@ -15,6 +15,7 @@ import {
   TERMINAL_ACTION_NAMES,
   type TerminalActionName,
 } from "./terminal-keybinds";
+import { INTERFACE_LANGUAGES, type InterfaceLanguage } from "./i18n";
 import { TERMINAL_THEME_COLOR_KEYS } from "./terminal-theme";
 import {
   isWindowsShellSuggestions,
@@ -79,6 +80,7 @@ export interface PreferencesValues {
   readonly cornerRadius: number;
   readonly autoHideTitleBar: boolean;
   readonly alwaysOnTop: boolean;
+  readonly language: InterfaceLanguage;
   readonly confirmClose: boolean;
   readonly logLevel: OperationalLogLevel;
   // Hovering a printed file name shows a preview card.
@@ -179,6 +181,7 @@ const SCALAR_CHECKS: Readonly<
   cornerRadius: integerIn(0, MAX_WINDOW_CORNER_RADIUS),
   autoHideTitleBar: isBoolean,
   alwaysOnTop: isBoolean,
+  language: oneOf(INTERFACE_LANGUAGES),
   confirmClose: isBoolean,
   logLevel: oneOf(LOG_LEVELS),
   filePreview: isBoolean,

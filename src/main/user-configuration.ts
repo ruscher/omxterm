@@ -1,4 +1,8 @@
 import { lstat, readFile, stat } from "node:fs/promises";
+import {
+  DEFAULT_INTERFACE_LANGUAGE,
+  INTERFACE_LANGUAGES,
+} from "../shared/i18n";
 import path from "node:path";
 import type {
   OperationalLogLevel,
@@ -66,6 +70,7 @@ export const USER_CONFIGURATION_VERSION = 1;
 
 export const DEFAULT_USER_CONFIGURATION: UserConfiguration = Object.freeze({
   version: USER_CONFIGURATION_VERSION,
+  language: DEFAULT_INTERFACE_LANGUAGE,
   confirmClose: true,
   logLevel: "info",
   fontSize: DEFAULT_TERMINAL_FONT_SIZE,
@@ -361,6 +366,7 @@ export function validateUserConfiguration(
   const root = requireObject(document, configurationPath, "$", "an object");
   rejectUnknownKeys(root, configurationPath, "$", [
     "version",
+    "language",
     "confirmClose",
     "logLevel",
     "windowsShell",
@@ -564,6 +570,13 @@ export function validateUserConfiguration(
     ["error", "info", "debug"] as const,
     "info",
   ) as OperationalLogLevel;
+  const language = optionalEnum(
+    root.language,
+    configurationPath,
+    "language",
+    INTERFACE_LANGUAGES,
+    DEFAULT_INTERFACE_LANGUAGE,
+  );
   const optionKeyMode = optionalEnum(
     keyboard?.optionAsAlt,
     configurationPath,
@@ -574,6 +587,7 @@ export function validateUserConfiguration(
 
   return Object.freeze({
     version: USER_CONFIGURATION_VERSION,
+    language,
     confirmClose,
     logLevel,
     ...windowsShellProperty(windowsShell),

@@ -137,11 +137,12 @@ function numberField(
   return wrapper.element;
 }
 
-function choice<Key extends "optionKeyMode" | "logLevel">(
+function choice<Key extends "optionKeyMode" | "logLevel" | "language">(
   context: PreferencesContext,
   key: Key,
   label: MessageKey,
   options: ReadonlyArray<readonly [PreferencesValues[Key], MessageKey]>,
+  hint?: MessageKey,
 ): HTMLElement {
   const select = selectInput(
     context.document,
@@ -154,7 +155,12 @@ function choice<Key extends "optionKeyMode" | "logLevel">(
   context.onSync((values) => {
     select.value = values[key];
   });
-  return field(context.document, context.t(label), select).element;
+  return field(
+    context.document,
+    context.t(label),
+    select,
+    hint ? context.t(hint) : undefined,
+  ).element;
 }
 
 function schemeCard(
@@ -351,6 +357,17 @@ export function terminalPage(context: PreferencesContext): HTMLElement {
 export function windowPage(context: PreferencesContext): HTMLElement {
   return page(
     context,
+    choice(
+      context,
+      "language",
+      "prefs.language",
+      [
+        ["system", "prefs.language.system"],
+        ["en-US", "prefs.language.enUS"],
+        ["pt-BR", "prefs.language.ptBR"],
+      ],
+      "prefs.languageHint",
+    ),
     heading(context, "prefs.newWindows"),
     toggle(context, "showTitleBar", "prefs.showTitleBar"),
     toggle(context, "autoHideTitleBar", "prefs.autoHideTitleBar"),

@@ -11,7 +11,11 @@ import {
 import * as nodePty from "node-pty";
 import { hostname } from "node:os";
 import { startWindowPlacement } from "./window-placement-wiring";
-import { mainTranslator, useSystemLanguages } from "./main-translator";
+import {
+  mainTranslator,
+  useInterfaceLanguage,
+  useSystemLanguages,
+} from "./main-translator";
 import { terminalIpc } from "../shared/terminal-ipc";
 import {
   terminalActionInvocations,
@@ -165,6 +169,7 @@ app
       configurationLoadOptions,
       async ({ configuration: userConfiguration, fallback, warnings }) => {
         operationalEvents!.setLevel(userConfiguration.logLevel);
+        useInterfaceLanguage(userConfiguration.language);
         if (fallback) {
           operationalEvents!.write({
             name: "configuration.rejected",
@@ -230,7 +235,10 @@ app
               BrowserWindow.getAllWindows(),
               terminalApplication,
               {
-                rebuildMenu,
+                rebuildMenu: () => {
+                  useInterfaceLanguage(state.configuration.language);
+                  rebuildMenu();
+                },
                 nativeTitleInset,
                 platform: process.platform,
                 applyBackgroundEffects: backgroundEffects.apply,

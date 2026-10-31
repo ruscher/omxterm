@@ -40,6 +40,14 @@ describe("internationalization", () => {
       "prefs.terminal",
       "prefs.shell",
       "prefs.configFile",
+      "prefs.language.enUS",
+      "prefs.language.ptBR",
+      "prefs.windowsShell.powershellCore",
+      "prefs.windowsShell.windowsPowerShell",
+      "prefs.windowsShell.wsl",
+      "prefs.windowsShell.gitBash",
+      "prefs.windowsShell.msys2",
+      "prefs.windowsShell.cygwin",
       "appMenu.terminal",
     ]);
     const texts = (message: unknown): string[] =>

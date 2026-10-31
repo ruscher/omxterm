@@ -111,6 +111,12 @@ export const englishPanelMessages = {
   "prefs.filePreviewToggle": "Preview files when hovering their names",
   "prefs.filePreviewHint":
     "Rest the pointer on a file name printed in a local terminal (for example by ls) to see its picture, first page or first lines, with its details.",
+  "prefs.language": "Language",
+  "prefs.languageHint":
+    "Menus change at once; open windows keep their language until they are reopened.",
+  "prefs.language.system": "Same as the system",
+  "prefs.language.enUS": "English",
+  "prefs.language.ptBR": "Português (Brasil)",
   "prefs.shell": "Shell",
   "prefs.windowsShell": "Windows shell",
   "prefs.windowsShellHint":

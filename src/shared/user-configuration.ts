@@ -1,4 +1,5 @@
 import { isTerminalTheme, type TerminalTheme } from "./terminal-theme";
+import { isInterfaceLanguage, type InterfaceLanguage } from "./i18n";
 import type { TerminalKeybinds } from "./terminal-keybinds";
 import type { WindowsShellProfiles } from "./windows-shell-profiles";
 
@@ -41,6 +42,8 @@ export interface TerminalPadding {
 }
 
 export interface TerminalRendererConfiguration {
+  // New windows use it for application text; absent means "system".
+  readonly language?: InterfaceLanguage;
   readonly fontConfigurationId?: string;
   readonly fontFamily?: string;
   readonly fontSize: number;
@@ -64,6 +67,7 @@ export interface TerminalRendererConfiguration {
 
 export interface UserConfiguration {
   readonly version: 1;
+  readonly language: InterfaceLanguage;
   readonly confirmClose: boolean;
   readonly logLevel: OperationalLogLevel;
   readonly windowsShell?: string;
@@ -95,6 +99,7 @@ export function isTerminalRendererConfiguration(
   return (
     keys.every((key) =>
       [
+        "language",
         "fontConfigurationId",
         "fontFamily",
         "fontSize",
@@ -113,6 +118,7 @@ export function isTerminalRendererConfiguration(
         "userFileErrors",
       ].includes(key),
     ) &&
+    (value.language === undefined || isInterfaceLanguage(value.language)) &&
     isOptionalSurfaceFontIdentity(value.fontConfigurationId) &&
     (value.fontFamily === undefined || typeof value.fontFamily === "string") &&
     Number.isInteger(value.fontSize) &&

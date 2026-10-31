@@ -7,6 +7,7 @@ const any = (type: unknown): unknown => expect.any(type) as unknown;
 export function expectCompleteConfiguration(document: unknown): void {
   expect(document).toMatchObject({
     version: 1,
+    language: any(String),
     confirmClose: any(Boolean),
     logLevel: any(String),
     font: {
