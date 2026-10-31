@@ -8,6 +8,16 @@ export const WINDOWS_SHELL_KINDS = [
   "cygwin",
 ] as const;
 
+export const WINDOWS_SHELL_LABELS = {
+  "powershell-core": "prefs.windowsShell.powershellCore",
+  "windows-powershell": "prefs.windowsShell.windowsPowerShell",
+  "command-prompt": "prefs.windowsShell.commandPrompt",
+  wsl: "prefs.windowsShell.wsl",
+  "git-bash": "prefs.windowsShell.gitBash",
+  msys2: "prefs.windowsShell.msys2",
+  cygwin: "prefs.windowsShell.cygwin",
+} as const;
+
 export const MAX_WINDOWS_SHELL_SUGGESTIONS = 16;
 
 export type WindowsShellKind = (typeof WINDOWS_SHELL_KINDS)[number];
@@ -54,5 +64,38 @@ export function isWindowsShellSuggestions(
     Array.isArray(value) &&
     value.length <= MAX_WINDOWS_SHELL_SUGGESTIONS &&
     value.every(isWindowsShellSuggestion)
+  );
+}
+
+// One entry of the new-tab shell menu. The renderer only ever sends the id back;
+// main alone maps it to an executable and arguments.
+export interface WindowsShellChoice {
+  readonly id: string;
+  readonly label: string;
+}
+
+export const MAX_WINDOWS_SHELL_CHOICES = 64;
+const WINDOWS_SHELL_CHOICE_ID = /^(?:profile|installed|wsl):[\w.+ -]{1,64}$/u;
+
+export function isWindowsShellChoiceId(value: unknown): value is string {
+  return typeof value === "string" && WINDOWS_SHELL_CHOICE_ID.test(value);
+}
+
+export function isWindowsShellChoices(
+  value: unknown,
+): value is readonly WindowsShellChoice[] {
+  return (
+    Array.isArray(value) &&
+    value.length <= MAX_WINDOWS_SHELL_CHOICES &&
+    value.every((choice: unknown) => {
+      if (typeof choice !== "object" || choice === null) return false;
+      const { id, label } = choice as Record<string, unknown>;
+      return (
+        isWindowsShellChoiceId(id) &&
+        typeof label === "string" &&
+        label.length > 0 &&
+        label.length <= 256
+      );
+    })
   );
 }

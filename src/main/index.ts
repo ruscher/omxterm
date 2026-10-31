@@ -1,7 +1,6 @@
 import {
   app,
   BrowserWindow,
-  clipboard,
   dialog,
   ipcMain,
   Menu,
@@ -24,6 +23,7 @@ import {
 } from "./application-menu";
 import { deliverKeybindsFromKeyEvents } from "./keybind-delivery";
 import { createDefaultShellLaunchResolver } from "./default-shell";
+import { startWindowsShellChoices } from "./windows-shell-wiring";
 import { registerTerminalShutdown } from "./terminal-shutdown";
 import { prepareStartup } from "./startup-preparation";
 import { readStartupCommandLine } from "./command-line-startup";
@@ -34,10 +34,7 @@ import {
 import { applyLinuxDisplayBackendDefault } from "./linux-display-backend";
 import { applyChromiumSandboxPolicy } from "./chromium-sandbox-policy";
 import { applyChromiumGpuPolicy } from "./chromium-gpu-policy";
-import {
-  isFilePathPlatform,
-  readClipboardPathInsertion,
-} from "../shared/file-path-insertion";
+import { windowClipboardOptions } from "./window-clipboard";
 import {
   startTerminalApplication,
   type TerminalApplication,
@@ -85,8 +82,6 @@ import { preferencesConfiguration } from "./preferences-configuration";
 import { applicationMenuActions } from "./application-menu-actions";
 import { registerCommandPaletteActions } from "./command-palette-actions";
 import { registerMainMenu, terminalMainMenuTemplate } from "./main-menu";
-import { showTerminalContextMenu } from "./terminal-context-menu";
-import type { TerminalContextMenuRequest } from "../shared/terminal-contract";
 import { commandIpc } from "../shared/command-ipc";
 import { sessionIpc } from "../shared/session-ipc";
 import { launchTerminalSession } from "./session-launch";
@@ -100,15 +95,9 @@ import {
   confirmClosePane,
   confirmCloseTab,
   confirmCloseWindow,
-  confirmProtectedPaste,
   confirmQuit,
 } from "./native-confirmations";
 
-const showClipboardError = () =>
-  dialog.showErrorBox(
-    mainTranslator().t("failure.clipboard.title"),
-    mainTranslator().t("failure.clipboard.message"),
-  );
 let terminalApplication: TerminalApplication<BrowserWindow> | undefined;
 let operationalEvents: OperationalEventLog | undefined;
 let disposeTerminalSessions = () => {};
@@ -119,31 +108,6 @@ const shutdown = registerTerminalShutdown(app, {
 
 // One window's Clipboard Boundary actions and right-click menu. A split
 // pane's menu adds Close Pane with the current keybind.
-function windowClipboardOptions(
-  window: BrowserWindow,
-  keybinds: () => { readonly closePane: string | null },
-) {
-  return {
-    writeClipboardText: (text: string) => clipboard.writeText(text),
-    readClipboardText: () =>
-      isFilePathPlatform(process.platform)
-        ? readClipboardPathInsertion(clipboard, process.platform)
-        : clipboard.readText(),
-    onClipboardError: showClipboardError,
-    confirmPaste: () => confirmProtectedPaste(window),
-    showClipboardContextMenu: (request?: TerminalContextMenuRequest) =>
-      showTerminalContextMenu(
-        window,
-        request?.closePane
-          ? {
-              click: () => void terminalApplication?.closeSelectedPane(),
-              accelerator: keybinds().closePane,
-            }
-          : undefined,
-      ),
-  };
-}
-
 const commandLine = readStartupCommandLine(app);
 
 applyChromiumSandboxPolicy(app.commandLine);
@@ -249,6 +213,10 @@ app
           account.shell,
           () => configurationReloader.current().configuration,
         );
+        const windowsShellChoices = startWindowsShellChoices(
+          terminalIpcRouter,
+          () => configurationReloader.current().configuration.windowsProfiles,
+        );
         const windowPlacement = await startWindowPlacement(account.homedir);
         terminalApplication = windowPlacement.preparing(
           startTerminalApplication<BrowserWindow>({
@@ -341,6 +309,7 @@ app
                     {
                       consumeLaunchRequest: consumeLaunch,
                       consumeStartupOptions: consumeStartup,
+                      windowsShell: windowsShellChoices.resolve,
                       savedSessions,
                       start: (sessionOptions) =>
                         shutdown.createSession(nodePty.spawn, sessionOptions),
@@ -369,6 +338,7 @@ app
                   ),
                 ...windowClipboardOptions(
                   window,
+                  () => void terminalApplication?.closeSelectedPane(),
                   () => configurationReloader.current().configuration.keybinds,
                 ),
                 loadSnippets: () =>

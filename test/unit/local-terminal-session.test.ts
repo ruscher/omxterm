@@ -185,57 +185,6 @@ describe("local PTY Adapter lifecycle", () => {
     expect(session.fallbackTitle).toBe("bash.exe");
   });
 
-  it("passes saved profile arguments literally and uses its display name", () => {
-    const harness = createPtyHarness();
-    const spawn = vi.fn<SpawnPty>(() => harness.pty);
-    const session = createLocalTerminalSession(spawn, {
-      shell: "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
-      shellArguments: ["-NoLogo", "", "two words", "&not-a-command"],
-      shellTitle: "PowerShell 7 (No Logo)",
-      platform: "win32",
-      homeDirectory: "C:\\Users\\example",
-      applicationVersionProvider: { getVersion: () => "1.2.3" },
-      environment: {},
-      onOutput: vi.fn(),
-      onExit: vi.fn(),
-    });
-
-    expect(spawn).toHaveBeenCalledWith(
-      "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
-      ["-NoLogo", "", "two words", "&not-a-command"],
-      expect.objectContaining({ cwd: "C:\\Users\\example" }),
-    );
-    expect(session.fallbackTitle).toBe("PowerShell 7 (No Logo)");
-  });
-
-  it("does not give a profile's arguments or title to an explicit command", () => {
-    const harness = createPtyHarness();
-    const spawn = vi.fn<SpawnPty>(() => harness.pty);
-    const session = createLocalTerminalSession(spawn, {
-      shell: "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
-      shellArguments: ["-NoLogo"],
-      shellTitle: "PowerShell 7 (No Logo)",
-      launchRequest: {
-        kind: "explicit-command",
-        executable: "C:\\Windows\\System32\\OpenSSH\\ssh.exe",
-        arguments: ["host"],
-      },
-      platform: "win32",
-      homeDirectory: "C:\\Users\\example",
-      applicationVersionProvider: { getVersion: () => "1.2.3" },
-      environment: {},
-      onOutput: vi.fn(),
-      onExit: vi.fn(),
-    });
-
-    expect(spawn).toHaveBeenCalledWith(
-      "C:\\Windows\\System32\\OpenSSH\\ssh.exe",
-      ["host"],
-      expect.anything(),
-    );
-    expect(session.fallbackTitle).not.toBe("PowerShell 7 (No Logo)");
-  });
-
   it("counts a live Windows session as Busy because ConPTY hides the foreground name", () => {
     const harness = createPtyHarness();
     const session = createLocalTerminalSession(
@@ -503,5 +452,58 @@ describe("local PTY Adapter lifecycle", () => {
     exitedHarness.setForegroundProcess("htop");
     exitedHarness.emitExit(0);
     expect(exitedSession.hasForegroundChildProcess()).toBe(false);
+  });
+});
+
+describe("Windows profile launch", () => {
+  it("passes saved profile arguments literally and uses its display name", () => {
+    const harness = createPtyHarness();
+    const spawn = vi.fn<SpawnPty>(() => harness.pty);
+    const session = createLocalTerminalSession(spawn, {
+      shell: "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      shellArguments: ["-NoLogo", "", "two words", "&not-a-command"],
+      shellTitle: "PowerShell 7 (No Logo)",
+      platform: "win32",
+      homeDirectory: "C:\\Users\\example",
+      applicationVersionProvider: { getVersion: () => "1.2.3" },
+      environment: {},
+      onOutput: vi.fn(),
+      onExit: vi.fn(),
+    });
+
+    expect(spawn).toHaveBeenCalledWith(
+      "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      ["-NoLogo", "", "two words", "&not-a-command"],
+      expect.objectContaining({ cwd: "C:\\Users\\example" }),
+    );
+    expect(session.fallbackTitle).toBe("PowerShell 7 (No Logo)");
+  });
+
+  it("does not give a profile's arguments or title to an explicit command", () => {
+    const harness = createPtyHarness();
+    const spawn = vi.fn<SpawnPty>(() => harness.pty);
+    const session = createLocalTerminalSession(spawn, {
+      shell: "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      shellArguments: ["-NoLogo"],
+      shellTitle: "PowerShell 7 (No Logo)",
+      launchRequest: {
+        kind: "explicit-command",
+        executable: "C:\\Windows\\System32\\OpenSSH\\ssh.exe",
+        arguments: ["host"],
+      },
+      platform: "win32",
+      homeDirectory: "C:\\Users\\example",
+      applicationVersionProvider: { getVersion: () => "1.2.3" },
+      environment: {},
+      onOutput: vi.fn(),
+      onExit: vi.fn(),
+    });
+
+    expect(spawn).toHaveBeenCalledWith(
+      "C:\\Windows\\System32\\OpenSSH\\ssh.exe",
+      ["host"],
+      expect.anything(),
+    );
+    expect(session.fallbackTitle).not.toBe("PowerShell 7 (No Logo)");
   });
 });

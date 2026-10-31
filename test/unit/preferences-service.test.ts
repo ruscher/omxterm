@@ -277,8 +277,11 @@ describe("Preferences service", () => {
     expect(saved.ok).toBe(true);
     expect(saved.snapshot.values.language).toBe("pt-BR");
     expect(
-      (JSON.parse(await readFile(configurationPath, "utf8")) as { language: string })
-        .language,
+      (
+        JSON.parse(await readFile(configurationPath, "utf8")) as {
+          language: string;
+        }
+      ).language,
     ).toBe("pt-BR");
   });
 

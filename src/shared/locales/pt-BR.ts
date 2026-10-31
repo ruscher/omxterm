@@ -398,6 +398,7 @@ export const brazilianPortugueseMessages: EnglishMessages = {
   "tabs.runningDetach":
     "Há um programa rodando nesta aba. A aba reabre numa nova janela, na mesma pasta ou conexão, e o programa em execução é encerrado.",
   "toolbar.openTabs": "Abas Abertas",
+  "tabs.newWithShell": "Nova Aba: {name}",
   "tabs.newGroup": "Novo Grupo com a Aba…",
   "tabs.groupName": "Nome do grupo",
   "tabs.addToGroup": "Adicionar a “{name}”",

@@ -395,6 +395,7 @@ export const englishMessages = {
   "tabs.runningDetach":
     "A program is running in this tab. The tab reopens in a new window in the same folder or connection, and the running program ends.",
   "toolbar.openTabs": "Open Tabs",
+  "tabs.newWithShell": "New Tab: {name}",
   "tabs.newGroup": "New Group from Tab…",
   "tabs.groupName": "Group name",
   "tabs.addToGroup": "Add to “{name}”",

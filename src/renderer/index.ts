@@ -41,10 +41,7 @@ void Promise.all([
   window.omxterm.terminal.workspacePlan().catch(() => null),
 ]).then(([configuration, startupConnection, workspacePlan]) => {
   const translator = createTranslator(
-    resolveInterfaceLocale(
-      configuration.language ?? "system",
-      systemLanguages,
-    ),
+    resolveInterfaceLocale(configuration.language ?? "system", systemLanguages),
   );
   document.documentElement.lang = translator.locale;
   // Render before mounting so the Terminal Surface measures the space the
@@ -77,6 +74,7 @@ void Promise.all([
         window.omxterm.terminal.onConfigurationUpdate,
       userFileErrorBanner: errorBanner,
       subscribeToClipboardActions: window.omxterm.terminal.onClipboardAction,
+      windowsShells: window.omxterm.terminal.windowsShells,
       droppedFilePathInsertion:
         window.omxterm.terminal.droppedFilePathInsertion,
       subscribeToTabCommands: window.omxterm.terminal.onTabCommand,

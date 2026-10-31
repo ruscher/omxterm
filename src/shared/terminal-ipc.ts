@@ -45,6 +45,8 @@ export const terminalIpc = {
   // Main asks for the focused pane's text; the renderer sends it to save.
   saveOutputRequest: "terminal:save-output-request",
   saveOutput: "terminal:save-output",
+  // The shells main offers for a new tab on Windows.
+  windowsShells: "terminal:windows-shells",
   // A tab reopened in a new window from its workspace snapshot.
   detachTab: "terminal:detach-tab",
 } as const;

@@ -433,16 +433,32 @@ export function windowServices(
           hasFiles: options.workspace?.files !== undefined,
           hasAssistant: options.workspace?.assistant !== undefined,
           openTabs: (position) =>
-            showContextMenu(
-              document,
-              position,
-              tabs()
-                .tabList()
-                .map((tab, index) => ({
-                  label: `${tab.selected ? "● " : ""}${index + 1}. ${tab.label}`,
-                  action: () => tabs().selectTab(index),
-                })),
-            ),
+            void (options.windowsShells?.() ?? Promise.resolve([]))
+              .catch(() => [])
+              .then((shells) =>
+                showContextMenu(document, position, [
+                  ...tabs()
+                    .tabList()
+                    .map((tab, index) => ({
+                      label: `${tab.selected ? "● " : ""}${index + 1}. ${tab.label}`,
+                      action: () => tabs().selectTab(index),
+                    })),
+                  ...(shells.length > 0 ? [{ separator: true } as const] : []),
+                  ...shells.map((shell) => ({
+                    label: translator.t("tabs.newWithShell", {
+                      name: shell.label,
+                    }),
+                    action: () =>
+                      tabs().openLaunch(
+                        {
+                          spec: { kind: "windows-shell", id: shell.id },
+                          label: shell.label,
+                        },
+                        "tab",
+                      ),
+                  })),
+                ]),
+              ),
         })
       : undefined;
   return {

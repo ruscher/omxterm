@@ -109,6 +109,17 @@ interface RoutedTerminalIpcController
   activeTerminalSurfaceFontConfigurations(): readonly TerminalSurfaceFontConfiguration[];
 }
 
+function paneState(
+  session: LocalTerminalSession,
+  directory: string | undefined,
+) {
+  return {
+    directory: directory ?? null,
+    busy: session.hasForegroundChildProcess(),
+    ...(session.shellDialect ? { dialect: session.shellDialect } : {}),
+  };
+}
+
 export function registerTerminalIpcRouter(
   ipcMain: IpcMainPort,
   operationalEvents?: Pick<OperationalEventLog, "write">,
@@ -722,14 +733,9 @@ function createTerminalIpcController(
     sessionDirectory(payload) {
       const state =
         typeof payload === "string" ? sessions.get(payload) : undefined;
-      if (!state || state.closed || state.exited) return null;
-      return {
-        directory: launches.directoryOf(payload as string) ?? null,
-        busy: state.session.hasForegroundChildProcess(),
-        ...(state.session.shellDialect
-          ? { dialect: state.session.shellDialect }
-          : {}),
-      };
+      return !state || state.closed || state.exited
+        ? null
+        : paneState(state.session, launches.directoryOf(payload as string));
     },
     sessionLaunch: (payload) =>
       typeof payload === "string" ? sessions.get(payload)?.launch : undefined,

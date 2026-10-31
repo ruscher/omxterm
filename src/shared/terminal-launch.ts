@@ -2,6 +2,7 @@ import {
   isTerminalSessionId,
   type TerminalSessionId,
 } from "./terminal-contract";
+import { isWindowsShellChoiceId } from "./windows-shells";
 
 // What the renderer may ask for when starting a session. It names intent, not
 // executables or paths: main resolves "inherit" to the referenced session's
@@ -12,6 +13,8 @@ export type TerminalLaunchSpec =
   | { readonly kind: "saved-session"; readonly id: string }
   // Quick Connect: "[user@]host[:port]", validated again in main.
   | { readonly kind: "quick-ssh"; readonly target: string }
+  // A shell from main's new-tab menu, named only by its opaque id.
+  | { readonly kind: "windows-shell"; readonly id: string }
   // A restored workspace pane: an opaque token main maps to a directory.
   | { readonly kind: "restored"; readonly token: string };
 
@@ -35,6 +38,8 @@ export function isTerminalLaunchSpec(
     return keys === "kind,sessionId" && isTerminalSessionId(record.sessionId);
   if (record.kind === "saved-session")
     return keys === "id,kind" && isSavedSessionId(record.id);
+  if (record.kind === "windows-shell")
+    return keys === "id,kind" && isWindowsShellChoiceId(record.id);
   if (record.kind === "restored")
     return (
       keys === "kind,token" &&

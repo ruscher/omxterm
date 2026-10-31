@@ -15,16 +15,14 @@ import { findExecutable } from "../../src/main/executable-lookup";
 const roots: string[] = [];
 afterEach(async () => {
   await Promise.all(
-    roots
-      .splice(0)
-      .map((root) =>
-        rm(root, {
-          recursive: true,
-          force: true,
-          maxRetries: 10,
-          retryDelay: 50,
-        }),
-      ),
+    roots.splice(0).map((root) =>
+      rm(root, {
+        recursive: true,
+        force: true,
+        maxRetries: 10,
+        retryDelay: 50,
+      }),
+    ),
   );
 });
 async function directory() {

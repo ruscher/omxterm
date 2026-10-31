@@ -1,4 +1,6 @@
+import type { WindowsShellChoice } from "../shared/windows-shells";
 import type { ShellDialect } from "../shared/shell-dialect";
+import { fileDropHandlers } from "./dropped-file-insertion";
 import {
   applyWindowFrame,
   mountWindowChrome,
@@ -25,7 +27,6 @@ import type { TerminalFontData } from "../shared/terminal-font-data";
 import type { ElectronTerminalAdapter } from "./electron-terminal-adapter";
 import {
   createTerminalTabs,
-  TERMINAL_TAB_DRAG_DATA_TYPE,
   type PaneLaunch,
   type TerminalTabs,
 } from "./terminal-tabs";
@@ -104,6 +105,8 @@ export interface TerminalWindowPageOptions {
   readonly subscribeToClipboardActions?: (
     listener: (action: "copy" | "paste" | "select-all") => void,
   ) => () => void;
+  // Windows only: what the toolbar's tab menu offers to open.
+  readonly windowsShells?: () => Promise<readonly WindowsShellChoice[]>;
   readonly droppedFilePathInsertion?: (
     files: readonly File[],
     dialect?: ShellDialect,
@@ -297,46 +300,18 @@ export function mountTerminalWindowPage(
     );
   }
 
-  const isInternalTabDrag = (event: DragEvent) =>
-    [...(event.dataTransfer?.types ?? [])].includes(
-      TERMINAL_TAB_DRAG_DATA_TYPE,
-    );
-  const onDragOver = (event: DragEvent) => {
-    event.preventDefault();
-    if (previewActive() || !isInternalTabDrag(event)) event.stopPropagation();
-  };
-  const onDrop = (event: DragEvent) => {
-    // Capture before the Terminal Surface or another target can interpret a native file URI.
-    event.preventDefault();
-    if (previewActive()) {
-      event.stopPropagation();
-      return;
-    }
-    if (isInternalTabDrag(event)) return;
-    event.stopPropagation();
-    const files = event.dataTransfer?.files;
-    if (!files || files.length === 0 || !options.droppedFilePathInsertion)
-      return;
-    const dropped = [...files];
-    const insert = options.droppedFilePathInsertion;
-    const insertFor = (dialect?: ShellDialect) => {
-      const insertion =
-        dialect === undefined ? insert(dropped) : insert(dropped, dialect);
-      if (insertion.length > 0) tabs.injectText(insertion);
-    };
-    // The quoting follows the focused pane's shell when main can name it.
-    const focused = tabs.focusedSessionId();
-    const sessionDirectory = options.workspace?.sessionDirectory;
-    if (focused === undefined || !sessionDirectory) {
-      insertFor();
-      return;
-    }
-    void sessionDirectory(focused)
-      .catch(() => null)
-      .then((pane) => {
-        if (!disposed) insertFor(pane?.dialect);
-      });
-  };
+  const { onDragOver, onDrop } = fileDropHandlers({
+    previewActive,
+    insert: options.droppedFilePathInsertion,
+    inject: (text) => tabs.injectText(text),
+    focusedPane: () => {
+      const focused = tabs.focusedSessionId();
+      return focused === undefined
+        ? undefined
+        : options.workspace?.sessionDirectory?.(focused);
+    },
+    isDisposed: () => disposed,
+  });
   const dispose = () => {
     if (disposed) return;
     disposed = true;

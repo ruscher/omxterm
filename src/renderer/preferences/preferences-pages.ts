@@ -21,8 +21,8 @@ import {
   MIN_TERMINAL_FONT_SIZE,
   MIN_TERMINAL_LINE_HEIGHT,
 } from "../../shared/user-configuration";
-import type { WindowsShellKind } from "../../shared/windows-shells";
 import { checkbox, field, selectInput, textInput } from "../ui/form";
+import { windowsShellField } from "./windows-shell-field";
 import {
   acceleratorFromKeyEvent,
   displayAccelerator,
@@ -48,7 +48,7 @@ type BooleanKey = {
 }[keyof PreferencesValues];
 
 // Enter commits a field instead of closing the dialog.
-function commitOnEnter(input: HTMLInputElement): void {
+export function commitOnEnter(input: HTMLInputElement): void {
   input.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
@@ -484,55 +484,6 @@ function hint(context: PreferencesContext, key: MessageKey): HTMLElement {
   element.className = "omx-field-hint";
   element.textContent = context.t(key);
   return element;
-}
-
-const WINDOWS_SHELL_LABELS = {
-  "powershell-core": "prefs.windowsShell.powershellCore",
-  "windows-powershell": "prefs.windowsShell.windowsPowerShell",
-  "command-prompt": "prefs.windowsShell.commandPrompt",
-  wsl: "prefs.windowsShell.wsl",
-  "git-bash": "prefs.windowsShell.gitBash",
-  msys2: "prefs.windowsShell.msys2",
-  cygwin: "prefs.windowsShell.cygwin",
-} as const satisfies Record<WindowsShellKind, MessageKey>;
-
-// Windows only: the program new local terminals start. Installed shells are
-// offered as suggestions; any absolute path stays valid free text.
-function windowsShellField(context: PreferencesContext): HTMLElement {
-  const snapshot = context.snapshot();
-  const input = textInput(context.document, snapshot.values.windowsShell, {
-    placeholder:
-      "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
-  });
-  const list = context.document.createElement("datalist");
-  list.id = "preferences-windows-shells";
-  for (const suggestion of snapshot.windowsShells ?? []) {
-    const option = context.document.createElement("option");
-    option.value = suggestion.executable;
-    option.label = context.t(WINDOWS_SHELL_LABELS[suggestion.kind]);
-    list.append(option);
-  }
-  input.setAttribute("list", list.id);
-  input.disabled = snapshot.windowsShellManaged === true;
-  commitOnEnter(input);
-  input.addEventListener("change", () =>
-    context.save({ windowsShell: input.value.trim() }),
-  );
-  context.onSync((values) => {
-    input.value = values.windowsShell;
-  });
-  const wrapper = field(
-    context.document,
-    context.t("prefs.windowsShell"),
-    input,
-    context.t(
-      snapshot.windowsShellManaged
-        ? "prefs.windowsShellManaged"
-        : "prefs.windowsShellHint",
-    ),
-  );
-  wrapper.element.append(list);
-  return wrapper.element;
 }
 
 export function advancedPage(context: PreferencesContext): HTMLElement {

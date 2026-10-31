@@ -7,6 +7,7 @@ import type {
 } from "./local-terminal-session";
 import type { SavedSessionService, SessionLaunchBase } from "./saved-sessions";
 import type { TerminalSessionLaunch } from "./terminal-ipc-types";
+import type { DefaultShellLaunch } from "./default-shell";
 
 // Turns main's resolved launch into session options and starts it: the
 // window's Default Shell (consuming the startup Launch Request and working
@@ -25,6 +26,7 @@ export function launchTerminalSession(
     readonly start: (
       options: LocalTerminalSessionOptions,
     ) => LocalTerminalSession;
+    readonly windowsShell?: (id: string) => DefaultShellLaunch | undefined;
   },
 ): LocalTerminalSession {
   if (launch.kind === "default") {
@@ -41,6 +43,16 @@ export function launchTerminalSession(
       ...base,
       ...existingDirectory(launch.workingDirectory),
     });
+  if (launch.kind === "windows-shell") {
+    const shell = context.windowsShell?.(launch.id);
+    if (!shell) throw new Error("Unknown Windows shell choice");
+    return context.start({
+      ...base,
+      shell: shell.shell,
+      shellArguments: shell.arguments,
+      shellTitle: shell.title,
+    });
+  }
   if (launch.kind === "quick-ssh") {
     const quick = context.savedSessions.quickConnect(launch.target);
     if (!quick) throw new Error("Invalid Quick Connect target");

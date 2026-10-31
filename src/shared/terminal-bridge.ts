@@ -1,3 +1,4 @@
+import type { WindowsShellChoice } from "./windows-shells";
 import type { ShellDialect } from "./shell-dialect";
 import type { AboutInfo, AboutLink } from "./about";
 import type { FilePeek } from "./file-peek";
@@ -275,6 +276,7 @@ export interface TerminalBridge {
   onFontZoom(listener: (command: TerminalFontZoom) => void): () => void;
   writeClipboardText(text: string): Promise<void>;
   readClipboardText(): Promise<string>;
+  windowsShells(): Promise<readonly WindowsShellChoice[]>;
   droppedFilePathInsertion(
     files: readonly File[],
     dialect?: ShellDialect,

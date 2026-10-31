@@ -38,6 +38,7 @@ import { createAboutBridge } from "./about-bridge";
 import { createCommandsBridge } from "./commands-bridge";
 import { createBackupBridge } from "./backup-bridge";
 import { isShellDialect } from "../shared/shell-dialect";
+import { isWindowsShellChoices } from "../shared/windows-shells";
 import { isWorkspacePlan, isWorkspaceSnapshot } from "../shared/workspace";
 import { TERMINAL_ACTION_NAMES } from "../shared/terminal-keybinds";
 import {
@@ -421,6 +422,14 @@ const terminal: TerminalBridge = {
     if (!isClipboardText(text))
       throw new TypeError("Invalid clipboard read response");
     return text;
+  },
+  async windowsShells() {
+    const choices: unknown = await ipcRenderer.invoke(
+      terminalIpc.windowsShells,
+    );
+    if (!isWindowsShellChoices(choices))
+      throw new TypeError("Invalid Windows shell choices");
+    return choices;
   },
   droppedFilePathInsertion(files: readonly File[], dialect?: unknown) {
     if (
