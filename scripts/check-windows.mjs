@@ -17,7 +17,7 @@ const npm = process.env.npm_execpath;
 if (!npm) throw new Error("Run this command through npm run check:win");
 for (const script of [
   "check:portable",
-  process.arch === "x64" ? "package-built:win:x64" : "package-built:win",
+  "package-built:win",
   "package:verify",
 ]) {
   const result = spawnSync(

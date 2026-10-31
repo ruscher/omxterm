@@ -71,10 +71,7 @@ export type PatchedResttyConfig = Pick<ResttyConfig, "root" | "surface"> & {
   readonly terminal: PatchedResttyTerminalConfig;
   readonly services: PatchedResttyServices;
 };
-export type PatchedRestty = Pick<
-  Restty,
-  "destroy" | "openSearch" | "isSearchOpen" | "setSearchUiStyleOptions"
-> & {
+export type PatchedRestty = Pick<Restty, "destroy" | "toggleSearch"> & {
   getActivePane(): PatchedResttyPane | null;
 };
 export const PatchedRestty = Restty as unknown as {

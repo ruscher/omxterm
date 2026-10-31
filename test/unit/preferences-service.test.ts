@@ -270,6 +270,21 @@ describe("Preferences service", () => {
     await expect(readFile(configurationPath)).rejects.toThrow();
   });
 
+  it("saves the interface language and defaults to the system's", async () => {
+    const { service, configurationPath } = await setup();
+    expect((await service.snapshot()).values.language).toBe("system");
+    const saved = await service.save({ language: "pt-BR" });
+    expect(saved.ok).toBe(true);
+    expect(saved.snapshot.values.language).toBe("pt-BR");
+    expect(
+      (
+        JSON.parse(await readFile(configurationPath, "utf8")) as {
+          language: string;
+        }
+      ).language,
+    ).toBe("pt-BR");
+  });
+
   it("saves file previews in config.json and keeps them on by default", async () => {
     const { service, config } = await setup();
     expect((await service.snapshot()).values.filePreview).toBe(true);

@@ -1907,24 +1907,17 @@ body.tabs-visible #workspace-sidebar {
   vertical-align: -2px;
 }
 
-/* Sessions: a status dot after the name, with the open count inside. */
-.sessions-name-line {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  min-width: 0;
-}
-
+/* Sessions: a status dot at the row's right end, with the open count. */
 .sessions-status {
   --status-color: var(--omx-muted);
 
-  display: inline-block;
   flex: none;
-  min-width: 8px;
-  height: 8px;
-  font-size: 10px;
+  min-width: 6px;
+  height: 6px;
+  margin-inline: 4px;
+  font-size: 8.5px;
   font-weight: 600;
-  line-height: 16px;
+  line-height: 13px;
   color: #fff;
   text-align: center;
   background: var(--status-color);
@@ -1932,9 +1925,10 @@ body.tabs-visible #workspace-sidebar {
 }
 
 .sessions-status:not(:empty) {
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
+  min-width: 13px;
+  height: 13px;
+  margin-inline: 0;
+  padding: 0 3px;
 }
 
 .sessions-status[data-state="connected"] {

@@ -217,7 +217,9 @@ describe("Files panel", () => {
         ),
       ].find((button) => button.textContent === label)!;
     item("Open in Terminal").click();
-    expect(typed).toEqual([["cd -- '/home/me/Alpha'", true]]);
+    await vi.waitFor(() =>
+      expect(typed).toEqual([["cd -- '/home/me/Alpha'", true]]),
+    );
   });
 
   it("browses an SSH pane over SFTP with permanent deletion", async () => {

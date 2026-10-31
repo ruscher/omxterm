@@ -40,9 +40,6 @@ describe("terminal keybind accelerators", () => {
     "Option+Space",
     "Control+Command+F",
     "Cmd+num0",
-    "F5",
-    "F11",
-    "Shift+F24",
   ])("accepts the accelerator %s", (accelerator) => {
     expect(isValidAccelerator(accelerator)).toBe(true);
   });
@@ -50,11 +47,7 @@ describe("terminal keybind accelerators", () => {
   it.each([
     "",
     "Q",
-    "F25",
-    "Space",
-    "Return",
-    "Escape",
-    "Shift+Space",
+    "F5",
     "Shift+Q",
     "Shift+Shift+Q",
     "Cmd+",
@@ -188,8 +181,6 @@ describe("terminal keybind accelerators", () => {
     expect(linux.copy).toBe("Control+Shift+C");
     expect(linux.paste).toBe("Control+Shift+V");
     expect(linux.selectAll).toBe("Control+Shift+A");
-    expect(linux.find).toBe("Control+Shift+F");
-    expect(linux.toggleFullScreen).toBe("F11");
     expect(linux.newWindow).toBe("Control+Shift+N");
     expect(linux.newTab).toBe("Control+Shift+T");
     expect(linux.closeTab).toBe("Control+Shift+W");

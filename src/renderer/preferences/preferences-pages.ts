@@ -22,6 +22,7 @@ import {
   MIN_TERMINAL_LINE_HEIGHT,
 } from "../../shared/user-configuration";
 import { checkbox, field, selectInput, textInput } from "../ui/form";
+import { windowsShellField } from "./windows-shell-field";
 import {
   acceleratorFromKeyEvent,
   displayAccelerator,
@@ -47,7 +48,7 @@ type BooleanKey = {
 }[keyof PreferencesValues];
 
 // Enter commits a field instead of closing the dialog.
-function commitOnEnter(input: HTMLInputElement): void {
+export function commitOnEnter(input: HTMLInputElement): void {
   input.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
@@ -136,11 +137,12 @@ function numberField(
   return wrapper.element;
 }
 
-function choice<Key extends "optionKeyMode" | "logLevel">(
+function choice<Key extends "optionKeyMode" | "logLevel" | "language">(
   context: PreferencesContext,
   key: Key,
   label: MessageKey,
   options: ReadonlyArray<readonly [PreferencesValues[Key], MessageKey]>,
+  hint?: MessageKey,
 ): HTMLElement {
   const select = selectInput(
     context.document,
@@ -153,7 +155,12 @@ function choice<Key extends "optionKeyMode" | "logLevel">(
   context.onSync((values) => {
     select.value = values[key];
   });
-  return field(context.document, context.t(label), select).element;
+  return field(
+    context.document,
+    context.t(label),
+    select,
+    hint ? context.t(hint) : undefined,
+  ).element;
 }
 
 function schemeCard(
@@ -350,6 +357,17 @@ export function terminalPage(context: PreferencesContext): HTMLElement {
 export function windowPage(context: PreferencesContext): HTMLElement {
   return page(
     context,
+    choice(
+      context,
+      "language",
+      "prefs.language",
+      [
+        ["system", "prefs.language.system"],
+        ["en-US", "prefs.language.enUS"],
+        ["pt-BR", "prefs.language.ptBR"],
+      ],
+      "prefs.languageHint",
+    ),
     heading(context, "prefs.newWindows"),
     toggle(context, "showTitleBar", "prefs.showTitleBar"),
     toggle(context, "autoHideTitleBar", "prefs.autoHideTitleBar"),
@@ -468,36 +486,20 @@ function hint(context: PreferencesContext, key: MessageKey): HTMLElement {
   return element;
 }
 
-// Windows only: the program new local terminals start.
-function windowsShellField(context: PreferencesContext): HTMLElement {
-  const input = textInput(
-    context.document,
-    context.snapshot().values.windowsShell,
-    {
-      placeholder:
-        "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
-    },
-  );
-  commitOnEnter(input);
-  input.addEventListener("change", () =>
-    context.save({ windowsShell: input.value.trim() }),
-  );
-  context.onSync((values) => {
-    input.value = values.windowsShell;
-  });
-  return field(
-    context.document,
-    context.t("prefs.windowsShell"),
-    input,
-    context.t("prefs.windowsShellHint"),
-  ).element;
-}
-
 export function advancedPage(context: PreferencesContext): HTMLElement {
   return page(
     context,
     ...(context.snapshot().platform === "win32"
-      ? [heading(context, "prefs.shell"), windowsShellField(context)]
+      ? [
+          heading(context, "prefs.shell"),
+          windowsShellField(context),
+          toggle(
+            context,
+            "windowsShellIntegration",
+            "prefs.windowsShellIntegration",
+          ),
+          hint(context, "prefs.windowsShellIntegrationHint"),
+        ]
       : []),
     heading(context, "prefs.diagnostics"),
     choice(context, "logLevel", "prefs.logLevel", [

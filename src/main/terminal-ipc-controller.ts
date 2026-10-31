@@ -1,3 +1,4 @@
+import type { ShellDialect } from "../shared/shell-dialect";
 import type {
   TerminalExit,
   TerminalSessionId,
@@ -102,9 +103,23 @@ interface RoutedTerminalIpcController
   sessionDirectory(payload?: unknown): {
     readonly directory: string | null;
     readonly busy: boolean;
+    readonly dialect?: ShellDialect;
   } | null;
   sessionLaunch(payload?: unknown): TerminalSessionLaunch | undefined;
   activeTerminalSurfaceFontConfigurations(): readonly TerminalSurfaceFontConfiguration[];
+}
+
+function paneState(
+  session: LocalTerminalSession,
+  directory: string | undefined,
+) {
+  return {
+    directory: directory ?? null,
+    // Close confirmation keeps its own Busy rule (ADR 0017); typing a cd only
+    // needs a shell that waits at its prompt.
+    busy: session.hasForegroundChildProcess() && !session.atShellPrompt?.(),
+    ...(session.shellDialect ? { dialect: session.shellDialect } : {}),
+  };
 }
 
 export function registerTerminalIpcRouter(
@@ -282,10 +297,6 @@ export function registerTerminalIpcRouter(
   ipcMain.on(terminalIpc.clipboardContextMenu, showClipboardContextMenu);
 
   return {
-    isTrustedSender: (event) =>
-      !disposed &&
-      !event.sender.isDestroyed() &&
-      controllerFor(event) !== undefined,
     registerController(options) {
       if (disposed) throw new Error("Terminal IPC router is disposed");
       if (controllers.has(options.webContents))
@@ -724,11 +735,9 @@ function createTerminalIpcController(
     sessionDirectory(payload) {
       const state =
         typeof payload === "string" ? sessions.get(payload) : undefined;
-      if (!state || state.closed || state.exited) return null;
-      return {
-        directory: launches.directoryOf(payload as string) ?? null,
-        busy: state.session.hasForegroundChildProcess(),
-      };
+      return !state || state.closed || state.exited
+        ? null
+        : paneState(state.session, launches.directoryOf(payload as string));
     },
     sessionLaunch: (payload) =>
       typeof payload === "string" ? sessions.get(payload)?.launch : undefined,

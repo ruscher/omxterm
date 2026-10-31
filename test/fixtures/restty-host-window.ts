@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { BrowserWindow } from "electron";
 import path from "node:path";
 
 export async function initializeResttyHostWindow(
@@ -13,14 +13,6 @@ export async function initializeResttyHostWindow(
   await window.loadFile(path.join(root, "renderer", "index.html"));
   window.showInactive();
   await waitFor(sessionReady, "default Restty session");
-  // This host scenario asserts active-window DOM focus. Native activation lets
-  // the production page-focus owner restore it without forcing a DOM target.
-  // Activate the owned macOS app only at initial readiness, not during blur tests.
-  if (process.platform === "darwin" && !app.isActive()) {
-    app.focus({ steal: true });
-  }
-  window.focus();
-  await waitFor(() => window.isFocused(), "native host window activation");
   await waitFor(
     () =>
       window.webContents.executeJavaScript(

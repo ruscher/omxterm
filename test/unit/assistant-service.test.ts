@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { useInterfaceLanguage } from "../../src/main/main-translator";
 import {
   assistantSystemPrompt,
   createAssistantService,
@@ -278,5 +279,26 @@ describe("assistant servers and models", () => {
     ).rejects.toThrow(
       "could not be reached at localhost:11434: connection refused; is the server running?",
     );
+  });
+
+  it("explains a failed request in the interface language", async () => {
+    useInterfaceLanguage("pt-BR");
+    try {
+      await expect(
+        createAssistantService(async () => {
+          throw Object.assign(new TypeError("fetch failed"), {
+            cause: { code: "ECONNREFUSED" },
+          });
+        }).models({
+          provider: "local",
+          baseUrl: "http://localhost:11434/v1",
+          model: "x",
+        }),
+      ).rejects.toThrow(
+        "em localhost:11434: conexão recusada; o servidor está em execução?",
+      );
+    } finally {
+      useInterfaceLanguage("en-US");
+    }
   });
 });

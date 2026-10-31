@@ -34,8 +34,8 @@ export async function exerciseApplicationMenu(
   window: BrowserWindow,
   application: TerminalApplication<BrowserWindow>,
   openings: readonly MenuOpening[],
-  showAbout: () => void,
 ) {
+  if (process.platform === "darwin") return "unchanged-macos";
   let bindings = terminalDefaultKeybinds(process.platform);
   let titleActions = 0;
   const unexpected = () => assert.fail("Unexpected fixture menu action");
@@ -57,7 +57,6 @@ export async function exerciseApplicationMenu(
     copySelectedTerminal: unexpected,
     pasteSelectedTerminal: unexpected,
     selectAllSelectedTerminal: unexpected,
-    findInSelectedTerminal: unexpected,
     toggleSelectedSnippets: unexpected,
     toggleSelectedTabBar: unexpected,
     toggleSelectedTitleBar() {
@@ -66,8 +65,18 @@ export async function exerciseApplicationMenu(
     },
     reloadUserConfiguration: unexpected,
     openLocalImage: unexpected,
-    showAbout,
-    showSettings: unexpected,
+    splitSelectedPane: unexpected,
+    closeSelectedPane: unexpected,
+    focusPaneInSelectedWindow: unexpected,
+    toggleSelectedPaneMaximized: unexpected,
+    equalizeSelectedPanes: unexpected,
+    toggleSelectedBroadcast: unexpected,
+    toggleSelectedSessions: unexpected,
+    toggleSelectedCommands: unexpected,
+    toggleSelectedCommandPalette: unexpected,
+    findInSelectedWindow: unexpected,
+    backUpSettings: unexpected,
+    restoreSettings: unexpected,
   };
   const invocations = terminalActionInvocations(actions);
   deliverKeybindsFromKeyEvents(
@@ -119,7 +128,7 @@ export async function exerciseApplicationMenu(
     assert.deepEqual(openings.at(-1), { menu, x: 8, y });
     assert.deepEqual(
       menu.items.map((item) => item.label),
-      ["OMXTerm", "Edit", "File", "View", "Window"],
+      ["OMXTerm", "Edit", "File", "View", "Terminal", "Window"],
     );
   };
   const dismiss = async (menu: Menu) => {
@@ -132,7 +141,6 @@ export async function exerciseApplicationMenu(
     );
   };
   const initial = install();
-  if (process.platform === "darwin") return "unchanged-macos";
   await open(initial, 42);
   await dismiss(initial);
   // Same effective invocation path as the displayed menu, consumed exactly once.

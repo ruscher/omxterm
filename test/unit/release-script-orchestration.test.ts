@@ -29,11 +29,7 @@ const packagerCommands = {
   win: ["node scripts/package.mjs win"],
 };
 
-async function runWindowsCheck(
-  args: string[],
-  failScript = "",
-  arch: "arm64" | "x64" = "arm64",
-) {
+async function runWindowsCheck(args: string[], failScript = "") {
   const root = await mkdtemp(path.join(tmpdir(), "omxterm-check-windows-"));
   try {
     const npm = path.join(root, "npm.mjs");
@@ -46,7 +42,7 @@ if (process.argv[3] === ${JSON.stringify(failScript)}) process.exit(23);\n`,
     await writeFile(
       driver,
       `Object.defineProperty(process, "platform", { value: "win32" });
-Object.defineProperty(process, "arch", { value: ${JSON.stringify(arch)} });
+Object.defineProperty(process, "arch", { value: "arm64" });
 await import(${JSON.stringify(new URL("../../scripts/check-windows.mjs", import.meta.url).href)});\n`,
     );
     const environment = { ...process.env };
@@ -116,33 +112,6 @@ describe("release script orchestration", () => {
     const result = await runWindowsCheck([], script);
     expect(result.status).toBe(23);
     expect(result.calls).toEqual(calls);
-  });
-
-  it("builds the Windows x64 package with the x64 target only", () => {
-    expect(commands("package:win:x64")).toEqual([
-      "node build.mjs",
-      "electron-builder --config electron-builder.yml --win nsis --x64 --publish never",
-    ]);
-    expect(commands("package-built:win:x64")).toEqual([
-      "electron-builder --config electron-builder.yml --win nsis --x64 --publish never",
-    ]);
-  });
-
-  it("Windows x64 packages with the x64 script, then verifies", async () => {
-    const result = await runWindowsCheck([], "", "x64");
-    expect(result.status).toBe(0);
-    expect(result.calls).toEqual([
-      ["run", "check:portable"],
-      ["run", "package-built:win:x64"],
-      ["run", "package:verify"],
-    ]);
-  });
-
-  it("rejects unsupported Windows architectures before starting any step", async () => {
-    const result = await runWindowsCheck([], "", "ia32" as "x64");
-    expect(result.status).not.toBe(0);
-    expect(result.calls).toEqual([]);
-    expect(result.stderr).toMatch(/requires native Windows arm64 or x64/u);
   });
 
   it.each(["--windows-unpacked-only", "--force"])(

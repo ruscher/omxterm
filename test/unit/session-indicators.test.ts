@@ -274,7 +274,12 @@ describe("Sessions status dots and open-pane menu", () => {
     expect(dot().getAttribute("aria-label")).toBe(
       "2 aberta(s) nesta janela, 2 conectada(s)",
     );
-    expect(dot().previousElementSibling!.textContent).toBe("Servidor");
+    // At the row's right end, after the name and subtitle.
+    expect(row.lastElementChild).toBe(dot());
+    expect(
+      dot().previousElementSibling!.querySelector(".sessions-name")!
+        .textContent,
+    ).toBe("Servidor");
     expect(row.title.split("\n")).toEqual(
       expect.arrayContaining([
         "Servidor",

@@ -73,7 +73,6 @@ function createApplicationHarness(
   const sendClipboardAction = vi.fn();
   const sendSnippetsToggle = vi.fn();
   const sendTabBarToggle = vi.fn();
-  const sendFind = vi.fn();
   const sendTitleBarToggle = vi.fn();
   const sendLocalImageOpen = vi.fn();
   const toggleDeveloperTools = vi.fn();
@@ -98,7 +97,6 @@ function createApplicationHarness(
     sendClipboardAction,
     sendSnippetsToggle,
     sendTabBarToggle,
-    sendFind,
     sendTitleBarToggle,
     sendLocalImageOpen,
     toggleDeveloperTools,
@@ -118,7 +116,6 @@ function createApplicationHarness(
     sendClipboardAction,
     sendSnippetsToggle,
     sendTabBarToggle,
-    sendFind,
     sendTitleBarToggle,
     sendLocalImageOpen,
     toggleDeveloperTools,
@@ -220,22 +217,6 @@ describe("Terminal application lifecycle", () => {
     harness.application.toggleSelectedSnippets();
     expect(harness.sendSnippetsToggle).toHaveBeenCalledExactlyOnceWith(
       harness.windows[1]!.window,
-    );
-  });
-
-  it("sends Find only to the selected Terminal Window", async () => {
-    const harness = createApplicationHarness();
-    await harness.application.newWindow();
-    await harness.application.newWindow();
-
-    harness.select(undefined);
-    harness.application.findInSelectedWindow();
-    expect(harness.sendFind).not.toHaveBeenCalled();
-
-    harness.select(harness.windows[0]!.window);
-    harness.application.findInSelectedWindow();
-    expect(harness.sendFind).toHaveBeenCalledExactlyOnceWith(
-      harness.windows[0]!.window,
     );
   });
 
@@ -365,7 +346,6 @@ describe("Terminal application lifecycle", () => {
       sendClipboardAction: vi.fn(),
       sendSnippetsToggle: vi.fn(),
       sendTabBarToggle: vi.fn(),
-      sendFind: vi.fn(),
       sendTitleBarToggle: vi.fn(),
       sendLocalImageOpen: vi.fn(),
       toggleDeveloperTools: vi.fn(),

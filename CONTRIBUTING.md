@@ -23,7 +23,7 @@ For security vulnerabilities, follow the private reporting instructions in [SECU
 
 ### Have an x64 Linux or Windows machine?
 
-Windows x64 installers are available and can also be built from source (`npm run package:win:x64`; see [development](docs/development.md#windows)). Help with native Intel/AMD qualification is welcome in the [Windows x64 issue](https://github.com/luizomf/omxterm/issues/224). The [Linux x64 issue](https://github.com/luizomf/omxterm/issues/223) is still open if you would like to help build and test native Linux x64 packages.
+Prebuilt releases are currently ARM64-only. Check out the [Linux x64 issue](https://github.com/luizomf/omxterm/issues/223) and [Windows x64 issue](https://github.com/luizomf/omxterm/issues/224) if you would like to help build and test native x64 packages.
 
 ## Opening a pull request
 
@@ -40,7 +40,7 @@ For small Markdown fixes, you can edit files directly on GitHub in your fork wit
 
 ## Development environment
 
-For code development, you need ARM64 hardware running macOS, Linux, or Windows (or an x64 Windows PC), Git, and **Node.js 22.13+ (22.x) or 24+** with npm.
+For code development, you need ARM64 hardware running macOS, Linux, or Windows, Git, and **Node.js 22.13+ (22.x) or 24+** with npm.
 
 Install your [platform prerequisites](docs/development.md#platform-prerequisites) before running `npm ci` (Xcode Command Line Tools on macOS; build tools, XWayland, and fixture fonts on Linux; Developer Mode symlink access and Visual C++ Redistributable on Windows).
 
@@ -121,11 +121,5 @@ Open a pull request against `luizomf/omxterm` (`main`) and include:
 - Any documentation or contract files updated (or why none were affected).
 
 ## Maintainer integration and releases
-
-When integrating a contribution, add any missing contributor to
-[CONTRIBUTORS.md](CONTRIBUTORS.md) in alphabetical GitHub handle order, with a
-profile link and their public name if known (otherwise just the handle). This
-includes small documentation fixes and one-line translations; contributors can
-correct their names or optional self-provided details later.
 
 Contributors do not need to bump versions, run multi-platform release builds, or publish packages. Maintainers handle cross-platform qualification, version bumps ([`docs/versioning.md`](docs/versioning.md)), release builds ([`docs/release.md`](docs/release.md)), and [issue tracker triage](docs/agents/issue-tracker.md).

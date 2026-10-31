@@ -171,7 +171,6 @@ function harness(confirmClose = false) {
     sendClipboardAction() {},
     sendSnippetsToggle() {},
     sendTabBarToggle() {},
-    sendFind() {},
     sendTitleBarToggle() {},
     sendLocalImageOpen() {},
     toggleDeveloperTools() {},

@@ -75,9 +75,6 @@ jobs:
           const json = JSON.stringify(metadata);
           console.log(json);
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `json=${json}\n`);
-          if (!fs.lstatSync('CLAUDE.md').isSymbolicLink() || fs.readlinkSync('CLAUDE.md') !== 'AGENTS.md') {
-            throw new Error('Expected repository CLAUDE.md symlink to AGENTS.md');
-          }
           for (const file of ['package.json', 'package-lock.json', 'AGENTS.md', '.github/workflows/windows-x64.yml']) {
             if (fs.readFileSync(file).includes(13)) throw new Error(`Expected LF checkout: ${file}`);
           }
@@ -91,7 +88,7 @@ jobs:
           } finally {
             fs.rmSync(root, { recursive: true, force: true });
           }
-          console.log('PASS: repository symlink, selected LF files and temporary file symlink');
+          console.log('PASS: selected LF files and temporary file symlink');
           '@ | node
 
       - name: Record npm version
@@ -133,7 +130,7 @@ jobs:
 
       - name: Build unsigned x64 candidate (publish never)
         id: package
-        run: npm.cmd run package-built:win:x64
+        run: npm.cmd run package-built:win
 
       - name: Hash the exact generated installer without executing it
         id: checksum

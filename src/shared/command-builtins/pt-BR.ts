@@ -302,7 +302,7 @@ export const BUILTIN_COMMANDS_PT_BR: {
       name: "Instalar Chave SSH em um Servidor",
       description:
         "Adiciona sua chave pública às chaves autorizadas do servidor.",
-      fields: { target: "usuario@host", port: "Porta" },
+      fields: { target: "usuário@host", port: "Porta" },
     },
     git_status: {
       name: "Status do Git",

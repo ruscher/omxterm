@@ -1,5 +1,8 @@
-import { validateLanguage } from "./user-configuration-language";
 import { lstat, readFile, stat } from "node:fs/promises";
+import {
+  DEFAULT_INTERFACE_LANGUAGE,
+  INTERFACE_LANGUAGES,
+} from "../shared/i18n";
 import path from "node:path";
 import type {
   OperationalLogLevel,
@@ -26,7 +29,6 @@ import { DEFAULT_TERMINAL_THEME } from "../shared/terminal-theme";
 import {
   canonicalAccelerator,
   DEFAULT_TERMINAL_KEYBINDS,
-  displayAccelerator,
   isValidAccelerator,
   shadowedControlKeyBindings,
   terminalDefaultKeybinds,
@@ -50,12 +52,8 @@ import {
   userConfigurationDiagnostic,
 } from "./user-configuration-error";
 import {
-  assertWindowsShellConfigurationExclusive,
   configuredWindowsShellTargets,
-  validateWindowsProfiles,
-  validateWindowsShell,
-  windowsProfilesProperty,
-  windowsShellProperty,
+  validateWindowsSettings,
 } from "./windows-shell-profile-configuration";
 export {
   UserConfigurationError,
@@ -68,8 +66,9 @@ export const USER_CONFIGURATION_VERSION = 1;
 
 export const DEFAULT_USER_CONFIGURATION: UserConfiguration = Object.freeze({
   version: USER_CONFIGURATION_VERSION,
+  language: DEFAULT_INTERFACE_LANGUAGE,
+  windowsShellIntegration: true,
   confirmClose: true,
-  language: "en-US",
   logLevel: "info",
   fontSize: DEFAULT_TERMINAL_FONT_SIZE,
   fontLineHeight: DEFAULT_TERMINAL_LINE_HEIGHT,
@@ -369,6 +368,7 @@ export function validateUserConfiguration(
     "logLevel",
     "windowsShell",
     "windowsProfiles",
+    "windowsShellIntegration",
     "font",
     "terminal",
     "scrollback",
@@ -459,21 +459,6 @@ export function validateUserConfiguration(
         "must be a non-empty string without a NUL character",
       );
   }
-
-  const windowsShell = validateWindowsShell(
-    root.windowsShell,
-    configurationPath,
-    platform,
-  );
-  const windowsProfiles = validateWindowsProfiles(
-    root.windowsProfiles,
-    configurationPath,
-  );
-  assertWindowsShellConfigurationExclusive(
-    windowsShell,
-    windowsProfiles,
-    configurationPath,
-  );
 
   const fontFamily = font?.family;
   if (fontFamily !== undefined) {
@@ -568,7 +553,13 @@ export function validateUserConfiguration(
     ["error", "info", "debug"] as const,
     "info",
   ) as OperationalLogLevel;
-  const language = validateLanguage(root.language, configurationPath);
+  const language = optionalEnum(
+    root.language,
+    configurationPath,
+    "language",
+    INTERFACE_LANGUAGES,
+    DEFAULT_INTERFACE_LANGUAGE,
+  );
   const optionKeyMode = optionalEnum(
     keyboard?.optionAsAlt,
     configurationPath,
@@ -582,8 +573,7 @@ export function validateUserConfiguration(
     language,
     confirmClose,
     logLevel,
-    ...windowsShellProperty(windowsShell),
-    ...windowsProfilesProperty(windowsProfiles),
+    ...validateWindowsSettings(root, configurationPath, platform),
     ...(fontFamily === undefined ? {} : { fontFamily }),
     fontSize,
     fontLineHeight,
@@ -639,9 +629,6 @@ function windowPreferences(
   };
 }
 
-const INVALID_KEYBIND =
-  "must be null or an accelerator with one key and at least one non-Shift modifier (function keys F1-F24 may stand alone)";
-
 function validateTerminalKeybinds(
   keybinds: Record<string, unknown> | undefined,
   configurationPath: string,
@@ -649,30 +636,32 @@ function validateTerminalKeybinds(
   platform: string,
 ): TerminalKeybinds {
   if (!keybinds) return defaultKeybinds;
-  const effective: Record<TerminalActionName, string | null> = {
+  const effective: Record<TerminalActionName, string> = {
     ...defaultKeybinds,
   };
   for (const action of TERMINAL_ACTION_NAMES) {
     const value = keybinds[action];
     if (value === undefined) continue;
-    if (
-      value !== null &&
-      (typeof value !== "string" || !isValidAccelerator(value))
-    )
-      fail(configurationPath, `keybinds.${action}`, INVALID_KEYBIND);
+    if (typeof value !== "string" || !isValidAccelerator(value))
+      fail(
+        configurationPath,
+        `keybinds.${action}`,
+        "must be an accelerator with at least one non-Shift modifier and one key",
+      );
     effective[action] = value;
   }
   // Duplicates are judged on the effective map: a remap that collides with
   // another action's remaining default is the same error as two explicit
-  // entries colliding. Diagnostics name actions and the parsed key identity,
-  // never raw accelerator contents. A null entry holds no shortcut.
+  // entries colliding. Diagnostics name actions, never accelerator contents.
   const actionsByAccelerator = new Map<string, TerminalActionName>();
   for (const action of TERMINAL_ACTION_NAMES) {
-    const value = effective[action];
-    if (value === null) continue;
-    const canonical = canonicalAccelerator(value, platform);
+    const canonical = canonicalAccelerator(effective[action], platform);
     if (canonical === undefined)
-      fail(configurationPath, `keybinds.${action}`, INVALID_KEYBIND);
+      fail(
+        configurationPath,
+        `keybinds.${action}`,
+        "must be an accelerator with at least one non-Shift modifier and one key",
+      );
     const holder = actionsByAccelerator.get(canonical);
     if (holder === undefined) {
       actionsByAccelerator.set(canonical, action);
@@ -684,7 +673,7 @@ function validateTerminalKeybinds(
     fail(
       configurationPath,
       `keybinds.${blamed}`,
-      `conflicts with the "${other}" keybind on ${displayAccelerator(value, platform)}. Choose another shortcut for one of them, or set one of them to null to disable its shortcut`,
+      `conflicts with the "${other}" keybind`,
     );
   }
   return Object.freeze(effective);

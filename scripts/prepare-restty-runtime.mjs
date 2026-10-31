@@ -120,8 +120,25 @@ const priorNativeScrollFeedbackDigest =
   "742a6d14c6906d6d4304199889eff69617f6a5ea25aaee788c2a7d6ee4e31dfa";
 const priorBlinkDigest =
   "a5a31366381972750bf98651ac028e6bbe370e89d5ca5cc3855c141cd1002638";
-const correctedDigest =
+const priorWorkingDirectoryDigest =
   "8ebccc2aa81d37266bbf4642e3e07e8c0b17e39935a97d8c3703eb9ac5e72649";
+const correctedDigest =
+  "1f12d9527d8a368ba7c5cd034364e70d48dc16e6fce63641e7804ee20b008a65";
+// OSC 7 reaches the host, which validates it, so panes can report their folder
+// on platforms that cannot read it from the process.
+const workingDirectoryCorrections = [
+  {
+    original: `  if (code === "52") {
+    if (handlers.onOsc) {`,
+    corrected: `  if (code === "7" && handlers.onOsc) {
+    const firstSep = content.indexOf(";");
+    handlers.onOsc(7, firstSep < 0 ? "" : content.slice(firstSep + 1));
+    return true;
+  }
+  if (code === "52") {
+    if (handlers.onOsc) {`,
+  },
+];
 
 const nativeScrollFeedbackCorrections = [
   {
@@ -1951,6 +1968,8 @@ export async function prepareResttyRuntime(options = {}) {
         source = applyCorrections(source, nativeScrollFeedbackCorrections);
       case priorBlinkDigest:
         source = applyCorrections(source, blinkCorrections);
+      case priorWorkingDirectoryDigest:
+        source = applyCorrections(source, workingDirectoryCorrections);
         break;
       default:
         throw new Error(

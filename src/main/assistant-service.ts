@@ -6,6 +6,12 @@ import {
   type AssistantMessage,
   type AssistantProvider,
 } from "../shared/assistant";
+import type { MessageKey, MessageParameters } from "../shared/i18n";
+import { mainTranslator } from "./main-translator";
+
+// Errors reach the assistant panel as text, in the interface language.
+const t = (key: MessageKey, parameters?: MessageParameters) =>
+  mainTranslator().t(key, parameters);
 
 // Talks to OpenAI-compatible chat completion endpoints. Only main has network
 // access and the API key; the renderer sends a conversation and receives the
@@ -83,8 +89,11 @@ async function failure(
   if (endpoint.apiKey) detail = detail.replaceAll(endpoint.apiKey, "•••");
   detail = detail.replace(/\s+/gu, " ").trim().slice(0, MAX_ERROR_LENGTH);
   const name = ASSISTANT_PROVIDERS[endpoint.provider].name;
+  const status = response.status;
   return new AssistantRequestError(
-    `${name} responded with HTTP ${response.status}${detail ? `: ${detail}` : ""}`,
+    detail
+      ? t("assistant.error.httpDetail", { name, status, detail })
+      : t("assistant.error.http", { name, status }),
   );
 }
 
@@ -95,17 +104,17 @@ function timeoutSignal(endpoint: AssistantEndpoint, signal?: AbortSignal) {
   return signal ? AbortSignal.any([signal, timeout]) : timeout;
 }
 
-const NETWORK_REASONS: Readonly<Record<string, string>> = {
-  ECONNREFUSED: "connection refused; is the server running?",
-  ENOTFOUND: "the host name was not found",
-  EAI_AGAIN: "the host name could not be resolved",
-  ECONNRESET: "the connection was reset",
-  EHOSTUNREACH: "the host is unreachable",
-  ENETUNREACH: "the network is unreachable",
-  ETIMEDOUT: "the connection timed out",
-  CERT_HAS_EXPIRED: "its TLS certificate has expired",
-  DEPTH_ZERO_SELF_SIGNED_CERT: "its TLS certificate is self-signed",
-  UNABLE_TO_VERIFY_LEAF_SIGNATURE: "its TLS certificate is not trusted",
+const NETWORK_REASONS: Readonly<Record<string, MessageKey>> = {
+  ECONNREFUSED: "assistant.network.refused",
+  ENOTFOUND: "assistant.network.notFound",
+  EAI_AGAIN: "assistant.network.unresolved",
+  ECONNRESET: "assistant.network.reset",
+  EHOSTUNREACH: "assistant.network.hostUnreachable",
+  ENETUNREACH: "assistant.network.networkUnreachable",
+  ETIMEDOUT: "assistant.network.timedOut",
+  CERT_HAS_EXPIRED: "assistant.network.certificateExpired",
+  DEPTH_ZERO_SELF_SIGNED_CERT: "assistant.network.selfSigned",
+  UNABLE_TO_VERIFY_LEAF_SIGNATURE: "assistant.network.untrusted",
 };
 
 // Names the server and, when Node says why, the reason.
@@ -113,20 +122,27 @@ function networkError(cause: unknown, endpoint: AssistantEndpoint): Error {
   if (cause instanceof AssistantRequestError) return cause;
   const name = ASSISTANT_PROVIDERS[endpoint.provider].name;
   if (cause instanceof Error && cause.name === "AbortError")
-    return new AssistantRequestError("Request cancelled.");
+    return new AssistantRequestError(t("assistant.error.cancelled"));
   if (cause instanceof Error && cause.name === "TimeoutError")
-    return new AssistantRequestError(`${name} did not answer in time.`);
+    return new AssistantRequestError(t("assistant.error.timeout", { name }));
   const code = (cause as { cause?: { code?: unknown } } | undefined)?.cause
     ?.code;
-  const reason = typeof code === "string" ? NETWORK_REASONS[code] : undefined;
+  const reasonKey =
+    typeof code === "string" ? NETWORK_REASONS[code] : undefined;
   let where = "";
   try {
-    where = ` at ${new URL(endpoint.baseUrl).host}`;
+    where = t("assistant.error.at", { host: new URL(endpoint.baseUrl).host });
   } catch {
     where = "";
   }
   return new AssistantRequestError(
-    `${name} could not be reached${where}${reason ? `: ${reason}` : "."}`,
+    reasonKey
+      ? t("assistant.error.unreachableReason", {
+          name,
+          where,
+          reason: t(reasonKey),
+        })
+      : t("assistant.error.unreachable", { name, where }),
   );
 }
 
@@ -162,14 +178,14 @@ async function readStream(
       if (parsed.error)
         throw new AssistantRequestError(
           String(
-            parsed.error.message ?? "The provider reported an error",
+            parsed.error.message ?? t("assistant.error.providerError"),
           ).slice(0, MAX_ERROR_LENGTH),
         );
       const text = parsed.choices?.[0]?.delta?.content;
       if (typeof text !== "string" || text === "") continue;
       total += text.length;
       if (total > MAX_ANSWER_LENGTH)
-        throw new AssistantRequestError("The answer was too long.");
+        throw new AssistantRequestError(t("assistant.error.tooLong"));
       onDelta(text);
     }
   }

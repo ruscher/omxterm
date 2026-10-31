@@ -42,18 +42,26 @@ source/test boundaries and known limitations.
 | 0031 | [Keep Linux installer choices small and local](0031-keep-linux-installer-choices-small-and-local.md)                             |
 | 0032 | [Report native exec failures outside Terminal Payload](0032-report-native-exec-failures-outside-terminal-payload.md)             |
 | 0033 | [Contain native resize failures](0033-contain-native-resize-failures-without-completing-sessions.md)                             |
-| 0034 | [Support native Windows x64 packages](0034-support-native-windows-x64-packages.md)                                               |
-| 0035 | [Select the interface language explicitly](0035-select-the-interface-language-explicitly.md)                                     |
-| 0036 | [Suggest Windows shells without executing them](0036-suggest-windows-shells-without-executing-them.md)                           |
-| 0037 | [Resolve the Windows Default Shell from system layouts](0037-resolve-the-windows-default-shell-from-system-layouts.md)           |
-| 0038 | [Launch saved Windows shell profiles with literal arguments](0038-launch-saved-windows-shell-profiles-with-literal-arguments.md) |
-| 0039 | [Refuse installer forced close of live terminals](0039-refuse-installer-forced-close-of-live-terminals.md)                     |
+| 0034 | [Store application data beside user configuration](0034-store-application-data-beside-user-configuration.md)                     |
+| 0035 | [Split tabs into independent terminal panes](0035-split-tabs-into-independent-terminal-panes.md)                                 |
+| 0036 | [Run saved SSH sessions through the system OpenSSH client](0036-run-saved-ssh-sessions-through-the-system-openssh-client.md)     |
+| 0037 | [Store optional SSH passwords in the system keyring](0037-store-optional-ssh-passwords-in-the-system-keyring.md)                 |
+| 0038 | [Allow the Linux software WebGL fallback](0038-allow-the-linux-software-webgl-fallback.md)                                       |
+| 0039 | [Guide failed SSH sessions without accepting host keys](0039-guide-failed-ssh-sessions-without-accepting-host-keys.md)           |
+| 0040 | [Support native Windows x64 packages](0040-support-native-windows-x64-packages.md)                                               |
+| 0041 | [Select the interface language in configuration](0041-select-the-interface-language-explicitly.md)                               |
+| 0042 | [Suggest Windows shells without executing them](0042-suggest-windows-shells-without-executing-them.md)                           |
+| 0043 | [Resolve the Windows default shell from system layouts](0043-resolve-the-windows-default-shell-from-system-layouts.md)           |
+| 0044 | [Launch saved Windows shell profiles with literal arguments](0044-launch-saved-windows-shell-profiles-with-literal-arguments.md) |
+| 0045 | [Refuse installer forced close of live terminals](0045-refuse-installer-forced-close-of-live-terminals.md)                       |
+| 0046 | [Report the PowerShell location through OSC 7](0046-report-the-powershell-location-through-osc-7.md)                             |
 
 ## Related boundaries
 
-- Tabs/chrome/close/native completion: 0016, 0017, 0027, 0028, 0032, 0033.
-- Portable Surface/fonts/protocols: 0008, 0012, 0022, 0025.
-- User-owned configuration and live application: 0002, 0003, 0025, 0029, 0030, 0035.
+- Tabs/panes/chrome/close/native completion: 0016, 0017, 0027, 0028, 0032, 0033, 0035.
+- Saved Sessions, SSH and OMXTerm-owned data: 0006, 0034, 0036, 0037, 0039.
+- Portable Surface/fonts/protocols: 0008, 0012, 0022, 0025, 0038.
+- User-owned configuration and live application: 0002, 0003, 0025, 0029, 0030.
 - Renderer privilege and explicit payload actions: 0006, 0009–0011, 0021, 0024, 0026.
-- Native distribution, verification and installers: 0015, 0019, 0020, 0023, 0031, 0034, 0039.
-- Windows shell selection, discovery and profiles: 0036–0038.
+- Native distribution, verification and installers: 0015, 0019, 0020, 0023, 0031, 0040, 0045.
+- Windows shells and interface language: 0041, 0042, 0043, 0044, 0046.

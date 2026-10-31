@@ -1,3 +1,4 @@
+import type { TerminalContextMenuRequest } from "../shared/terminal-contract";
 import type { TerminalFontZoom } from "../shared/terminal-contract";
 import type { LocalImageActivation } from "../shared/local-image";
 import type { TerminalFontInput } from "./terminal-font-stack";
@@ -17,8 +18,16 @@ export interface TerminalSurface {
   paste(): Promise<void>;
   inject(text: string, options?: { readonly submit?: boolean }): Promise<void>;
   selectAll(): void;
-  // Opens the in-memory scrollback search bar, or focuses it when open.
-  find(): void;
+  // The selected text, read without touching the clipboard.
+  selectionText?(): string;
+  // The whole buffer, scrollback included, as text. It selects everything to
+  // read it; the selection clears at the next key press, as usual.
+  outputText?(): string;
+  // Opens or closes the in-terminal search bar over the scrollback.
+  toggleSearch(): void;
+  // The file name printed under a window point (an `ls` entry, a path), or
+  // null over blank cells.
+  fileTokenAt?(clientX: number, clientY: number): string | null;
   dispose(): void;
 }
 
@@ -26,7 +35,8 @@ export interface TerminalClipboard {
   writeText(text: string): Promise<void>;
   readText(): Promise<string>;
   confirmPaste(text: string): Promise<boolean>;
-  requestContextMenu(): void;
+  // The Surface sends no request; a pane host may add one.
+  requestContextMenu(request?: TerminalContextMenuRequest): void;
 }
 
 export interface TerminalAppearance {
@@ -39,19 +49,7 @@ export interface TerminalAppearance {
   };
 }
 
-// Application-owned text inside the Surface, in the window language.
-export interface TerminalSurfaceLabels {
-  readonly surfaceRegion: string;
-  readonly searchRegion: string;
-  readonly searchPlaceholder: string;
-  readonly searchClear: string;
-  readonly searchMatchAbove: string;
-  readonly searchMatchBelow: string;
-  readonly searchClose: string;
-}
-
 export interface TerminalSurfaceConfiguration {
-  readonly labels?: TerminalSurfaceLabels;
   readonly scrollbackLines: number;
   readonly optionKeyMode: OptionKeyMode;
   readonly appearance: TerminalAppearance & {
@@ -69,10 +67,6 @@ export interface TerminalFontInputLease {
 }
 
 export interface TerminalSurfaceOptions {
-  readonly labels?: TerminalSurfaceLabels;
-  // Standalone Surfaces focus their initial pane by default. Window/tab owners
-  // disable this implicit construction side effect and call focus() explicitly.
-  readonly focus?: boolean;
   // A window host may paint one shared tint behind Surface, padding and chrome.
   // Otherwise the Surface paints its own opaque default background.
   readonly background?: "surface" | "host";
@@ -90,6 +84,13 @@ export interface TerminalSurfaceOptions {
   readonly onClipboardError?: () => void;
   readonly onTitleRequest?: (request: string) => void;
   readonly onBell?: () => void;
+  // Keyboard input typed into this Surface (never parser replies or paste).
+  readonly onUserInput?: (text: string) => void;
+  // A pure, order-preserving transform of PTY output before parsing, used for
+  // output highlighting. It must only insert SGR sequences.
+  readonly transformOutput?: (data: string) => string;
+  // A program reported its working directory through OSC 7 (file:// URI).
+  readonly onWorkingDirectory?: (uri: string) => void;
   readonly linkHoverAvailability?: {
     isEnabled(): boolean;
     subscribe(listener: () => void): () => void;
@@ -97,6 +98,17 @@ export interface TerminalSurfaceOptions {
   readonly onExternalLink?: (url: string) => void;
   readonly onLocalImageActivation?: (source: LocalImageActivation) => void;
   readonly onFatalError?: (message: string) => void;
+  // Keep the final screen after a non-zero exit instead of disposing, so a
+  // failed connection's error stays readable. Input is refused afterwards.
+  readonly retainOnExit?: boolean;
+  // Labels for the search bar; English when absent.
+  readonly searchLabels?: {
+    readonly placeholder: string;
+    readonly previous: string;
+    readonly next: string;
+    readonly clear: string;
+    readonly close: string;
+  };
 }
 
 export { mountResttyTerminalSurface as mountTerminalSurface } from "./restty-terminal-surface";

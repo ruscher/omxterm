@@ -70,7 +70,7 @@ it.for([
               bundle: true,
               platform: "node",
               format: "esm",
-              external: ["electron", "node-pty", "yaml"],
+              external: ["electron", "node-pty"],
             });
           }
         },
@@ -122,14 +122,11 @@ it.for([
         } | null;
         configuredWhileReady: boolean;
         version: string;
-        aboutEntry: { label: string; hasClick: boolean };
+        nativeAboutRole: string;
         iconSize?: { width: number; height: number };
         iconEmpty?: boolean;
       };
-      expect(result.aboutEntry).toEqual({
-        label: "About OMXTerm",
-        hasClick: true,
-      });
+      expect(result.nativeAboutRole).toBe("about");
       if (
         process.platform === "linux" &&
         process.env.ELECTRON_OZONE_PLATFORM_HINT !== undefined

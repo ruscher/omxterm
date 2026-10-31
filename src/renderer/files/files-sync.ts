@@ -1,4 +1,9 @@
-import { quotePathForShell } from "../../shared/file-browser";
+import {
+  changeDirectoryForDialect,
+  platformShellDialect,
+  quotePathForDialect,
+  type ShellDialect,
+} from "../../shared/shell-dialect";
 import type { FilesSource } from "./files-source";
 
 export interface PaneState {
@@ -6,6 +11,8 @@ export interface PaneState {
   readonly directory: string | null;
   // A program runs in the pane's shell; nothing is typed into it then.
   readonly busy: boolean;
+  // The command language of the pane's shell, when main can name it.
+  readonly dialect?: ShellDialect;
 }
 
 export interface TerminalSyncOptions {
@@ -68,23 +75,21 @@ export function createTerminalSync(options: TerminalSyncOptions) {
     // with Ctrl+Y); the command starts with a space so shells set to ignore
     // such lines keep it out of history.
     async push(source: FilesSource, directory: string): Promise<PushResult> {
+      let dialect = platformShellDialect(source.platform);
       if (source.kind === "local") {
         const pane = await options.focusedPane().catch(() => null);
         if (!pane || pane.busy) return "busy";
         if (pane.directory === directory) return "same";
+        dialect = pane.dialect ?? dialect;
       } else if (pathFromUri(options.reportedUri()) === directory)
         return "same";
       pending = { path: directory, until: Date.now() + PUSH_GRACE_MS };
-      if (source.platform === "win32") {
+      if (dialect === "powershell" || dialect === "cmd") {
         options.sendKeys("\u001b");
-        options.runCommand(
-          `Set-Location -LiteralPath ${quotePathForShell(directory, "win32")}`,
-        );
+        options.runCommand(changeDirectoryForDialect(directory, dialect));
       } else {
         options.sendKeys("\u0005\u0015");
-        options.runCommand(
-          ` cd -- ${quotePathForShell(directory, source.platform)}`,
-        );
+        options.runCommand(` cd -- ${quotePathForDialect(directory, dialect)}`);
       }
       return "sent";
     },

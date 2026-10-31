@@ -15,6 +15,13 @@ dist/
 release/
 npm-debug.log*
 
+# makepkg output. packaging/arch/PKGBUILD packages every untracked file that
+# is not ignored, so a previous build's src/, pkg/, Git clone or package
+# archive must never look like source.
+/pkgbuild/*/
+/packaging/arch/*/
+*.pkg.tar*
+
 # A bit unreadable, but "temp.md" and "tmp.md". Case does not matter
 [Tt][Ee][Mm][Pp].[Mm][Dd]
 [Tt][Mm][Pp].[Mm][Dd]
@@ -33,7 +40,8 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
+build/*
+!build/installer.nsh
 develop-eggs/
 dist/
 downloads/

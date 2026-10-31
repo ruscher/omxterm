@@ -1,58 +1,58 @@
-import { aboutIpc, isAboutLink } from "../shared/about";
-import type {
-  IpcEvent,
-  IpcMainPort,
-  TrustedWebContents,
-} from "./terminal-ipc-types";
+import { app, BrowserWindow, shell, type IpcMain } from "electron";
+import { aboutIpc, isAboutLink, type AboutInfo } from "../shared/about";
+import {
+  APPLICATION_AUTHORS,
+  APPLICATION_COPYLEFT,
+  APPLICATION_ISSUES,
+  APPLICATION_WEBSITE,
+  MIT_LICENSE_URL,
+} from "./application-about";
+import type { OperationalEventLog } from "./operational-events";
+import type { IpcEvent, IpcMainPort } from "./terminal-ipc-types";
+import { registerTrustedHandlers } from "./trusted-ipc";
 
-// Version/fixed-link route adapted from ruscher/omxterm PR #622,
-// b3c3a4ad6c1f2224bded65873ba0b09a07ec5d38 (MIT).
-const links = {
-  website: "https://github.com/luizomf/omxterm",
-  contributors: "https://github.com/luizomf/omxterm/blob/main/CONTRIBUTORS.md",
-  issues: "https://github.com/luizomf/omxterm/issues",
-  license: "https://github.com/luizomf/omxterm/blob/main/LICENSE",
+const LINKS = {
+  website: APPLICATION_WEBSITE,
+  issues: APPLICATION_ISSUES,
+  license: MIT_LICENSE_URL,
 } as const;
 
+// The About dialog drawn by the window: main supplies the application facts
+// and opens only its own fixed links, never an address from the renderer.
 export function startAbout(options: {
-  readonly ipcMain: Pick<IpcMainPort, "handle" | "removeHandler">;
+  readonly ipcMain: IpcMain;
   readonly isTrustedSender: (event: IpcEvent) => boolean;
-  readonly getVersion: () => string;
-  readonly openExternal: (url: string) => Promise<unknown>;
-  readonly selectedContents: () => TrustedWebContents | undefined;
+  readonly operationalEvents: Pick<OperationalEventLog, "write">;
 }) {
-  let disposed = false;
-  const trusted = (event: IpcEvent) =>
-    !disposed && !event.sender.isDestroyed() && options.isTrustedSender(event);
-  options.ipcMain.handle(aboutIpc.info, async (event, payload) => {
-    if (!trusted(event)) throw new Error("Rejected About sender");
-    if (payload !== undefined) throw new TypeError("Invalid About request");
-    return {
-      name: "OMXTerm",
-      version: options.getVersion(),
-      copyright: "Copyright © 2026 Luiz Otávio Miranda",
-    };
-  });
-  options.ipcMain.handle(aboutIpc.openLink, async (event, payload) => {
-    if (!trusted(event)) throw new Error("Rejected About sender");
-    if (!isAboutLink(payload)) throw new TypeError("Invalid About request");
-    try {
-      await options.openExternal(links[payload]);
-    } catch {
-      throw new Error("Could not open the About link");
-    }
-  });
+  registerTrustedHandlers(
+    options.ipcMain as unknown as IpcMainPort,
+    options.isTrustedSender,
+    {
+      [aboutIpc.info]: (): AboutInfo => ({
+        name: "OMXTerm",
+        version: app.getVersion(),
+        authors: [...APPLICATION_AUTHORS],
+        copyleft: APPLICATION_COPYLEFT,
+        website: APPLICATION_WEBSITE,
+      }),
+      [aboutIpc.openLink]: async (_event, payload) => {
+        if (!isAboutLink(payload)) throw new TypeError("Invalid link");
+        await shell.openExternal(LINKS[payload]);
+      },
+    },
+    () =>
+      options.operationalEvents.write({
+        name: "boundary.rejected",
+        boundary: "ipc",
+        reason: "untrusted-sender",
+      }),
+  );
   return {
     show() {
-      const sender = options.selectedContents();
-      if (sender && trusted({ sender, senderFrame: sender.mainFrame }))
-        sender.send(aboutIpc.open, undefined);
-    },
-    dispose() {
-      if (disposed) return;
-      disposed = true;
-      options.ipcMain.removeHandler(aboutIpc.info);
-      options.ipcMain.removeHandler(aboutIpc.openLink);
+      const window =
+        BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
+      if (window && !window.webContents.isDestroyed())
+        window.webContents.send(aboutIpc.open);
     },
   };
 }

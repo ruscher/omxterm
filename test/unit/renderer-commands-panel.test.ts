@@ -135,6 +135,57 @@ describe("Commands panel", () => {
     );
   });
 
+  it("duplicates a built-in whose fields use types the editor does not offer", async () => {
+    const { panel } = await mount("linux");
+    rowNamed(panel.element, "Compress").dispatchEvent(
+      new MouseEvent("contextmenu", { bubbles: true }),
+    );
+    [
+      ...document.querySelectorAll<HTMLButtonElement>(
+        ".omx-context-menu button",
+      ),
+    ]
+      .find((button) => button.textContent === "Duplicate")!
+      .click();
+    const dialog = await vi.waitFor(() =>
+      document.querySelector<HTMLDialogElement>(".command-editor-dialog")!,
+    );
+    const labels = [...dialog.querySelectorAll("option")].map(
+      (option) => option.textContent,
+    );
+    expect(labels).toContain("Multiline Text");
+  });
+
+  it("asks for the command when the template is empty", async () => {
+    const { panel } = await mount("linux");
+    rowNamed(panel.element, "Compress").dispatchEvent(
+      new MouseEvent("contextmenu", { bubbles: true }),
+    );
+    [
+      ...document.querySelectorAll<HTMLButtonElement>(
+        ".omx-context-menu button",
+      ),
+    ]
+      .find((button) => button.textContent === "Duplicate")!
+      .click();
+    const dialog = await vi.waitFor(() =>
+      document.querySelector<HTMLDialogElement>(".command-editor-dialog")!,
+    );
+    const template = dialog.querySelector<HTMLTextAreaElement>("textarea")!;
+    template.value = "";
+    template.dispatchEvent(new Event("input", { bubbles: true }));
+    [...dialog.querySelectorAll<HTMLButtonElement>(".omx-modal-actions button")]
+      .at(-1)!
+      .click();
+    await vi.waitFor(() =>
+      expect(
+        [...dialog.querySelectorAll(".omx-field-error")].map(
+          (node) => node.textContent,
+        ),
+      ).toContain("Enter the command to run."),
+    );
+  });
+
   it("uses PowerShell commands and quoting on Windows, translated for pt-BR", async () => {
     const { panel } = await mount("win32", "pt-BR");
     const names = [...panel.element.querySelectorAll(".sessions-name")].map(

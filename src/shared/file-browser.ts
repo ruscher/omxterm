@@ -163,6 +163,18 @@ export function isFileOperationResult(
   );
 }
 
+// Windows hides these through file attributes that node:fs does not expose: the
+// legacy profile junctions (which refuse listing) and its per-folder records.
+const WINDOWS_HIDDEN_NAMES =
+  /^(?:application data|cookies|local settings|my documents|nethood|printhood|recent|sendto|start menu|templates|ntuser\.(?:dat|ini|pol)(?:[.{].*)?|desktop\.ini|thumbs\.db|\$recycle\.bin|system volume information)$/iu;
+
+export function isHiddenFileName(name: string, platform: string): boolean {
+  return (
+    name.startsWith(".") ||
+    (platform === "win32" && WINDOWS_HIDDEN_NAMES.test(name))
+  );
+}
+
 // Quotes a path as one literal argument for the shell that will read it.
 export function quotePathForShell(filePath: string, platform: string): string {
   if (platform === "win32") return `'${filePath.replaceAll("'", "''")}'`;

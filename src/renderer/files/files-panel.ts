@@ -1,4 +1,8 @@
-import type { DirectoryListing, FileEntry } from "../../shared/file-browser";
+import {
+  isHiddenFileName,
+  type DirectoryListing,
+  type FileEntry,
+} from "../../shared/file-browser";
 import type { Translator } from "../../shared/i18n";
 import type { FilesBridge } from "../../shared/terminal-bridge";
 import type { TerminalSessionId } from "../../shared/terminal-contract";
@@ -56,12 +60,13 @@ function visibleEntries(
   showHidden: boolean,
   filter: string,
   compare: (first: string, second: string) => number,
+  platform: string,
 ): FileEntry[] {
   const query = filter.trim().toLocaleLowerCase();
   return sortEntries(
     (listing?.entries ?? []).filter(
       (entry) =>
-        (showHidden || !entry.name.startsWith(".")) &&
+        (showHidden || !isHiddenFileName(entry.name, platform)) &&
         (query === "" || entry.name.toLocaleLowerCase().includes(query)),
     ),
     compare,
@@ -109,8 +114,12 @@ export function createFilesPanel(
   const pathOf = (entry: FileEntry) => join(listing?.path ?? "/", entry.name);
 
   const visible = () =>
-    visibleEntries(listing, showHidden, filter.value, (first, second) =>
-      translator.compare(first, second),
+    visibleEntries(
+      listing,
+      showHidden,
+      filter.value,
+      (first, second) => translator.compare(first, second),
+      source?.platform ?? "linux",
     );
   const render = () => {
     const entries = visible();
@@ -225,6 +234,7 @@ export function createFilesPanel(
   const actions = createFilesActions(document, {
     t,
     notify: options.notify,
+    focusedPane: options.focusedPane,
     typeInTerminal: options.typeInTerminal,
     copyText: options.copyText,
     source: () => source,

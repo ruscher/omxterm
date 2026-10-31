@@ -18,6 +18,7 @@ import {
   type SftpAttributes,
   type SftpClient,
 } from "./sftp-client";
+import { mainTranslator } from "./main-translator";
 
 // One SFTP connection per destination, opened on demand through the user's
 // OpenSSH and closed after a quiet period.
@@ -146,7 +147,8 @@ export function createRemoteFiles(options: RemoteFilesOptions) {
     budget: { left: number },
   ): Promise<void> => {
     budget.left -= 1;
-    if (budget.left < 0) throw new Error("Too many items to delete at once.");
+    if (budget.left < 0)
+      throw new Error(mainTranslator().t("files.error.tooManyToDelete"));
     const attributes = await client.lstat(remotePath);
     if (isDirectoryMode(attributes.permissions)) {
       for (const child of await client.list(remotePath))

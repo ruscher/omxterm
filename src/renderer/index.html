@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob:; connect-src 'none'; object-src 'none'; base-uri 'none'"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src blob:; connect-src 'none'; object-src 'none'; base-uri 'none'"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OMXTerm</title>
@@ -15,7 +15,7 @@
     <div id="terminal-window-content">
       <aside id="workspace-sidebar" hidden></aside>
       <div id="terminal-tabs"></div>
-      <aside id="snippets-sidebar" aria-label="Auxiliary panel" hidden></aside>
+      <aside id="snippets-sidebar" aria-label="Snippets Sidebar" hidden></aside>
     </div>
     <aside
       id="user-file-errors"

@@ -44,5 +44,4 @@ Times are means per chunk.
 - Ghostty/Restty parse throughput, to put the transform cost in proportion.
 - Split-pane resize and redraw cost with 16 panes.
 
-These need an instrumented run of the packaged application and will be added
-before release ([16-release-readiness.md](16-release-readiness.md)).
+These need an instrumented run of the packaged application.

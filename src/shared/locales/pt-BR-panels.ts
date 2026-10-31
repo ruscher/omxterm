@@ -118,10 +118,28 @@ export const brazilianPortuguesePanelMessages: Pick<
     "Mostrar prévia ao passar o mouse sobre nomes de arquivos",
   "prefs.filePreviewHint":
     "Deixe o ponteiro sobre um nome de arquivo exibido num terminal local (por exemplo pelo ls) para ver a imagem, a primeira página ou as primeiras linhas, com os detalhes.",
+  "prefs.language": "Idioma",
+  "prefs.languageHint":
+    "Os menus mudam na hora; as janelas abertas mantêm o idioma até serem reabertas.",
+  "prefs.language.system": "Igual ao do sistema",
+  "prefs.language.enUS": "English",
+  "prefs.language.ptBR": "Português (Brasil)",
   "prefs.shell": "Shell",
   "prefs.windowsShell": "Shell do Windows",
   "prefs.windowsShellHint":
     "Caminho absoluto do programa que os novos terminais locais iniciam. Vazio usa o Windows PowerShell.",
+  "prefs.windowsShellManaged":
+    "Gerenciado pela seção windowsProfiles do config.json. Edite-a na página config.json.",
+  "prefs.windowsShell.powershellCore": "PowerShell 7",
+  "prefs.windowsShell.windowsPowerShell": "Windows PowerShell",
+  "prefs.windowsShell.commandPrompt": "Prompt de Comando",
+  "prefs.windowsShell.wsl": "WSL",
+  "prefs.windowsShell.gitBash": "Git Bash",
+  "prefs.windowsShell.msys2": "MSYS2",
+  "prefs.windowsShell.cygwin": "Cygwin",
+  "prefs.windowsShellIntegration": "Informar a pasta atual do PowerShell",
+  "prefs.windowsShellIntegrationHint":
+    "Permite que o painel Arquivos e os novos painéis acompanhem o PowerShell. Altera só um PowerShell iniciado sem argumentos, envolvendo o prompt; novas abas usam esta opção.",
   "prefs.configFile": "config.json",
   "prefs.configFileHint":
     "Edite todas as configurações diretamente. Ao salvar, o arquivo é verificado como numa recarga, a versão anterior fica em config.json.bak e tudo é aplicado em todas as janelas.",
@@ -181,7 +199,6 @@ export const brazilianPortuguesePanelMessages: Pick<
   "assistant.model": "Modelo",
   "assistant.modelHint":
     "Digite o id de um modelo ou carregue a lista do provedor.",
-  "assistant.loadModels": "Carregar Modelos",
   "assistant.baseUrl": "Endereço do servidor",
   "assistant.baseUrlHint":
     "Endereço compatível com OpenAI, por exemplo http://localhost:11434/v1 para Ollama ou http://localhost:1234/v1 para LM Studio. http sem criptografia só é aceito para este computador e a rede local.",
@@ -239,7 +256,6 @@ export const brazilianPortuguesePanelMessages: Pick<
   "about.version": "Versão {version}",
   "about.summary": "Um terminal para macOS, Linux e Windows.",
   "about.authors": "Autores",
-  "about.website": "Site",
   "about.license": "Licença",
   "about.warrantyBefore":
     "Este aplicativo vem sem absolutamente nenhuma garantia. Consulte a ",

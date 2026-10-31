@@ -18,6 +18,7 @@ import {
   type FileOperationResult,
   type FileTransfer,
 } from "../shared/file-browser";
+import { mainTranslator } from "./main-translator";
 
 // Local file operations for the Files panel. Every path arrives as a literal
 // argument to a Node API; nothing goes through a shell. Deletion moves items
@@ -90,6 +91,7 @@ async function entry(
 }
 
 const message = (cause: unknown) => {
+  const t = mainTranslator().t.bind(mainTranslator());
   const code =
     typeof cause === "object" && cause !== null && "code" in cause
       ? String(cause.code)
@@ -97,20 +99,22 @@ const message = (cause: unknown) => {
   switch (code) {
     case "EACCES":
     case "EPERM":
-      return "Permission denied.";
+      return t("files.error.permissionDenied");
     case "EEXIST":
     case "ERR_FS_CP_EEXIST":
-      return "An item with that name already exists.";
+      return t("files.error.exists");
     case "ENOENT":
-      return "The item no longer exists.";
+      return t("files.error.missing");
     case "ENOTEMPTY":
-      return "The folder is not empty.";
+      return t("files.error.notEmpty");
     case "EXDEV":
-      return "The item cannot be moved across devices.";
+      return t("files.error.crossDevice");
     case "ERR_FS_CP_EINVAL":
-      return "A folder cannot be copied into itself.";
+      return t("files.error.copyIntoItself");
     default:
-      return cause instanceof Error ? cause.message.slice(0, 512) : "Failed.";
+      return cause instanceof Error
+        ? cause.message.slice(0, 512)
+        : t("files.error.failed");
   }
 };
 

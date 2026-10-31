@@ -185,29 +185,6 @@ describe("local PTY Adapter lifecycle", () => {
     expect(session.fallbackTitle).toBe("bash.exe");
   });
 
-  it("passes saved profile arguments literally and uses its display name", () => {
-    const harness = createPtyHarness();
-    const spawn = vi.fn<SpawnPty>(() => harness.pty);
-    const session = createLocalTerminalSession(spawn, {
-      shell: "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
-      shellArguments: ["-NoLogo", "", "two words", "&not-a-command"],
-      shellTitle: "PowerShell 7 (No Logo)",
-      platform: "win32",
-      homeDirectory: "C:\\Users\\example",
-      applicationVersionProvider: { getVersion: () => "1.2.3" },
-      environment: {},
-      onOutput: vi.fn(),
-      onExit: vi.fn(),
-    });
-
-    expect(spawn).toHaveBeenCalledWith(
-      "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
-      ["-NoLogo", "", "two words", "&not-a-command"],
-      expect.objectContaining({ cwd: "C:\\Users\\example" }),
-    );
-    expect(session.fallbackTitle).toBe("PowerShell 7 (No Logo)");
-  });
-
   it("counts a live Windows session as Busy because ConPTY hides the foreground name", () => {
     const harness = createPtyHarness();
     const session = createLocalTerminalSession(
@@ -475,5 +452,128 @@ describe("local PTY Adapter lifecycle", () => {
     exitedHarness.setForegroundProcess("htop");
     exitedHarness.emitExit(0);
     expect(exitedSession.hasForegroundChildProcess()).toBe(false);
+  });
+});
+
+describe("Windows profile launch", () => {
+  it("passes saved profile arguments literally and uses its display name", () => {
+    const harness = createPtyHarness();
+    const spawn = vi.fn<SpawnPty>(() => harness.pty);
+    const session = createLocalTerminalSession(spawn, {
+      shell: "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      shellArguments: ["-NoLogo", "", "two words", "&not-a-command"],
+      shellTitle: "PowerShell 7 (No Logo)",
+      platform: "win32",
+      homeDirectory: "C:\\Users\\example",
+      applicationVersionProvider: { getVersion: () => "1.2.3" },
+      environment: {},
+      onOutput: vi.fn(),
+      onExit: vi.fn(),
+    });
+
+    expect(spawn).toHaveBeenCalledWith(
+      "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      ["-NoLogo", "", "two words", "&not-a-command"],
+      expect.objectContaining({ cwd: "C:\\Users\\example" }),
+    );
+    expect(session.fallbackTitle).toBe("PowerShell 7 (No Logo)");
+  });
+
+  it("does not give a profile's arguments or title to an explicit command", () => {
+    const harness = createPtyHarness();
+    const spawn = vi.fn<SpawnPty>(() => harness.pty);
+    const session = createLocalTerminalSession(spawn, {
+      shell: "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      shellArguments: ["-NoLogo"],
+      shellTitle: "PowerShell 7 (No Logo)",
+      launchRequest: {
+        kind: "explicit-command",
+        executable: "C:\\Windows\\System32\\OpenSSH\\ssh.exe",
+        arguments: ["host"],
+      },
+      platform: "win32",
+      homeDirectory: "C:\\Users\\example",
+      applicationVersionProvider: { getVersion: () => "1.2.3" },
+      environment: {},
+      onOutput: vi.fn(),
+      onExit: vi.fn(),
+    });
+
+    expect(spawn).toHaveBeenCalledWith(
+      "C:\\Windows\\System32\\OpenSSH\\ssh.exe",
+      ["host"],
+      expect.anything(),
+    );
+    expect(session.fallbackTitle).not.toBe("PowerShell 7 (No Logo)");
+  });
+});
+
+describe("Windows prompt detection", () => {
+  it("knows a Windows shell waits at its prompt from the prompt's drive folder report", () => {
+    const harness = createPtyHarness();
+    const session = createLocalTerminalSession(
+      vi.fn<SpawnPty>(() => harness.pty),
+      {
+        shell: "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        platform: "win32",
+        homeDirectory: "C:\\Users\\example",
+        applicationVersionProvider: { getVersion: () => "1.2.3" },
+        environment: {},
+        onOutput: vi.fn(),
+        onExit: vi.fn(),
+      },
+    );
+
+    expect(session.atShellPrompt?.()).toBe(false);
+    // The report may arrive split across ConPTY reads, with the colon
+    // escaped as the PowerShell integration sends it.
+    harness.emitData("\u001b]7;file://localhost/C%3");
+    harness.emitData("A/Users/example\u001b\\PS C:\\Users\\example> ");
+    expect(session.atShellPrompt?.()).toBe(true);
+    expect(session.hasForegroundChildProcess()).toBe(true);
+    session.write("pin");
+    expect(session.atShellPrompt?.()).toBe(true);
+    session.write("g example.org\r");
+    expect(session.atShellPrompt?.()).toBe(false);
+    harness.emitData("Pinging example.org\r\n");
+    expect(session.atShellPrompt?.()).toBe(false);
+    // A remote or WSL shell reports a POSIX path, not a drive folder.
+    harness.emitData("\u001b]7;file://localhost/home/example\u001b\\");
+    harness.emitData("\u001b]7;file://server/C:/x\u001b\\");
+    expect(session.atShellPrompt?.()).toBe(false);
+    harness.emitData("\u001b]7;file://localhost/D:/\u001b\\PS D:\\> ");
+    expect(session.atShellPrompt?.()).toBe(true);
+    session.close();
+    expect(session.atShellPrompt?.()).toBe(false);
+  });
+
+  it("never reports a prompt outside Windows or for an explicit command", () => {
+    for (const options of [
+      { shell: "/bin/bash", platform: "linux" },
+      {
+        shell: "C:\\Windows\\System32\\cmd.exe",
+        platform: "win32",
+        launchRequest: {
+          kind: "explicit-command" as const,
+          executable: "C:\\Tools\\tool.exe",
+          arguments: [],
+        },
+      },
+    ]) {
+      const harness = createPtyHarness();
+      const session = createLocalTerminalSession(
+        vi.fn<SpawnPty>(() => harness.pty),
+        {
+          ...options,
+          homeDirectory: "/home/example",
+          applicationVersionProvider: { getVersion: () => "1.2.3" },
+          environment: {},
+          onOutput: vi.fn(),
+          onExit: vi.fn(),
+        },
+      );
+      harness.emitData("\u001b]7;file://localhost/C:/\u001b\\");
+      expect(session.atShellPrompt?.()).toBe(false);
+    }
   });
 });

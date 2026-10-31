@@ -1,6 +1,10 @@
 import { isTerminalTheme, type TerminalTheme } from "./terminal-theme";
+import {
+  SUPPORTED_LOCALES,
+  type InterfaceLanguage,
+  type SupportedLocale,
+} from "./i18n";
 import type { TerminalKeybinds } from "./terminal-keybinds";
-import { isSupportedLanguage, type SupportedLanguage } from "./i18n";
 import type { WindowsShellProfiles } from "./windows-shell-profiles";
 
 export const MIN_TERMINAL_FONT_SIZE = 8;
@@ -42,8 +46,8 @@ export interface TerminalPadding {
 }
 
 export interface TerminalRendererConfiguration {
-  // Main always sends the configured language; absent means en-US.
-  readonly language?: SupportedLanguage;
+  // The locale main resolved for application text in new windows.
+  readonly language?: SupportedLocale;
   readonly fontConfigurationId?: string;
   readonly fontFamily?: string;
   readonly fontSize: number;
@@ -67,11 +71,13 @@ export interface TerminalRendererConfiguration {
 
 export interface UserConfiguration {
   readonly version: 1;
-  readonly language: SupportedLanguage;
+  readonly language: InterfaceLanguage;
   readonly confirmClose: boolean;
   readonly logLevel: OperationalLogLevel;
   readonly windowsShell?: string;
   readonly windowsProfiles?: WindowsShellProfiles;
+  // A PowerShell started without arguments reports its folder through OSC 7.
+  readonly windowsShellIntegration: boolean;
   readonly fontFamily?: string;
   readonly fontSize: number;
   readonly fontLineHeight: number;
@@ -89,16 +95,6 @@ export interface UserConfiguration {
   readonly autoHideTitleBar: boolean;
   readonly terminalTheme: TerminalTheme;
   readonly keybinds: TerminalKeybinds;
-}
-
-function hasValidOptionalRendererFields(
-  value: Record<string, unknown>,
-): boolean {
-  return (
-    (value.language === undefined || isSupportedLanguage(value.language)) &&
-    isOptionalSurfaceFontIdentity(value.fontConfigurationId) &&
-    (value.fontFamily === undefined || typeof value.fontFamily === "string")
-  );
 }
 
 export function isTerminalRendererConfiguration(
@@ -128,7 +124,10 @@ export function isTerminalRendererConfiguration(
         "userFileErrors",
       ].includes(key),
     ) &&
-    hasValidOptionalRendererFields(value) &&
+    (value.language === undefined ||
+      (SUPPORTED_LOCALES as readonly unknown[]).includes(value.language)) &&
+    isOptionalSurfaceFontIdentity(value.fontConfigurationId) &&
+    (value.fontFamily === undefined || typeof value.fontFamily === "string") &&
     Number.isInteger(value.fontSize) &&
     (value.fontSize as number) >= MIN_TERMINAL_FONT_SIZE &&
     (value.fontSize as number) <= MAX_TERMINAL_FONT_SIZE &&

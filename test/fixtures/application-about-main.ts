@@ -103,7 +103,7 @@ try {
       app.quit();
       return;
     }
-    const about = items.find((item) => item.id === "about");
+    const about = items.find((item) => item.role === "about");
     const icon = options?.iconPath
       ? nativeImage.createFromPath(options.iconPath)
       : undefined;
@@ -113,9 +113,7 @@ try {
       options: options ?? null,
       configuredWhileReady,
       version: app.getVersion(),
-      aboutEntry: about
-        ? { label: about.label, hasClick: typeof about.click === "function" }
-        : null,
+      nativeAboutRole: about?.role,
       iconSize: icon?.getSize(),
       iconEmpty: icon?.isEmpty(),
     });

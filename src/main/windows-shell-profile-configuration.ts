@@ -10,10 +10,45 @@ import {
 } from "../shared/windows-shell-profiles";
 import { isLocalWindowsDriveAbsolutePath } from "../shared/windows-shells";
 import { UserConfigurationError } from "./user-configuration-error";
+import { optionalBoolean } from "./user-configuration-values";
 
 export interface ConfiguredWindowsShellTarget {
   readonly executable: string;
   readonly location: string;
+}
+
+export function validateWindowsSettings(
+  root: Readonly<Record<string, unknown>>,
+  configurationPath: string,
+  platform: string,
+): Pick<
+  UserConfiguration,
+  "windowsShell" | "windowsProfiles" | "windowsShellIntegration"
+> {
+  const windowsShell = validateWindowsShell(
+    root.windowsShell,
+    configurationPath,
+    platform,
+  );
+  const windowsProfiles = validateWindowsProfiles(
+    root.windowsProfiles,
+    configurationPath,
+  );
+  assertWindowsShellConfigurationExclusive(
+    windowsShell,
+    windowsProfiles,
+    configurationPath,
+  );
+  return {
+    ...windowsShellProperty(windowsShell),
+    ...windowsProfilesProperty(windowsProfiles),
+    windowsShellIntegration: optionalBoolean(
+      root.windowsShellIntegration,
+      configurationPath,
+      "windowsShellIntegration",
+      true,
+    ),
+  };
 }
 
 export function validateWindowsShell(

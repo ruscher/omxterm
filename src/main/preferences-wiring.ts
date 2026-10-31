@@ -17,6 +17,7 @@ import {
 } from "./preferences-service";
 import type { IpcEvent, IpcMainPort } from "./terminal-ipc-types";
 import { registerTrustedHandlers } from "./trusted-ipc";
+import { discoverWindowsShells } from "./windows-shell-discovery";
 
 const execFileAsync = promisify(execFile);
 const MAX_FONT_FAMILIES = 512;
@@ -74,6 +75,7 @@ export function startPreferences(
       list: (directory) => readdir(directory),
     },
     fontFamilies: () => monospaceFontFamilies(options.platform),
+    windowsShells: () => discoverWindowsShells({ environment: process.env }),
   });
   registerTrustedHandlers(
     options.ipcMain as unknown as IpcMainPort,

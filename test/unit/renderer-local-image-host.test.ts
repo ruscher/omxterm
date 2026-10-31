@@ -78,12 +78,10 @@ async function setup(
     copy: vi.fn(async () => {}),
     paste: vi.fn(async () => {}),
     selectAll: vi.fn(),
-    find: vi.fn(),
+    toggleSearch: vi.fn(),
   };
   let openImage!: () => void;
-  let openAbout!: () => void;
   let toggleTabBar!: () => void;
-  let find!: () => void;
   let toggleTitleBar = () => {};
   const chromeCommand = vi.fn();
   let clipboard!: (action: "copy" | "paste" | "select-all") => void;
@@ -106,14 +104,6 @@ async function setup(
         return surface;
       },
       page: window,
-      about: {
-        info: async () => ({ name: "OMXTerm", version: "1", copyright: "MIT" }),
-        openLink: async () => {},
-        onOpen(listener) {
-          openAbout = listener;
-          return () => {};
-        },
-      },
       ...(withChrome
         ? {
             chrome: {
@@ -162,10 +152,6 @@ async function setup(
         toggleTabBar = listener;
         return () => {};
       },
-      subscribeToFind(listener) {
-        find = listener;
-        return () => {};
-      },
       subscribeToTabCommands: (listener) => {
         tabCommand = listener;
         return () => {};
@@ -182,9 +168,7 @@ async function setup(
     tabCommand,
     surfaceOptions,
     openImage,
-    openAbout,
     toggleTabBar,
-    find: () => find(),
     toggleTitleBar: () => toggleTitleBar(),
     chromeCommand,
     tabStrip,
@@ -193,35 +177,6 @@ async function setup(
 }
 
 describe("local image preview through the Terminal Window host", () => {
-  it("does not stack About on an asynchronous image picker or image on About", async () => {
-    let finish!: (image: LocalImageData | null) => void;
-    const load = vi.fn(
-      () =>
-        new Promise<LocalImageData | null>((resolve) => {
-          finish = resolve;
-        }),
-    );
-    const page = await setup(load, true);
-    page.openImage();
-    page.openAbout();
-    expect(document.querySelector(".about-dialog")).toBeNull();
-    finish(null);
-    await vi.waitFor(() => expect(page.surface.focus).toHaveBeenCalled());
-    page.surface.focus.mockClear();
-    page.openAbout();
-    page.openImage();
-    page.toggleTitleBar();
-    page.toggleTabBar();
-    page.clipboard("paste");
-    page.zoom("in");
-    fileDrop();
-    expect(load).toHaveBeenCalledOnce();
-    expect(page.surface.focus).not.toHaveBeenCalled();
-    expect(page.surface.paste).not.toHaveBeenCalled();
-    expect(page.surface.zoom).not.toHaveBeenCalled();
-    expect(page.surface.inject).not.toHaveBeenCalled();
-    page.host.dispose();
-  });
   it.each(["menu", "destination"])(
     "disables hover throughout %s preview activity",
     async (route) => {
@@ -385,7 +340,6 @@ describe("local image preview through the Terminal Window host", () => {
         view.clipboard("paste");
         view.clipboard("copy");
         view.clipboard("select-all");
-        view.find();
         view.zoom("in");
         fileDrop();
         window.dispatchEvent(new Event("focus"));
@@ -399,7 +353,6 @@ describe("local image preview through the Terminal Window host", () => {
       expect.soft(view.surface.paste).not.toHaveBeenCalled();
       expect.soft(view.surface.copy).not.toHaveBeenCalled();
       expect.soft(view.surface.selectAll).not.toHaveBeenCalled();
-      expect.soft(view.surface.find).not.toHaveBeenCalled();
       expect.soft(view.surface.inject).not.toHaveBeenCalled();
       expect.soft(view.surface.zoom).not.toHaveBeenCalled();
       expect.soft(view.surface.focus).not.toHaveBeenCalled();
@@ -409,7 +362,6 @@ describe("local image preview through the Terminal Window host", () => {
       expect(view.surface.paste).toHaveBeenCalledOnce();
       expect(view.surface.copy).toHaveBeenCalledOnce();
       expect(view.surface.selectAll).toHaveBeenCalledOnce();
-      expect(view.surface.find).toHaveBeenCalledOnce();
       expect(view.surface.inject).toHaveBeenCalledOnce();
       expect(view.surface.zoom).toHaveBeenCalledOnce();
       expect(view.surface.focus).toHaveBeenCalled();

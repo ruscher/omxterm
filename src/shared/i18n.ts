@@ -1,17 +1,14 @@
-import { englishMessages, type MessageKey } from "./locales/en-US";
+import { englishMessages, type MessageKey } from "./locales/en";
 import { brazilianPortugueseMessages } from "./locales/pt-BR";
 
-export type { MessageKey } from "./locales/en-US";
+export type { MessageKey } from "./locales/en";
 
-// Translator and catalog structure adapted from ruscher/omxterm PR #622 at
-// b3c3a4ad6c1f2224bded65873ba0b09a07ec5d38 (MIT). OMXTerm defaults to en-US
-// and never infers a language from the system; User Configuration selects it.
-export const SUPPORTED_LANGUAGES = ["en-US", "pt-BR"] as const;
-export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
-export const DEFAULT_LANGUAGE: SupportedLanguage = "en-US";
+export const SUPPORTED_LOCALES = ["en", "pt-BR"] as const;
+export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+export const DEFAULT_LOCALE: SupportedLocale = "en";
 
-// A message is a template or plural forms chosen by the `count` parameter
-// through Intl.PluralRules. Templates interpolate `{name}` parameters.
+// A message is either a plain template or a plural form selected by the
+// `count` parameter through Intl.PluralRules. Templates interpolate `{name}`.
 export type PluralMessage = {
   readonly one?: string;
   readonly few?: string;
@@ -25,76 +22,117 @@ export type PartialMessageCatalog = Readonly<
 >;
 export type MessageParameters = Readonly<Record<string, string | number>>;
 
-export const MESSAGE_CATALOGS: Readonly<
-  Record<SupportedLanguage, PartialMessageCatalog>
-> = Object.freeze({
-  "en-US": englishMessages,
-  "pt-BR": brazilianPortugueseMessages,
-});
+const CATALOGS: Readonly<Record<SupportedLocale, PartialMessageCatalog>> =
+  Object.freeze({
+    en: englishMessages,
+    "pt-BR": brazilianPortugueseMessages,
+  });
 
-export interface Translator {
-  readonly language: SupportedLanguage;
-  t(key: MessageKey, parameters?: MessageParameters): string;
+// Resolve the first supported locale from an ordered preference list, matching
+// an exact tag first and then the language subtag ("pt-PT" falls back to the
+// only Portuguese catalog). Unknown preferences fall back to English.
+export function resolveLocale(preferences: readonly string[]): SupportedLocale {
+  for (const preference of preferences) {
+    if (typeof preference !== "string" || preference.length === 0) continue;
+    const exact = SUPPORTED_LOCALES.find(
+      (locale) => locale.toLowerCase() === preference.toLowerCase(),
+    );
+    if (exact) return exact;
+    const language = preference.split(/[-_]/u)[0]!.toLowerCase();
+    const sameLanguage = SUPPORTED_LOCALES.find(
+      (locale) => locale.split("-")[0]!.toLowerCase() === language,
+    );
+    if (sameLanguage) return sameLanguage;
+  }
+  return DEFAULT_LOCALE;
 }
 
-export function isSupportedLanguage(
+// What config.json may choose. "system" follows the operating system's
+// preferred languages; any other value overrides them.
+export const INTERFACE_LANGUAGES = ["system", "en-US", "pt-BR"] as const;
+export type InterfaceLanguage = (typeof INTERFACE_LANGUAGES)[number];
+export const DEFAULT_INTERFACE_LANGUAGE: InterfaceLanguage = "system";
+
+export function isInterfaceLanguage(
   value: unknown,
-): value is SupportedLanguage {
+): value is InterfaceLanguage {
   return (
     typeof value === "string" &&
-    (SUPPORTED_LANGUAGES as readonly string[]).includes(value)
+    (INTERFACE_LANGUAGES as readonly string[]).includes(value)
   );
 }
 
-// A key missing from a catalog falls back to its English message.
+export function resolveInterfaceLocale(
+  language: InterfaceLanguage,
+  systemLanguages: readonly string[],
+): SupportedLocale {
+  return resolveLocale(language === "system" ? systemLanguages : [language]);
+}
+
+export interface Translator {
+  readonly locale: SupportedLocale;
+  t(key: MessageKey, parameters?: MessageParameters): string;
+  formatNumber(value: number, options?: Intl.NumberFormatOptions): string;
+  formatDate(
+    value: Date | number,
+    options?: Intl.DateTimeFormatOptions,
+  ): string;
+  compare(first: string, second: string): number;
+}
+
+export interface TranslatorOptions {
+  readonly onMissing?: (key: MessageKey, locale: SupportedLocale) => void;
+}
+
 export function createTranslator(
-  language: SupportedLanguage,
-  catalog: PartialMessageCatalog = MESSAGE_CATALOGS[language],
+  locale: SupportedLocale,
+  options: TranslatorOptions = {},
 ): Translator {
-  const pluralRules = new Intl.PluralRules(language);
+  const catalog = CATALOGS[locale];
+  const pluralRules = new Intl.PluralRules(locale);
+  const collator = new Intl.Collator(locale, { sensitivity: "base" });
+  const numbers = new Map<string, Intl.NumberFormat>();
   return Object.freeze({
-    language,
+    locale,
     t(key: MessageKey, parameters?: MessageParameters) {
-      const message = catalog[key] ?? englishMessages[key];
+      let message = catalog[key];
+      if (message === undefined) {
+        options.onMissing?.(key, locale);
+        message = englishMessages[key];
+      }
       return interpolate(
         selectPlural(message, pluralRules, parameters?.count),
         parameters,
       );
     },
+    formatNumber(value: number, formatOptions?: Intl.NumberFormatOptions) {
+      const cacheKey = JSON.stringify(formatOptions ?? {});
+      let format = numbers.get(cacheKey);
+      if (!format) {
+        format = new Intl.NumberFormat(locale, formatOptions);
+        numbers.set(cacheKey, format);
+      }
+      return format.format(value);
+    },
+    formatDate(
+      value: Date | number,
+      formatOptions?: Intl.DateTimeFormatOptions,
+    ) {
+      return new Intl.DateTimeFormat(locale, formatOptions).format(value);
+    },
+    compare: (first: string, second: string) => collator.compare(first, second),
   });
 }
 
-const translators = new Map<SupportedLanguage, Translator>();
-
-export function translatorFor(language: SupportedLanguage): Translator {
-  let translator = translators.get(language);
-  if (!translator) {
-    translator = createTranslator(language);
-    translators.set(language, translator);
-  }
-  return translator;
-}
-
-// Keys present in English but absent from a catalog.
+// Keys present in English but absent from a locale's catalog: the build-time
+// missing-translation diagnostic used by tests and `--debug` startup.
 export function missingTranslations(
-  catalog: PartialMessageCatalog,
+  locale: SupportedLocale,
 ): readonly MessageKey[] {
+  const catalog = CATALOGS[locale];
   return (Object.keys(englishMessages) as MessageKey[]).filter(
     (key) => catalog[key] === undefined,
   );
-}
-
-// The `{name}` parameters a message uses, across all plural forms.
-export function messageParameters(message: Message): readonly string[] {
-  const texts =
-    typeof message === "string" ? [message] : Object.values(message);
-  return [
-    ...new Set(
-      texts.flatMap((text) =>
-        [...(text ?? "").matchAll(/\{(\w+)\}/gu)].map((match) => match[1]!),
-      ),
-    ),
-  ].sort();
 }
 
 function selectPlural(

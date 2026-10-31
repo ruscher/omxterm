@@ -10,7 +10,9 @@ import {
   isBackupFileName,
   restoreBackup,
   type RestoreTargets,
+  validatePassphrase,
 } from "../../src/main/settings-backup";
+import { useInterfaceLanguage } from "../../src/main/main-translator";
 import { createHighlightSettingsService } from "../../src/main/highlight-settings-store";
 
 const PASSPHRASE = "correct horse battery";
@@ -39,6 +41,17 @@ async function configurationDirectory(): Promise<string> {
 }
 
 describe("settings backup", () => {
+  it("explains a short passphrase in the interface language", () => {
+    useInterfaceLanguage("pt-BR");
+    try {
+      expect(() => validatePassphrase("short")).toThrow(
+        "A senha precisa ter pelo menos 8 caracteres",
+      );
+    } finally {
+      useInterfaceLanguage("en-US");
+    }
+  });
+
   it("collects only OMXTerm's own files", async () => {
     const directory = await configurationDirectory();
     const contents = await collectBackup(

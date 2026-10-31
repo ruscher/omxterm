@@ -28,12 +28,10 @@ Developer and architecture docs for contributors and coding agents:
 - **[Contributing](../CONTRIBUTING.md)** — reporting bugs, setting up a local checkout, running checks, and opening pull requests.
 - **[AGENTS.md](../AGENTS.md)** — quick command reference and repository rules for coding agents.
 - **[Native development](development.md)** — OS prerequisites, test suites, graphical test precautions, and packaging verification.
+- **[Windows status](windows/README.md)** — what runs on Windows today and what was verified on real Windows machines.
 - **[Restty Terminal Surface](restty-development.md)** — rendering integration, pinned dependencies, WASM core rebuilds, and optional diagnostics.
 - **[Terminology](../CONTEXT.md)**, **[Product contract](spec.md)**, and **[Architecture Decision Records](adr/README.md)** — domain terms, observable behavior, and architectural rationale.
 - **[Security policy](../SECURITY.md)** — private vulnerability reporting and security boundaries.
-- **[Windows engineering audit](windows/README.md)** — evidence, parity gaps,
-  competitive references, implementation progress, and native validation still
-  required for the Windows program.
 - **[MIT License](../LICENSE)** and **[Third-Party Notices](../THIRD_PARTY_NOTICES.md)**.
 
 ### Maintainer references

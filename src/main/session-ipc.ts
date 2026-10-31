@@ -5,6 +5,7 @@ import { SessionValidationError } from "../shared/saved-sessions";
 import type { SavedSessionService } from "./saved-sessions";
 import type { IpcEvent, IpcMainPort } from "./terminal-ipc-types";
 import { registerTrustedHandlers } from "./trusted-ipc";
+import { mainTranslator } from "./main-translator";
 
 const MAX_IMPORT_BYTES = 4 * 1024 * 1024;
 
@@ -81,7 +82,9 @@ export function registerSessionIpc(
           if (!chosen) return null;
           const bytes = await readFile(chosen);
           if (bytes.byteLength > MAX_IMPORT_BYTES)
-            throw new SessionIpcError("The file is too large");
+            throw new SessionIpcError(
+              mainTranslator().t("sessions.error.fileTooLarge"),
+            );
           const document = parseExport(bytes);
           return service.importDocument(document);
         }),
@@ -105,7 +108,7 @@ function parseExport(bytes: Uint8Array): unknown {
   try {
     value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
   } catch {
-    throw new SessionIpcError("The file is not an OMXTerm sessions export");
+    throw new SessionIpcError(mainTranslator().t("sessions.error.notExport"));
   }
   if (
     typeof value !== "object" ||
@@ -113,7 +116,7 @@ function parseExport(bytes: Uint8Array): unknown {
     (value as Record<string, unknown>).format !== "omxterm-sessions" ||
     (value as Record<string, unknown>).version !== 1
   )
-    throw new SessionIpcError("The file is not an OMXTerm sessions export");
+    throw new SessionIpcError(mainTranslator().t("sessions.error.notExport"));
   const { folders, sessions } = value as Record<string, unknown>;
   return { folders, sessions };
 }

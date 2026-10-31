@@ -15,7 +15,12 @@ import {
   TERMINAL_ACTION_NAMES,
   type TerminalActionName,
 } from "./terminal-keybinds";
+import { INTERFACE_LANGUAGES, type InterfaceLanguage } from "./i18n";
 import { TERMINAL_THEME_COLOR_KEYS } from "./terminal-theme";
+import {
+  isWindowsShellSuggestions,
+  type WindowsShellSuggestion,
+} from "./windows-shells";
 
 export const preferencesIpc = {
   get: "preferences:get",
@@ -75,12 +80,14 @@ export interface PreferencesValues {
   readonly cornerRadius: number;
   readonly autoHideTitleBar: boolean;
   readonly alwaysOnTop: boolean;
+  readonly language: InterfaceLanguage;
   readonly confirmClose: boolean;
   readonly logLevel: OperationalLogLevel;
   // Hovering a printed file name shows a preview card.
   readonly filePreview: boolean;
   // Windows only; the empty string uses the default shell.
   readonly windowsShell: string;
+  readonly windowsShellIntegration: boolean;
   readonly keybinds: Readonly<Record<TerminalActionName, string>>;
   readonly restoreWindows: boolean;
   readonly highlightOutput: boolean;
@@ -110,6 +117,10 @@ export interface PreferencesSnapshot {
   // Installed monospace families to suggest; free text is still accepted.
   readonly fontFamilies: readonly string[];
   readonly platform: string;
+  // Windows only: shells found at fixed installation layouts, never executed.
+  readonly windowsShells?: readonly WindowsShellSuggestion[];
+  // A saved windowsProfiles collection chooses the shell instead of this field.
+  readonly windowsShellManaged?: boolean;
   // Why config.json is not active right now, when it is not.
   readonly problem?: string;
 }
@@ -171,11 +182,13 @@ const SCALAR_CHECKS: Readonly<
   cornerRadius: integerIn(0, MAX_WINDOW_CORNER_RADIUS),
   autoHideTitleBar: isBoolean,
   alwaysOnTop: isBoolean,
+  language: oneOf(INTERFACE_LANGUAGES),
   confirmClose: isBoolean,
   logLevel: oneOf(LOG_LEVELS),
   filePreview: isBoolean,
   windowsShell: (value) =>
     typeof value === "string" && value.length <= 4_096 && !value.includes("\0"),
+  windowsShellIntegration: isBoolean,
   restoreWindows: isBoolean,
   highlightOutput: isBoolean,
 };
@@ -268,6 +281,10 @@ export function isPreferencesSnapshot(
     value.fontFamilies.length <= MAX_LIST &&
     value.fontFamilies.every(text) &&
     text(value.platform) &&
+    (value.windowsShells === undefined ||
+      isWindowsShellSuggestions(value.windowsShells)) &&
+    (value.windowsShellManaged === undefined ||
+      typeof value.windowsShellManaged === "boolean") &&
     (value.problem === undefined ||
       (typeof value.problem === "string" && value.problem.length <= 4_096))
   );

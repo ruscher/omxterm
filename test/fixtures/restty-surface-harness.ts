@@ -21,9 +21,6 @@ const harness = vi.hoisted(() => {
     readonly setScrollbackLines = vi.fn();
     readonly applyTheme = vi.fn();
     readonly updateSize = vi.fn();
-    readonly openSearch = vi.fn();
-    readonly isSearchOpen = vi.fn(() => false);
-    readonly setSearchUiStyleOptions = vi.fn();
     backend = "webgl2";
     state: ResttyRuntimeLifecycleState = "created";
     readonly pane = {

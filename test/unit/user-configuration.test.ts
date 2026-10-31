@@ -87,7 +87,6 @@ describe("strict version 1 User Configuration", () => {
       validateUserConfiguration(
         {
           version: 1,
-          language: "pt-BR",
           confirmClose: false,
           logLevel: "debug",
           windowsShell: "C:\\configured\\shell.exe",
@@ -110,7 +109,8 @@ describe("strict version 1 User Configuration", () => {
       ),
     ).toEqual({
       version: 1,
-      language: "pt-BR",
+      language: "system",
+      windowsShellIntegration: true,
       confirmClose: false,
       logLevel: "debug",
       windowsShell: "C:\\configured\\shell.exe",
@@ -416,7 +416,7 @@ describe("strict version 1 User Configuration", () => {
     },
   );
 
-  it("rejects two explicit keybinds that collide, naming both actions, the parsed key and both ways out", () => {
+  it("rejects two explicit keybinds that collide, naming both actions and no accelerator contents", () => {
     let failure: unknown;
     try {
       validateUserConfiguration(
@@ -433,10 +433,9 @@ describe("strict version 1 User Configuration", () => {
     expect(failure).toBeInstanceOf(UserConfigurationError);
     expect(failure).toMatchObject({
       location: "keybinds.zoomIn",
-      reason:
-        'conflicts with the "newWindow" keybind on Cmd+G. Choose another shortcut for one of them, or set one of them to null to disable its shortcut',
+      reason: 'conflicts with the "newWindow" keybind',
     });
-    // The key comes from the parsed identity, not the configured text.
+    expect((failure as Error).message).not.toContain("Cmd+G");
     expect((failure as Error).message).not.toContain("CommandOrControl+G");
   });
 
@@ -451,8 +450,7 @@ describe("strict version 1 User Configuration", () => {
       ).toThrow(
         expect.objectContaining({
           location: "keybinds.newWindow",
-          reason:
-            'conflicts with the "closeTab" keybind on Cmd+W. Choose another shortcut for one of them, or set one of them to null to disable its shortcut',
+          reason: 'conflicts with the "closeTab" keybind',
         }),
       );
     }
@@ -615,7 +613,7 @@ describe("isolated User Configuration loading", () => {
       "a conflicting keybind",
       '{"version":1,"keybinds":{"newWindow":"CommandOrControl+W"}}',
       "keybinds.newWindow",
-      'conflicts with the "closeTab" keybind on Cmd+W. Choose another shortcut for one of them, or set one of them to null to disable its shortcut',
+      'conflicts with the "closeTab" keybind',
     ],
   ])(
     "starts with full defaults and a precise diagnostic for %s",

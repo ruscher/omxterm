@@ -37,7 +37,8 @@ export type TerminalSessionLaunch =
   | { readonly kind: "default" }
   | { readonly kind: "inherit"; readonly workingDirectory?: string }
   | { readonly kind: "saved-session"; readonly id: string }
-  | { readonly kind: "quick-ssh"; readonly target: string };
+  | { readonly kind: "quick-ssh"; readonly target: string }
+  | { readonly kind: "windows-shell"; readonly id: string };
 
 export interface IpcMainPort {
   handle(channel: string, handler: IpcHandler): void;
@@ -142,7 +143,6 @@ export interface TerminalSurfaceFontConfiguration {
 }
 
 export interface TerminalIpcRouter {
-  isTrustedSender(event: IpcEvent): boolean;
   registerController(
     options: TerminalIpcControllerOptions,
   ): TerminalIpcController;

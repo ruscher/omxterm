@@ -610,16 +610,24 @@ describe("renderer Terminal Tabs runtime configuration", () => {
   });
 });
 
-describe("Scrollback Search routing", () => {
-  it("opens search in the selected tab only", async () => {
+describe("renderer Terminal Tabs pane targets", () => {
+  it("lists every pane of every tab as a target for a command", async () => {
     const harness = createTabsHarness();
     await harness.tabs.ready;
     harness.tabs.handleCommand({ action: "new" });
     await vi.waitFor(() => expect(harness.surfaces).toHaveLength(2));
 
-    harness.tabs.find();
+    const targets = harness.tabs.paneTargets();
+    expect(targets.map((target) => target.current)).toEqual([false, true]);
+    expect(targets[0]!.run("uptime")).toBe(true);
+    expect(harness.surfaces[0]!.inject).toHaveBeenCalledExactlyOnceWith(
+      "uptime",
+      { submit: true },
+    );
+    expect(harness.surfaces[1]!.inject).not.toHaveBeenCalled();
 
-    expect(harness.surfaces[1]!.find).toHaveBeenCalledOnce();
-    expect(harness.surfaces[0]!.find).not.toHaveBeenCalled();
+    harness.tabs.handleCommand({ action: "close" });
+    await vi.waitFor(() => expect(harness.tabs.paneTargets()).toHaveLength(1));
+    expect(targets[1]!.run("uptime")).toBe(false);
   });
 });

@@ -111,10 +111,28 @@ export const englishPanelMessages = {
   "prefs.filePreviewToggle": "Preview files when hovering their names",
   "prefs.filePreviewHint":
     "Rest the pointer on a file name printed in a local terminal (for example by ls) to see its picture, first page or first lines, with its details.",
+  "prefs.language": "Language",
+  "prefs.languageHint":
+    "Menus change at once; open windows keep their language until they are reopened.",
+  "prefs.language.system": "Same as the system",
+  "prefs.language.enUS": "English",
+  "prefs.language.ptBR": "Português (Brasil)",
   "prefs.shell": "Shell",
   "prefs.windowsShell": "Windows shell",
   "prefs.windowsShellHint":
     "Absolute path of the program new local terminals start. Empty uses Windows PowerShell.",
+  "prefs.windowsShellManaged":
+    "Managed by the windowsProfiles section of config.json. Edit it on the config.json page.",
+  "prefs.windowsShell.powershellCore": "PowerShell 7",
+  "prefs.windowsShell.windowsPowerShell": "Windows PowerShell",
+  "prefs.windowsShell.commandPrompt": "Command Prompt",
+  "prefs.windowsShell.wsl": "WSL",
+  "prefs.windowsShell.gitBash": "Git Bash",
+  "prefs.windowsShell.msys2": "MSYS2",
+  "prefs.windowsShell.cygwin": "Cygwin",
+  "prefs.windowsShellIntegration": "Report the current folder from PowerShell",
+  "prefs.windowsShellIntegrationHint":
+    "Lets the Files panel and new panes follow PowerShell. Changes only a PowerShell started without arguments, by wrapping its prompt; new tabs use this setting.",
   "prefs.configFile": "config.json",
   "prefs.configFileHint":
     "Edit every setting directly. Saving checks the file like a reload, keeps the previous version as config.json.bak and applies it to all windows.",
@@ -171,7 +189,6 @@ export const englishPanelMessages = {
   "assistant.provider": "Provider",
   "assistant.model": "Model",
   "assistant.modelHint": "Type a model id or load the provider's list.",
-  "assistant.loadModels": "Load Models",
   "assistant.baseUrl": "Server address",
   "assistant.baseUrlHint":
     "OpenAI-compatible address, for example http://localhost:11434/v1 for Ollama or http://localhost:1234/v1 for LM Studio. Plain http is accepted only for this computer and the local network.",
@@ -228,7 +245,6 @@ export const englishPanelMessages = {
   "about.version": "Version {version}",
   "about.summary": "A terminal for macOS, Linux, and Windows.",
   "about.authors": "Authors",
-  "about.website": "Website",
   "about.license": "License",
   "about.warrantyBefore":
     "This application comes with absolutely no warranty. See the ",

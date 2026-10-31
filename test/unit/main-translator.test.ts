@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { terminalApplicationMenuTemplate } from "../../src/main/application-menu";
 import {
   mainTranslator,
+  useInterfaceLanguage,
   useSystemLanguages,
 } from "../../src/main/main-translator";
 import {
@@ -22,6 +23,14 @@ afterEach(() => {
 });
 
 describe("main process language", () => {
+  it("lets config.json override the system's languages", () => {
+    useSystemLanguages(["pt-BR"]);
+    expect(useInterfaceLanguage("en-US").locale).toBe("en");
+    expect(useInterfaceLanguage("system").locale).toBe("pt-BR");
+    useSystemLanguages(["en-GB"]);
+    expect(useInterfaceLanguage("pt-BR").locale).toBe("pt-BR");
+  });
+
   it("starts in English and follows the system's languages", () => {
     expect(mainTranslator().locale).toBe("en");
     useSystemLanguages(["pt-BR", "en-US"]);

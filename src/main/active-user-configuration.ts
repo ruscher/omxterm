@@ -1,3 +1,4 @@
+import { interfaceLocale, useInterfaceLanguage } from "./main-translator";
 import type { TerminalRendererConfiguration } from "../shared/user-configuration";
 import type { TerminalIpcRouter } from "./terminal-ipc-controller";
 import type { LoadedUserConfiguration } from "./user-configuration";
@@ -44,6 +45,7 @@ export function applyActiveUserConfiguration<
     confirmClose: state.configuration.confirmClose,
     alwaysOnTopDefault: state.configuration.alwaysOnTop,
   });
+  useInterfaceLanguage(state.configuration.language);
   options.rebuildMenu();
 }
 
@@ -53,7 +55,7 @@ export function terminalRendererConfiguration(
 ): TerminalRendererConfiguration {
   const configuration: LoadedUserConfiguration = active.configuration;
   return Object.freeze({
-    language: configuration.language,
+    language: interfaceLocale(configuration.language),
     ...(configuration.fontFamily
       ? { fontFamily: configuration.fontFamily }
       : {}),

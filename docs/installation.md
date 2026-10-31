@@ -1,20 +1,41 @@
 # Install OMXTerm
 
-OMXTerm ships ready-to-run packages for Apple Silicon Macs, Linux ARM64, and Windows 11 ARM64 or x64. Grab the file for your system from the [downloads table](../README.md#platforms-and-downloads) and follow the steps below.
+OMXTerm packages are built for **ARM64** and **x64** computers: Apple Silicon and Intel Macs, Linux, and Windows 11. Grab the file for your system from the [downloads table](../README.md#platforms-and-downloads) and follow the steps below.
 
-**[macOS](#macos)** · **[Linux](#linux)** · **[Windows](#windows)** · **[Update or uninstall](#updating-or-uninstalling)**
+> Releases up to 0.20.2 ship ARM64 packages only (DMG, AppImage, and Windows installer). From 0.21.0, every release has ARM64 and x64 packages, plus Linux DEB and RPM packages.
+
+**[Pick a file](#pick-the-right-file)** · **[macOS](#macos)** · **[Linux](#linux)** · **[Windows](#windows)** · **[Update or uninstall](#updating-or-uninstalling)**
+
+## Pick the right file
+
+| System                   | ARM64                                        | x64                                          |
+| ------------------------ | -------------------------------------------- | -------------------------------------------- |
+| macOS                    | `OMXTerm-<version>-arm64.dmg`                | `OMXTerm-<version>-x64.dmg`                  |
+| Linux (any distribution) | `OMXTerm-<version>-arm64.AppImage`           | `OMXTerm-<version>-x86_64.AppImage`          |
+| Debian, Ubuntu           | `OMXTerm-<version>-arm64.deb`                | `OMXTerm-<version>-amd64.deb`                |
+| Fedora, openSUSE         | `OMXTerm-<version>-aarch64.rpm`              | `OMXTerm-<version>-x86_64.rpm`               |
+| Arch Linux, Manjaro      | [Build from source](#arch-linux-and-manjaro) | [Build from source](#arch-linux-and-manjaro) |
+| Windows 11               | `OMXTerm-<version>-arm64.exe`                | `OMXTerm-<version>-x64.exe`                  |
+
+Not sure which one you have?
+
+- **macOS:** Apple menu → **About This Mac**. "Chip: Apple M…" is ARM64; "Processor: Intel" is x64.
+- **Linux:** run `uname -m`. `aarch64` is ARM64; `x86_64` is x64.
+- **Windows:** **Settings → System → About → System type**. "ARM-based processor" is ARM64; "x64-based processor" is x64.
+
+Each release also lists a `SHA256SUMS-<platform>-<arch>.txt` file and a `.sha256` file per download for verifying what you downloaded.
 
 ## macOS
 
-You need an Apple Silicon Mac (M1 or later) with macOS 12 Monterey or newer.
+You need an Apple Silicon Mac (M1 or later) or an Intel Mac, with macOS 12 Monterey or newer.
 
-1. Download the **DMG**.
+1. Download the **DMG** for your Mac (`arm64` for Apple Silicon, `x64` for Intel).
 2. Open it and drag **OMXTerm.app** to your **Applications** folder.
 3. Launch OMXTerm from Applications or Spotlight.
 
 ### First launch on macOS
 
-OMXTerm is not notarized by Apple, so macOS blocks it the first time. To allow it:
+OMXTerm is not notarized by Apple and has no Developer ID signature (only an ad-hoc signature), so macOS blocks it the first time. To allow it:
 
 1. Open **System Settings → Privacy & Security**.
 2. Scroll down to **Security**.
@@ -28,7 +49,7 @@ You only do this once. Later, macOS may also ask before OMXTerm opens protected 
 Download the matching `.sha256` file, then run this in the folder where both files are:
 
 ```sh
-shasum -a 256 -c OMXTerm-0.21.0-arm64.dmg.sha256
+shasum -a 256 -c OMXTerm-<version>-arm64.dmg.sha256
 ```
 
 A valid file prints `OK`.
@@ -39,14 +60,14 @@ A valid file prints `OK`.
 
 ### Requirements
 
-OMXTerm needs an `aarch64` (ARM64) processor and **glibc 2.42 or newer**. Check both with:
+OMXTerm needs an `aarch64` (ARM64) or `x86_64` (x64) processor and glibc **2.34 or newer** (from 0.21.0; the minimum follows the system the release was built on, and 0.20.2 needed 2.42). Check both with:
 
 ```sh
 uname -m
 getconf GNU_LIBC_VERSION
 ```
 
-Recent releases such as Fedora 43, Ubuntu 25.10, and Arch meet this requirement. Ubuntu 24.04 LTS and other older releases ship an older glibc and cannot run the current package.
+Ubuntu 22.04 LTS and newer, Debian 12 and newer, Fedora 35 and newer, and Arch meet this requirement.
 
 Then install the few desktop packages OMXTerm relies on (most desktops already have them):
 
@@ -58,19 +79,60 @@ sudo apt install fontconfig file xwayland
 sudo dnf install fontconfig file xorg-x11-server-Xwayland
 ```
 
-### Run the AppImage
+OMXTerm deliberately runs without Chromium's sandbox on Linux, so no package installs a setuid helper or an AppArmor profile.
 
-Make the AppImage executable and run it:
+### Install the DEB package (Debian, Ubuntu)
 
 ```sh
-chmod +x OMXTerm-0.21.0-arm64.AppImage
-./OMXTerm-0.21.0-arm64.AppImage
+sudo apt install ./OMXTerm-<version>-amd64.deb    # or -arm64.deb
+```
+
+`apt` installs the required libraries and recommends the OpenSSH client for SSH sessions. OMXTerm is installed in `/opt/OMXTerm`, appears in your application menu, and starts from a terminal with `omxterm`.
+
+### Install the RPM package (Fedora, openSUSE)
+
+```sh
+sudo dnf install ./OMXTerm-<version>-x86_64.rpm   # or -aarch64.rpm
+```
+
+The RPM is not GPG-signed. On openSUSE, use `sudo zypper install --allow-unsigned-rpm ./OMXTerm-<version>-x86_64.rpm` after verifying its checksum.
+
+### Arch Linux and Manjaro
+
+OMXTerm is not in the AUR. Build a native package from the source tree with the included `PKGBUILD` (needs `base-devel`, `git`, `nodejs`, and `npm`; the build downloads npm dependencies and Electron):
+
+```sh
+git clone https://github.com/ruscher/omxterm.git
+cd omxterm/packaging/arch
+makepkg -si
+```
+
+It builds your local tree, committed or not, versioned from `package.json`, and installs OMXTerm in `/usr/lib/omxterm` with the `omxterm` command, an application menu entry, theme icons, the README in `/usr/share/doc/omxterm`, and its licenses in `/usr/share/licenses/omxterm`. Optional packages: `openssh` (SSH sessions, Quick Connect, remote files over SFTP) and `ollama` (local models for the AI assistant).
+
+On **BigLinux**, [`pkgbuild/PKGBUILD`](../pkgbuild/PKGBUILD) clones the repository at the release tag (`v0.22.2`), or the branch in `OMXTERM_BRANCH`, and takes the version from that checkout's `package.json`. It installs the same files:
+
+```sh
+mkdir omxterm-pkg && cd omxterm-pkg
+curl -fLO https://raw.githubusercontent.com/ruscher/omxterm/main/pkgbuild/PKGBUILD
+makepkg -si                       # release v0.22.2
+OMXTERM_BRANCH=main makepkg -si   # a branch
+```
+
+Both PKGBUILDs set `epoch=1`, so `1:0.22.2` upgrades the date-versioned packages built before 0.22.1 (such as `26.10.25`) without a downgrade warning.
+
+### Run the AppImage
+
+The AppImage runs on any distribution without installation. Make it executable and run it:
+
+```sh
+chmod +x OMXTerm-<version>-x86_64.AppImage   # or -arm64.AppImage
+./OMXTerm-<version>-x86_64.AppImage
 ```
 
 If you get a FUSE error, run it this way instead:
 
 ```sh
-./OMXTerm-0.21.0-arm64.AppImage --appimage-extract-and-run
+./OMXTerm-<version>-x86_64.AppImage --appimage-extract-and-run
 ```
 
 ### Add it to your application menu (optional)
@@ -79,7 +141,7 @@ Download `linux_install.sh` next to the AppImage and run:
 
 ```sh
 chmod +x linux_install.sh
-./linux_install.sh install ./OMXTerm-0.21.0-arm64.AppImage
+./linux_install.sh install ./OMXTerm-<version>-x86_64.AppImage
 ```
 
 OMXTerm now shows up in your application launcher. The [Linux installer guide](linux-installer.md) has the details. For blur, HiDPI scaling, or VM graphics, see [Linux desktop tips](linux-desktop.md).
@@ -87,21 +149,27 @@ OMXTerm now shows up in your application launcher. The [Linux installer guide](l
 <details>
 <summary>Optional: verify the download</summary>
 
-Download the matching `.sha256` file next to the AppImage and run:
+Download the matching `.sha256` file next to your download and run:
 
 ```sh
-sha256sum --check OMXTerm-0.21.0-arm64.AppImage.sha256
+sha256sum --check OMXTerm-<version>-x86_64.AppImage.sha256
+```
+
+Or check every Linux file you downloaded against the release's list:
+
+```sh
+sha256sum --check --ignore-missing SHA256SUMS-linux-x64.txt   # or -linux-arm64.txt
 ```
 
 </details>
 
 ## Windows
 
-You need a Windows 11 PC with an ARM64 or x64 (Intel/AMD) processor (check **System type** in **Settings → System → About**). Use the `-arm64.exe` installer on ARM and the `-x64.exe` installer on Intel/AMD. Windows x64 validation uses emulation on Windows ARM64; native Intel/AMD qualification remains pending. See the [release notes](https://github.com/luizomf/omxterm/releases/tag/v0.21.0) for coverage.
+You need a Windows 11 PC with an ARM64 or x64 processor (check **Settings → System → About**).
 
-1. Install the Microsoft Visual C++ Redistributable for your architecture (ARM64 or x64) if you don't have it yet. See [Microsoft's download page](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist).
-2. Download and run the matching installer: `OMXTerm-0.21.0-arm64.exe` or `OMXTerm-0.21.0-x64.exe`.
-3. If SmartScreen warns about an unrecognized app, click **More info → Run anyway**.
+1. Install the [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) for your processor (ARM64 or x64) if you don't have it yet.
+2. Download and run the installer for your processor (`OMXTerm-<version>-arm64.exe` or `OMXTerm-<version>-x64.exe`).
+3. The installer is unsigned. If SmartScreen warns about an unrecognized app, click **More info → Run anyway**.
 4. Launch **OMXTerm** from the Start menu.
 
 OMXTerm starts Windows PowerShell by default. You can [switch to PowerShell 7 or Git Bash](configuration.md#choose-the-windows-default-shell) in your settings.
@@ -112,11 +180,10 @@ OMXTerm starts Windows PowerShell by default. You can [switch to PowerShell 7 or
 In PowerShell, in your download folder:
 
 ```powershell
-$name = "OMXTerm-0.21.0-arm64.exe" # Use OMXTerm-0.21.0-x64.exe on Intel/AMD
-Get-FileHash $name -Algorithm SHA256
+Get-FileHash .\OMXTerm-<version>-x64.exe -Algorithm SHA256
 ```
 
-Compare the result with the hash inside the matching `$name.sha256` file.
+Compare the result with the hash inside `OMXTerm-<version>-x64.exe.sha256` (or the `-arm64` files).
 
 </details>
 
@@ -135,6 +202,9 @@ OMXTerm does not update itself. To update, quit OMXTerm, download the new versio
 | macOS                  | Replace OMXTerm.app in Applications.                    | Move the app to the Trash.                              |
 | Linux, AppImage only   | Replace the AppImage file.                              | Delete the AppImage file.                               |
 | Linux, with the helper | Run `./linux_install.sh install` with the new AppImage. | Run `./linux_install.sh uninstall`.                     |
+| Linux, DEB package     | `sudo apt install ./` the new `.deb` file.              | `sudo apt remove omxterm`                               |
+| Linux, RPM package     | `sudo dnf install ./` the new `.rpm` file.              | `sudo dnf remove omxterm`                               |
+| Arch Linux, Manjaro    | Pull the new source and run `makepkg -si` again.        | `sudo pacman -R omxterm`                                |
 | Windows                | Run the new installer.                                  | Settings → Apps → Installed apps → OMXTerm → Uninstall. |
 
 Updating or uninstalling never touches your settings, themes, snippets, or logs. See [Configuration](configuration.md) and [Local diagnostics](usage.md#local-diagnostics) for where they live.

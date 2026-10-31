@@ -1,4 +1,13 @@
 import { execFile } from "node:child_process";
+import {
+  mkdtemp,
+  readFile,
+  rename,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import type {
   SessionDefinition,
@@ -11,10 +20,14 @@ import {
 } from "../shared/session-ipc";
 import type { IpcEvent, IpcMainPort } from "./terminal-ipc-types";
 import { registerTrustedHandlers } from "./trusted-ipc";
+import { mainTranslator } from "./main-translator";
 
-// Removes a host's keys from the user's own known_hosts with
-// `ssh-keygen -R`, which keeps the previous file as known_hosts.old. Only an
-// explicit Solution request does this, for a host taken from the session
+// Removes a host's keys from the user's own known_hosts. `ssh-keygen -R`
+// decides which lines belong to the host, run on a private copy because it
+// refuses to rewrite a file that has any invalid line. OMXTerm then removes
+// exactly those lines from the real file, keeps the previous one as
+// known_hosts.old and leaves every other line, valid or not, untouched. Only
+// an explicit Solution request does this, for a host taken from the session
 // definition; the reconnect that follows makes ssh ask about the new key in
 // the terminal (ADR 0039).
 
@@ -41,17 +54,22 @@ export type RunFile = (
   arguments_: readonly string[],
 ) => Promise<{ readonly stdout: string }>;
 
+// ssh-keygen's exit status is ignored: on a file with invalid lines it still
+// reports the host's lines and only declines to write the copy.
 const runFile: RunFile = (executable, arguments_) =>
   new Promise((resolve, reject) => {
     execFile(
       executable,
       [...arguments_],
       { timeout: 10_000, windowsHide: true },
-      (error, stdout) => (error ? reject(error) : resolve({ stdout })),
+      (error, stdout) =>
+        error && (typeof error.code !== "number" || error.killed)
+          ? reject(error)
+          : resolve({ stdout }),
     );
   });
 
-// Resolves whether ssh-keygen found and removed a key for the host.
+// Resolves whether a key for the host was found and removed.
 export async function forgetHostKey(
   session: Pick<SshSessionDefinition, "host" | "port">,
   options: {
@@ -60,13 +78,48 @@ export async function forgetHostKey(
     readonly run?: RunFile;
   },
 ): Promise<boolean> {
-  const { stdout } = await (options.run ?? runFile)(options.sshKeygen, [
-    "-R",
-    knownHostsName(session),
-    "-f",
-    options.knownHostsFile,
-  ]);
-  return /\bfound: line \d+/u.test(stdout);
+  const file = options.knownHostsFile;
+  let original: Buffer;
+  try {
+    original = await readFile(file);
+  } catch (cause) {
+    if ((cause as NodeJS.ErrnoException).code === "ENOENT") return false;
+    throw cause;
+  }
+  const scratch = await mkdtemp(path.join(tmpdir(), "omxterm-known-hosts-"));
+  let lines: ReadonlySet<number>;
+  try {
+    const copy = path.join(scratch, "known_hosts");
+    await writeFile(copy, original, { mode: 0o600 });
+    const { stdout } = await (options.run ?? runFile)(options.sshKeygen, [
+      "-R",
+      knownHostsName(session),
+      "-f",
+      copy,
+    ]);
+    lines = new Set(
+      [...stdout.matchAll(/\bfound: line (\d+)/gu)].map((match) =>
+        Number(match[1]),
+      ),
+    );
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
+  if (lines.size === 0) return false;
+  const next = original
+    .toString("utf8")
+    .split("\n")
+    .filter((_line, index) => !lines.has(index + 1))
+    .join("\n");
+  // Another ssh may have added a host meanwhile; never overwrite that.
+  if (!(await readFile(file)).equals(original))
+    throw new Error("known_hosts changed while it was being updated");
+  const mode = (await stat(file)).mode & 0o777;
+  await writeFile(`${file}.old`, original, { mode });
+  const temporary = `${file}.omxterm-${process.pid}`;
+  await writeFile(temporary, next, { mode });
+  await rename(temporary, file);
+  return true;
 }
 
 // Serves the Solution's "remove the old key" request. The renderer names the
@@ -93,9 +146,10 @@ export function registerHostKeyIpc(
           throw new Error("Invalid session reference");
         const session = options.resolve(payload);
         if (session?.kind !== "ssh")
-          throw new Error("The session is not an SSH session");
+          throw new Error(mainTranslator().t("sessions.error.notSsh"));
         const sshKeygen = options.sshKeygen();
-        if (!sshKeygen) throw new Error("ssh-keygen was not found on PATH");
+        if (!sshKeygen)
+          throw new Error(mainTranslator().t("sessions.error.noSshKeygen"));
         try {
           return {
             removed: await forgetHostKey(session, {
@@ -105,7 +159,9 @@ export function registerHostKeyIpc(
             }),
           };
         } catch {
-          throw new Error("ssh-keygen could not update known_hosts");
+          throw new Error(
+            mainTranslator().t("sessions.error.knownHostsUpdate"),
+          );
         }
       },
     },
