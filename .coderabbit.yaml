@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit reviews every pull request in this fork. The rules below repeat
+# the repository standards in AGENTS.md and CONTRIBUTING.md.
+language: en-US
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "!package-lock.json"
+    - "!**/*.png"
+    - "!**/*.svg"
+  path_instructions:
+    - path: "src/main/**"
+      instructions: >-
+        Electron main owns every privileged capability. Validate IPC payloads
+        exactly at the boundary, pass untrusted values as literal process
+        arguments (never interpolated shell strings), and keep terminal
+        contents, commands, clipboard data, passwords and private paths out of
+        logs. User-visible errors go through the main translator.
+    - path: "src/preload/**"
+      instructions: >-
+        Keep the bridge minimal and typed; validate sender and payload shape.
+        Never expose Node or Electron objects to the renderer.
+    - path: "src/renderer/**"
+      instructions: >-
+        Runs with context isolation and no Node integration. User-visible text
+        comes from the translator, never hard-coded strings; insert untrusted
+        text with textContent, not innerHTML.
+    - path: "src/terminal-surface/**"
+      instructions: >-
+        Framework-independent: must not import Electron, node-pty or renderer
+        modules; it receives a session adapter.
+    - path: "src/shared/locales/**"
+      instructions: >-
+        en-US is the base catalog. pt-BR must keep the same keys and
+        placeholders, read naturally in Brazilian Portuguese and use Title Case
+        consistently with neighboring labels.
+    - path: "test/**"
+      instructions: >-
+        Unit tests mock external I/O. A bug fix needs a test that fails without
+        it. Graphical suites open real windows and must stay isolated.
+    - path: "{docs/**,*.md}"
+      instructions: >-
+        Documentation is English and must describe the implemented behavior;
+        flag claims of verification that the change does not support.
+    - path: "{pkgbuild/**,packaging/**}"
+      instructions: >-
+        Never disable integrity checks or add unverified downloads; keep
+        version bumps and release tags out of contributor changes.
+chat:
+  auto_reply: true
